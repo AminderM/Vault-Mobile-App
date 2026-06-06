@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { View, ScrollView, StyleSheet, Text } from 'react-native';
 import { ThemedView } from './themed-view';
 import { ThemedText } from './themed-text';
+import SmartScanScreen from '@/screens/SmartScanScreen';
 
 type TabName = 'loads' | 'expenses' | 'scan' | 'vault';
 
@@ -72,37 +73,7 @@ export default function AppTabs() {
         );
 
       case 'scan':
-        return (
-          <ScrollView style={styles.screenContent}>
-            <View style={styles.hero}>
-              <ThemedText type="title" style={styles.heroTitle}>
-                Smart Scan
-              </ThemedText>
-              <ThemedText style={styles.heroSubtitle}>
-                Universal document identification
-              </ThemedText>
-            </View>
-            <View style={styles.card}>
-              <ThemedText type="subtitle">Smart Scan Features</ThemedText>
-              <ThemedText style={styles.cardText}>
-                📸 Scan any document{'\n'}
-                ✅ Auto-identifies document type{'\n'}
-                ✅ Detects expiry dates{'\n'}
-                ✅ Category picker (License, Insurance, etc){'\n'}
-                ✅ Saves to vault with expiry tracking
-              </ThemedText>
-            </View>
-            <View style={styles.card}>
-              <ThemedText type="subtitle">Phase 1 Status</ThemedText>
-              <ThemedText style={styles.cardText}>
-                ✅ Document Scanner{'\n'}
-                ✅ Category Selection{'\n'}
-                ✅ Expiry Detection{'\n'}
-                ✅ Save to Vault
-              </ThemedText>
-            </View>
-          </ScrollView>
-        );
+        return <SmartScanScreen />;
 
       case 'vault':
         return (
