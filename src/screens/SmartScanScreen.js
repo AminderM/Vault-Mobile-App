@@ -106,6 +106,20 @@ export default function SmartScanScreen() {
     }
   };
 
+  const handleEditData = () => {
+    const dataToEdit = {
+      docType: selectedCategory,
+      expiryDate: expiryDate,
+      ...result,
+    };
+
+    Alert.alert(
+      'Edit Form',
+      'Full edit form will open here in the mobile version.\n\nData to edit:\n' +
+      JSON.stringify(dataToEdit, null, 2)
+    );
+  };
+
   return (
     <ScrollView style={styles.container}>
       <View style={styles.buttonContainer}>
@@ -173,13 +187,23 @@ export default function SmartScanScreen() {
             />
           </View>
 
-          <TouchableOpacity
-            style={styles.saveButton}
-            onPress={saveScannedDocument}
-            disabled={!selectedCategory}
-          >
-            <Text style={styles.saveButtonText}>Save to Vault</Text>
-          </TouchableOpacity>
+          <View style={styles.buttonRow}>
+            <TouchableOpacity
+              style={[styles.saveButton, styles.editButton]}
+              onPress={handleEditData}
+              disabled={!selectedCategory}
+            >
+              <Text style={styles.saveButtonText}>✏️ Edit Data</Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              style={styles.saveButton}
+              onPress={saveScannedDocument}
+              disabled={!selectedCategory}
+            >
+              <Text style={styles.saveButtonText}>Save to Vault</Text>
+            </TouchableOpacity>
+          </View>
         </View>
       )}
     </ScrollView>
@@ -279,5 +303,14 @@ const styles = StyleSheet.create({
     color: '#fff',
     fontSize: 16,
     fontWeight: '600',
+  },
+  buttonRow: {
+    flexDirection: 'row',
+    gap: 12,
+    marginTop: 12,
+  },
+  editButton: {
+    flex: 1,
+    backgroundColor: '#FF9500',
   },
 });
