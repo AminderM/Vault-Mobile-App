@@ -1,5 +1,17 @@
 const API_BASE = 'https://api.staging.integratedtech.ca';
 
+// Convert camelCase keys to snake_case for backend API
+function toSnakeCase(obj) {
+  if (!obj || typeof obj !== 'object') return obj;
+
+  return Object.keys(obj).reduce((acc, key) => {
+    const snakeKey = key.replace(/([A-Z])/g, '_$1').toLowerCase();
+    const value = obj[key];
+    acc[snakeKey] = value && typeof value === 'object' ? toSnakeCase(value) : value;
+    return acc;
+  }, {});
+}
+
 export async function scanRateCon(file, api = API_BASE) {
   const formData = new FormData();
   formData.append('file', file);
@@ -77,7 +89,7 @@ export async function saveDocument(data, api = API_BASE) {
   const res = await fetch(`${api}/api/documents`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(data),
+    body: JSON.stringify(toSnakeCase(data)),
   });
 
   if (!res.ok) throw new Error('Failed to save document');
@@ -86,9 +98,9 @@ export async function saveDocument(data, api = API_BASE) {
 
 export async function updateDocument(docId, data, api = API_BASE) {
   const res = await fetch(`${api}/api/documents/${docId}`, {
-    method: 'PUT',
+    method: 'PATCH',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(data),
+    body: JSON.stringify(toSnakeCase(data)),
   });
 
   if (!res.ok) throw new Error('Failed to update document');
@@ -139,7 +151,7 @@ export async function createExpense(expenseData, api = API_BASE) {
   const res = await fetch(`${api}/api/driver-mobile/expenses`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(expenseData),
+    body: JSON.stringify(toSnakeCase(expenseData)),
   });
 
   if (!res.ok) throw new Error('Failed to create expense');
@@ -192,7 +204,7 @@ export async function createLoad(loadData, api = API_BASE) {
   const res = await fetch(`${api}/api/driver-mobile/loads`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(loadData),
+    body: JSON.stringify(toSnakeCase(loadData)),
   });
 
   if (!res.ok) throw new Error('Failed to create load');
@@ -201,9 +213,9 @@ export async function createLoad(loadData, api = API_BASE) {
 
 export async function updateLoad(loadId, loadData, api = API_BASE) {
   const res = await fetch(`${api}/api/driver-mobile/loads/${loadId}`, {
-    method: 'PUT',
+    method: 'PATCH',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(loadData),
+    body: JSON.stringify(toSnakeCase(loadData)),
   });
 
   if (!res.ok) throw new Error('Failed to update load');
@@ -229,7 +241,7 @@ export async function uploadFileToVault(fileData, api = API_BASE) {
   });
   formData.append('category', fileData.category);
   if (fileData.expiryDate) {
-    formData.append('expiryDate', fileData.expiryDate);
+    formData.append('expiry_date', fileData.expiryDate);
   }
   if (fileData.notes) {
     formData.append('notes', fileData.notes);
