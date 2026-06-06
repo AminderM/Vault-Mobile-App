@@ -2,7 +2,7 @@
 // Provides consistent colors across light and dark modes
 
 export const LIGHT_MODE = {
-  primary: '#007AFF',
+  primary: '#FF3B30',
   primaryText: '#ffffff',
   secondaryText: '#999999',
   tertiaryText: '#666666',
@@ -23,7 +23,7 @@ export const LIGHT_MODE = {
     success: '#34C759',
     warning: '#FF9500',
     error: '#FF3B30',
-    info: '#007AFF',
+    info: '#FF3B30',
   },
 
   interactive: {
@@ -33,7 +33,7 @@ export const LIGHT_MODE = {
 };
 
 export const DARK_MODE = {
-  primary: '#0A84FF',
+  primary: '#FF3B30',
   primaryText: '#ffffff',
   secondaryText: '#999999',
   tertiaryText: '#666666',
@@ -54,7 +54,7 @@ export const DARK_MODE = {
     success: '#34C759',
     warning: '#FF9500',
     error: '#FF3B30',
-    info: '#0A84FF',
+    info: '#FF3B30',
   },
 
   interactive: {
