@@ -9,11 +9,14 @@ import {
   Alert,
 } from 'react-native';
 import { getLoads } from '../lib/api';
+import { colors } from '../lib/theme';
+
+const theme = colors.dark;
 
 const STATUS_COLORS = {
-  pending: '#FF9500',
-  completed: '#34C759',
-  cancelled: '#FF3B30',
+  pending: theme.status.warning,
+  completed: theme.status.success,
+  cancelled: theme.status.error,
 };
 
 const STATUS_LABELS = {
@@ -229,22 +232,22 @@ export default function LoadsScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#1a1a1a',
+    backgroundColor: theme.background.primary,
   },
   header: {
-    backgroundColor: '#007AFF',
+    backgroundColor: theme.primary,
     padding: 20,
     paddingTop: 12,
   },
   title: {
     fontSize: 28,
     fontWeight: 'bold',
-    color: '#fff',
+    color: theme.primaryText,
     marginBottom: 4,
   },
   subtitle: {
     fontSize: 16,
-    color: '#e8f0fe',
+    color: theme.primaryText,
   },
   statsContainer: {
     flexDirection: 'row',
@@ -253,7 +256,7 @@ const styles = StyleSheet.create({
   },
   statBox: {
     flex: 1,
-    backgroundColor: '#2a2a2a',
+    backgroundColor: theme.background.secondary,
     borderRadius: 8,
     padding: 12,
     alignItems: 'center',
@@ -261,18 +264,18 @@ const styles = StyleSheet.create({
   statNumber: {
     fontSize: 24,
     fontWeight: 'bold',
-    color: '#007AFF',
+    color: theme.primary,
     marginBottom: 4,
   },
   statRevenue: {
     fontSize: 20,
     fontWeight: 'bold',
-    color: '#34C759',
+    color: theme.status.success,
     marginBottom: 4,
   },
   statLabel: {
     fontSize: 12,
-    color: '#999',
+    color: theme.secondaryText,
   },
   statusFilter: {
     flexDirection: 'row',
@@ -285,22 +288,22 @@ const styles = StyleSheet.create({
     paddingVertical: 8,
     paddingHorizontal: 12,
     borderWidth: 1,
-    borderColor: '#333',
+    borderColor: theme.border.light,
     borderRadius: 6,
     alignItems: 'center',
-    backgroundColor: '#2a2a2a',
+    backgroundColor: theme.background.secondary,
   },
   statusButtonActive: {
-    backgroundColor: '#007AFF',
-    borderColor: '#007AFF',
+    backgroundColor: theme.primary,
+    borderColor: theme.primary,
   },
   statusButtonText: {
     fontSize: 11,
     fontWeight: '600',
-    color: '#999',
+    color: theme.secondaryText,
   },
   statusButtonTextActive: {
-    color: '#fff',
+    color: theme.primaryText,
   },
   loader: {
     marginTop: 40,
@@ -309,17 +312,17 @@ const styles = StyleSheet.create({
     padding: 16,
   },
   noLoads: {
-    color: '#999',
+    color: theme.secondaryText,
     textAlign: 'center',
     paddingVertical: 20,
   },
   loadCard: {
-    backgroundColor: '#2a2a2a',
+    backgroundColor: theme.background.secondary,
     borderRadius: 8,
     padding: 16,
     marginBottom: 12,
     borderLeftWidth: 4,
-    borderLeftColor: '#007AFF',
+    borderLeftColor: theme.primary,
   },
   loadHeader: {
     flexDirection: 'row',
@@ -330,7 +333,7 @@ const styles = StyleSheet.create({
   loadId: {
     fontSize: 16,
     fontWeight: 'bold',
-    color: '#fff',
+    color: theme.primaryText,
   },
   statusBadge: {
     paddingVertical: 4,
@@ -338,13 +341,13 @@ const styles = StyleSheet.create({
     borderRadius: 4,
   },
   statusText: {
-    color: '#fff',
+    color: theme.primaryText,
     fontSize: 12,
     fontWeight: '600',
   },
   route: {
     fontSize: 14,
-    color: '#ccc',
+    color: theme.primaryText,
     marginBottom: 12,
   },
   loadDetails: {
@@ -356,19 +359,19 @@ const styles = StyleSheet.create({
   amount: {
     fontSize: 18,
     fontWeight: 'bold',
-    color: '#34C759',
+    color: theme.status.success,
   },
   carrier: {
     fontSize: 13,
-    color: '#999',
+    color: theme.secondaryText,
   },
   dueDate: {
     fontSize: 12,
-    color: '#999',
+    color: theme.secondaryText,
     marginBottom: 8,
   },
   badge: {
-    backgroundColor: '#333',
+    backgroundColor: theme.background.tertiary,
     paddingVertical: 6,
     paddingHorizontal: 10,
     borderRadius: 4,
@@ -376,7 +379,7 @@ const styles = StyleSheet.create({
   },
   badgeText: {
     fontSize: 12,
-    color: '#ccc',
+    color: theme.primaryText,
   },
   actionButtons: {
     padding: 16,
@@ -390,13 +393,13 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   scanButton: {
-    backgroundColor: '#FF9500',
+    backgroundColor: theme.status.warning,
   },
   createButton: {
-    backgroundColor: '#007AFF',
+    backgroundColor: theme.primary,
   },
   buttonText: {
-    color: '#fff',
+    color: theme.primaryText,
     fontSize: 14,
     fontWeight: '600',
   },
