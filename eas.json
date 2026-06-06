@@ -11,11 +11,32 @@
       "distribution": "internal",
       "android": {
         "buildType": "apk"
+      },
+      "ios": {
+        "simulator": false
       }
     },
     "production": {
+      "distribution": "store",
       "android": {
         "buildType": "app-bundle"
+      },
+      "ios": {
+        "buildConfiguration": "Release"
+      }
+    }
+  },
+  "submit": {
+    "production": {
+      "android": {
+        "serviceAccount": null,
+        "track": "internal"
+      },
+      "ios": {
+        "appleId": null,
+        "appleTeamId": null,
+        "appleAppSpecificPassword": null,
+        "ascAppId": null
       }
     }
   }
