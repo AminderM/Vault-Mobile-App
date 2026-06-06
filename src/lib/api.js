@@ -113,3 +113,45 @@ export async function listDocuments(api = API_BASE) {
   if (!res.ok) throw new Error('Failed to fetch documents');
   return res.json();
 }
+
+export async function getExpenses(filters = {}, api = API_BASE) {
+  const params = new URLSearchParams();
+
+  if (filters.startDate) params.append('startDate', filters.startDate);
+  if (filters.endDate) params.append('endDate', filters.endDate);
+  if (filters.category) params.append('category', filters.category);
+
+  const queryString = params.toString();
+  const url = queryString
+    ? `${api}/api/driver-mobile/expenses?${queryString}`
+    : `${api}/api/driver-mobile/expenses`;
+
+  const res = await fetch(url, {
+    method: 'GET',
+    headers: { 'Content-Type': 'application/json' },
+  });
+
+  if (!res.ok) throw new Error('Failed to fetch expenses');
+  return res.json();
+}
+
+export async function createExpense(expenseData, api = API_BASE) {
+  const res = await fetch(`${api}/api/driver-mobile/expenses`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(expenseData),
+  });
+
+  if (!res.ok) throw new Error('Failed to create expense');
+  return res.json();
+}
+
+export async function deleteExpense(expenseId, api = API_BASE) {
+  const res = await fetch(`${api}/api/driver-mobile/expenses/${expenseId}`, {
+    method: 'DELETE',
+    headers: { 'Content-Type': 'application/json' },
+  });
+
+  if (!res.ok) throw new Error('Failed to delete expense');
+  return res.json();
+}
