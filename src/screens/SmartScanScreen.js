@@ -10,6 +10,7 @@ import {
   TextInput,
 } from 'react-native';
 import * as ImagePicker from 'expo-image-picker';
+import { pickFile, takePhoto, pickFromGallery } from '../lib/filePicker';
 import { scanIdentify, saveDocument } from '../lib/api';
 import { scheduleExpiryReminders } from '../lib/expiryNotifications';
 
@@ -27,24 +28,38 @@ export default function SmartScanScreen() {
     'Other',
   ];
 
-  const pickImage = async () => {
-    const result = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: ImagePicker.MediaTypeOptions.Images,
-      quality: 1,
-    });
-
-    if (!result.cancelled && result.assets[0]) {
-      await scanDocument(result.assets[0]);
+  const handlePickImage = async () => {
+    try {
+      const file = await pickFromGallery();
+      if (file) {
+        await scanDocument(file);
+      }
+    } catch (error) {
+      Alert.alert('Error', error.message);
     }
   };
 
-  const takePhoto = async () => {
-    const result = await ImagePicker.launchCameraAsync({
-      quality: 1,
-    });
+  const handleTakePhoto = async () => {
+    try {
+      const file = await takePhoto();
+      if (file) {
+        await scanDocument(file);
+      }
+    } catch (error) {
+      Alert.alert('Error', error.message);
+    }
+  };
 
-    if (!result.cancelled && result.assets[0]) {
-      await scanDocument(result.assets[0]);
+  const handlePickDocument = async () => {
+    try {
+      const file = await pickFile({
+        allowedTypes: ['image/*', 'application/pdf'],
+      });
+      if (file) {
+        await scanDocument(file);
+      }
+    } catch (error) {
+      Alert.alert('Error', error.message);
     }
   };
 
@@ -125,18 +140,26 @@ export default function SmartScanScreen() {
       <View style={styles.buttonContainer}>
         <TouchableOpacity
           style={styles.button}
-          onPress={takePhoto}
+          onPress={handleTakePhoto}
           disabled={loading}
         >
-          <Text style={styles.buttonText}>Take Photo</Text>
+          <Text style={styles.buttonText}>📸 Take Photo</Text>
         </TouchableOpacity>
 
         <TouchableOpacity
           style={styles.button}
-          onPress={pickImage}
+          onPress={handlePickImage}
           disabled={loading}
         >
-          <Text style={styles.buttonText}>Pick from Gallery</Text>
+          <Text style={styles.buttonText}>🖼️ Pick from Gallery</Text>
+        </TouchableOpacity>
+
+        <TouchableOpacity
+          style={[styles.button, styles.pdfButton]}
+          onPress={handlePickDocument}
+          disabled={loading}
+        >
+          <Text style={styles.buttonText}>📄 Upload Document</Text>
         </TouchableOpacity>
       </View>
 
@@ -224,6 +247,9 @@ const styles = StyleSheet.create({
     padding: 16,
     borderRadius: 8,
     alignItems: 'center',
+  },
+  pdfButton: {
+    backgroundColor: '#FF9500',
   },
   buttonText: {
     color: '#fff',
