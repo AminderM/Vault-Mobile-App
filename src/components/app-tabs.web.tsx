@@ -3,6 +3,7 @@ import { View, ScrollView, StyleSheet, Text } from 'react-native';
 import { ThemedView } from './themed-view';
 import { ThemedText } from './themed-text';
 import SmartScanScreen from '@/screens/SmartScanScreen';
+import ExpenseScreen from '@/screens/ExpenseScreen';
 
 type TabName = 'loads' | 'expenses' | 'scan' | 'vault';
 
@@ -42,35 +43,7 @@ export default function AppTabs() {
         );
 
       case 'expenses':
-        return (
-          <ScrollView style={styles.screenContent}>
-            <View style={styles.hero}>
-              <ThemedText type="title" style={styles.heroTitle}>
-                Expenses
-              </ThemedText>
-              <ThemedText style={styles.heroSubtitle}>
-                Scan and record receipts
-              </ThemedText>
-            </View>
-            <View style={styles.card}>
-              <ThemedText type="subtitle">Scan Receipt</ThemedText>
-              <ThemedText style={styles.cardText}>
-                📸 Camera access enabled{'\n'}
-                ✅ API connected to backend{'\n'}
-                ✅ Extracts: vendor, amount, date, description
-              </ThemedText>
-            </View>
-            <View style={styles.card}>
-              <ThemedText type="subtitle">Phase 1 Status</ThemedText>
-              <ThemedText style={styles.cardText}>
-                ✅ Receipt Scanner{'\n'}
-                ✅ Photo/Gallery picker{'\n'}
-                ⏳ TODO: Save as expense record{'\n'}
-                ⏳ TODO: Edit form before save
-              </ThemedText>
-            </View>
-          </ScrollView>
-        );
+        return <ExpenseScreen />;
 
       case 'scan':
         return <SmartScanScreen />;
