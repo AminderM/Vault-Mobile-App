@@ -5,6 +5,7 @@ import { ThemedText } from './themed-text';
 import SmartScanScreen from '@/screens/SmartScanScreen';
 import ExpenseScreen from '@/screens/ExpenseScreen';
 import LoadsScreen from '@/screens/LoadsScreen';
+import FilePickerScreen from '@/screens/FilePickerScreen';
 
 type TabName = 'loads' | 'expenses' | 'scan' | 'vault';
 
@@ -23,39 +24,7 @@ export default function AppTabs() {
         return <SmartScanScreen />;
 
       case 'vault':
-        return (
-          <ScrollView style={styles.screenContent}>
-            <View style={styles.hero}>
-              <ThemedText type="title" style={styles.heroTitle}>
-                Document Vault
-              </ThemedText>
-              <ThemedText style={styles.heroSubtitle}>
-                View and manage all your documents
-              </ThemedText>
-            </View>
-            <View style={styles.card}>
-              <ThemedText type="subtitle">Vault Features</ThemedText>
-              <ThemedText style={styles.cardText}>
-                📋 List all saved documents{'\n'}
-                🔴 Expiry status color-coded{'\n'}
-                🗑️ Delete documents{'\n'}
-                📅 Shows: type, upload date, expiry date{'\n'}
-                🔔 Expiry reminders (60/30/15/7/1 days)
-              </ThemedText>
-            </View>
-            <View style={styles.card}>
-              <ThemedText type="subtitle">Phase 1 Status</ThemedText>
-              <ThemedText style={styles.cardText}>
-                ✅ Document List{'\n'}
-                ✅ Status Color Coding{'\n'}
-                ✅ Delete Functionality{'\n'}
-                ✅ Expiry Notifications{'\n'}
-                ⏳ TODO: Edit documents{'\n'}
-                ⏳ TODO: View full details
-              </ThemedText>
-            </View>
-          </ScrollView>
-        );
+        return <FilePickerScreen />;
 
       default:
         return null;

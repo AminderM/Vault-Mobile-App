@@ -219,3 +219,33 @@ export async function deleteLoad(loadId, api = API_BASE) {
   if (!res.ok) throw new Error('Failed to delete load');
   return res.json();
 }
+
+export async function uploadFileToVault(fileData, api = API_BASE) {
+  const formData = new FormData();
+  formData.append('file', {
+    uri: fileData.file.uri,
+    type: fileData.file.type,
+    name: fileData.file.name,
+  });
+  formData.append('category', fileData.category);
+  if (fileData.expiryDate) {
+    formData.append('expiryDate', fileData.expiryDate);
+  }
+  if (fileData.notes) {
+    formData.append('notes', fileData.notes);
+  }
+
+  const res = await fetch(`${api}/api/documents/upload`, {
+    method: 'POST',
+    body: formData,
+  });
+
+  if (!res.ok) {
+    const status = res.status;
+    if (status === 413) throw new Error('File too large (max 10MB)');
+    if (status === 415) throw new Error('Unsupported file type');
+    throw new Error('Failed to upload file');
+  }
+
+  return await res.json();
+}
