@@ -1,7 +1,4 @@
 import { registerRootComponent } from 'expo';
-import { ExpoRoot } from 'expo-router';
+import App from './src/app/_layout';
 
-const ctx = require.context('./src/app');
-const RootComponent = ExpoRoot({ ctx });
-
-registerRootComponent(RootComponent);
+registerRootComponent(App);
