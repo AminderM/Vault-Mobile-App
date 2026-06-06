@@ -9,6 +9,9 @@ import {
   Alert,
 } from 'react-native';
 import { getExpenses } from '../lib/api';
+import { colors } from '../lib/theme';
+
+const theme = colors.dark;
 
 const CATEGORIES = [
   { id: 'fuel', label: 'Fuel', icon: '⛽' },
@@ -225,7 +228,7 @@ export default function ExpenseScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#1a1a1a',
+    backgroundColor: theme.background.primary,
     padding: 16,
   },
   periodTabs: {
@@ -238,42 +241,42 @@ const styles = StyleSheet.create({
     paddingVertical: 10,
     paddingHorizontal: 8,
     borderWidth: 1,
-    borderColor: '#333',
+    borderColor: theme.border.light,
     borderRadius: 6,
     alignItems: 'center',
-    backgroundColor: '#2a2a2a',
+    backgroundColor: theme.background.secondary,
   },
   periodTabActive: {
-    backgroundColor: '#FF3B30',
-    borderColor: '#FF3B30',
+    backgroundColor: theme.primary,
+    borderColor: theme.primary,
   },
   periodTabText: {
     fontSize: 11,
     fontWeight: '600',
-    color: '#999',
+    color: theme.secondaryText,
   },
   periodTabTextActive: {
-    color: '#fff',
+    color: theme.primaryText,
   },
   totalSection: {
     marginBottom: 24,
   },
   totalLabel: {
     fontSize: 12,
-    color: '#999',
+    color: theme.secondaryText,
     marginBottom: 8,
     letterSpacing: 1,
   },
   totalAmount: {
     fontSize: 36,
     fontWeight: 'bold',
-    color: '#FF3B30',
+    color: theme.primary,
   },
   loader: {
     marginTop: 40,
   },
   breakdownSection: {
-    backgroundColor: '#2a2a2a',
+    backgroundColor: theme.background.secondary,
     borderRadius: 8,
     padding: 16,
     marginBottom: 20,
@@ -291,23 +294,23 @@ const styles = StyleSheet.create({
     marginRight: 8,
   },
   categoryName: {
-    color: '#fff',
+    color: theme.primaryText,
     fontSize: 14,
     fontWeight: '500',
   },
   categoryBar: {
     height: 6,
-    backgroundColor: '#333',
+    backgroundColor: theme.border.light,
     borderRadius: 3,
     marginBottom: 6,
     overflow: 'hidden',
   },
   barFill: {
     height: '100%',
-    backgroundColor: '#FF3B30',
+    backgroundColor: theme.primary,
   },
   categoryAmount: {
-    color: '#FF3B30',
+    color: theme.primary,
     fontSize: 13,
     fontWeight: '600',
   },
@@ -315,7 +318,7 @@ const styles = StyleSheet.create({
     marginBottom: 20,
   },
   noExpenses: {
-    color: '#999',
+    color: theme.secondaryText,
     textAlign: 'center',
     paddingVertical: 20,
   },
@@ -325,7 +328,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingVertical: 12,
     paddingHorizontal: 12,
-    backgroundColor: '#2a2a2a',
+    backgroundColor: theme.background.secondary,
     borderRadius: 6,
     marginBottom: 8,
   },
@@ -333,17 +336,17 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   expenseCategory: {
-    color: '#fff',
+    color: theme.primaryText,
     fontSize: 14,
     fontWeight: '500',
     marginBottom: 4,
   },
   expenseDate: {
-    color: '#999',
+    color: theme.secondaryText,
     fontSize: 12,
   },
   expenseAmount: {
-    color: '#FF3B30',
+    color: theme.primary,
     fontSize: 14,
     fontWeight: '600',
   },
@@ -360,15 +363,15 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   scanButton: {
-    backgroundColor: '#FF3B30',
+    backgroundColor: theme.primary,
     borderWidth: 1,
-    borderColor: '#FF3B30',
+    borderColor: theme.primary,
   },
   addButton: {
-    backgroundColor: '#FF3B30',
+    backgroundColor: theme.primary,
   },
   buttonText: {
-    color: '#fff',
+    color: theme.primaryText,
     fontSize: 14,
     fontWeight: '600',
   },

@@ -13,6 +13,9 @@ import * as ImagePicker from 'expo-image-picker';
 import { pickFile, takePhoto, pickFromGallery } from '../lib/filePicker';
 import { scanIdentify, saveDocument } from '../lib/api';
 import { scheduleExpiryReminders } from '../lib/expiryNotifications';
+import { colors } from '../lib/theme';
+
+const theme = colors.dark;
 
 export default function SmartScanScreen() {
   const [loading, setLoading] = useState(false);
@@ -165,7 +168,7 @@ export default function SmartScanScreen() {
 
       {loading && (
         <View style={styles.loadingContainer}>
-          <ActivityIndicator size="large" color="#007AFF" />
+          <ActivityIndicator size="large" color={theme.primary} />
           <Text style={styles.loadingText}>Scanning document...</Text>
         </View>
       )}
@@ -236,23 +239,23 @@ export default function SmartScanScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#f5f5f5',
+    backgroundColor: theme.background.primary,
   },
   buttonContainer: {
     padding: 16,
     gap: 12,
   },
   button: {
-    backgroundColor: '#007AFF',
+    backgroundColor: theme.primary,
     padding: 16,
     borderRadius: 8,
     alignItems: 'center',
   },
   pdfButton: {
-    backgroundColor: '#FF9500',
+    backgroundColor: theme.status.warning,
   },
   buttonText: {
-    color: '#fff',
+    color: theme.primaryText,
     fontSize: 16,
     fontWeight: '600',
   },
@@ -263,7 +266,7 @@ const styles = StyleSheet.create({
   loadingText: {
     marginTop: 12,
     fontSize: 16,
-    color: '#666',
+    color: theme.secondaryText,
   },
   formContainer: {
     padding: 16,
@@ -272,7 +275,7 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontWeight: '600',
     marginBottom: 16,
-    color: '#000',
+    color: theme.primaryText,
   },
   section: {
     marginBottom: 20,
@@ -281,7 +284,7 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: '600',
     marginBottom: 8,
-    color: '#333',
+    color: theme.primaryText,
   },
   categoryGrid: {
     flexDirection: 'row',
@@ -295,38 +298,39 @@ const styles = StyleSheet.create({
     paddingHorizontal: 8,
     borderRadius: 6,
     borderWidth: 1,
-    borderColor: '#ddd',
-    backgroundColor: '#fff',
+    borderColor: theme.border.light,
+    backgroundColor: theme.background.secondary,
     alignItems: 'center',
   },
   categoryButtonActive: {
-    backgroundColor: '#007AFF',
-    borderColor: '#007AFF',
+    backgroundColor: theme.primary,
+    borderColor: theme.primary,
   },
   categoryButtonText: {
     fontSize: 13,
-    color: '#666',
+    color: theme.secondaryText,
   },
   categoryButtonTextActive: {
-    color: '#fff',
+    color: theme.primaryText,
     fontWeight: '600',
   },
   input: {
-    backgroundColor: '#fff',
+    backgroundColor: theme.background.secondary,
     borderRadius: 6,
     borderWidth: 1,
-    borderColor: '#ddd',
+    borderColor: theme.border.light,
     padding: 12,
     fontSize: 14,
+    color: theme.primaryText,
   },
   saveButton: {
-    backgroundColor: '#34C759',
+    backgroundColor: theme.status.success,
     padding: 16,
     borderRadius: 8,
     alignItems: 'center',
   },
   saveButtonText: {
-    color: '#fff',
+    color: theme.primaryText,
     fontSize: 16,
     fontWeight: '600',
   },
@@ -337,6 +341,6 @@ const styles = StyleSheet.create({
   },
   editButton: {
     flex: 1,
-    backgroundColor: '#FF9500',
+    backgroundColor: theme.status.warning,
   },
 });
