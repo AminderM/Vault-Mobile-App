@@ -25,19 +25,5 @@
         "buildConfiguration": "Release"
       }
     }
-  },
-  "submit": {
-    "production": {
-      "android": {
-        "serviceAccount": null,
-        "track": "internal"
-      },
-      "ios": {
-        "appleId": null,
-        "appleTeamId": null,
-        "appleAppSpecificPassword": null,
-        "ascAppId": null
-      }
-    }
   }
 }
