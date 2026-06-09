@@ -19,7 +19,6 @@
     "expo-linking": "~56.0.13",
     "expo-location": "^56.0.15",
     "expo-notifications": "^56.0.15",
-    "expo-permissions": "^14.4.0",
     "expo-router": "~56.2.8",
     "expo-splash-screen": "~56.0.10",
     "expo-status-bar": "~56.0.4",
