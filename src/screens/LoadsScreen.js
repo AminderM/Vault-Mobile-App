@@ -10,6 +10,9 @@ import {
 } from 'react-native';
 import { getLoads } from '../lib/api';
 import { colors } from '../lib/theme';
+import Card from '../components/Card';
+import Button from '../components/Button';
+import Section from '../components/Section';
 
 const theme = colors.dark;
 
@@ -98,48 +101,43 @@ export default function LoadsScreen() {
       </View>
 
       {/* Stats */}
-      <View style={styles.statsContainer}>
-        <View style={styles.statBox}>
-          <Text style={styles.statNumber}>{stats.totalLoads}</Text>
-          <Text style={styles.statLabel}>Total Loads</Text>
+      <Section>
+        <View style={styles.statsContainer}>
+          <Card leftBorder={false} style={styles.statCard}>
+            <Text style={styles.statNumber}>{stats.totalLoads}</Text>
+            <Text style={styles.statLabel}>Total Loads</Text>
+          </Card>
+          <Card leftBorder={false} style={styles.statCard}>
+            <Text style={styles.statNumber}>{stats.completedLoads}</Text>
+            <Text style={styles.statLabel}>Completed</Text>
+          </Card>
+          <Card leftBorder={false} style={styles.statCard}>
+            <Text style={styles.statRevenue}>
+              ${stats.totalRevenue.toFixed(0)}
+            </Text>
+            <Text style={styles.statLabel}>Total Revenue</Text>
+          </Card>
         </View>
-        <View style={styles.statBox}>
-          <Text style={styles.statNumber}>{stats.completedLoads}</Text>
-          <Text style={styles.statLabel}>Completed</Text>
-        </View>
-        <View style={styles.statBox}>
-          <Text style={styles.statRevenue}>
-            ${stats.totalRevenue.toFixed(0)}
-          </Text>
-          <Text style={styles.statLabel}>Total Revenue</Text>
-        </View>
-      </View>
+      </Section>
 
       {/* Status Filter */}
-      <View style={styles.statusFilter}>
-        {statusOptions.map((option) => (
-          <TouchableOpacity
-            key={option.id}
-            style={[
-              styles.statusButton,
-              selectedStatus === option.id && styles.statusButtonActive,
-            ]}
-            onPress={() => setSelectedStatus(option.id)}
-          >
-            <Text
-              style={[
-                styles.statusButtonText,
-                selectedStatus === option.id && styles.statusButtonTextActive,
-              ]}
-            >
-              {option.label}
-            </Text>
-          </TouchableOpacity>
-        ))}
-      </View>
+      <Section style={styles.filterSection}>
+        <View style={styles.statusFilter}>
+          {statusOptions.map((option) => (
+            <Button
+              key={option.id}
+              label={option.label}
+              variant={selectedStatus === option.id ? 'primary' : 'secondary'}
+              size="small"
+              onPress={() => setSelectedStatus(option.id)}
+              style={styles.filterButton}
+            />
+          ))}
+        </View>
+      </Section>
 
       {loading ? (
-        <ActivityIndicator size="large" color="#007AFF" style={styles.loader} />
+        <ActivityIndicator size="large" color={theme.primary} style={styles.loader} />
       ) : (
         <>
           {/* Loads List */}
@@ -210,21 +208,18 @@ export default function LoadsScreen() {
       )}
 
       {/* Action Buttons */}
-      <View style={styles.actionButtons}>
-        <TouchableOpacity
-          style={[styles.button, styles.scanButton]}
+      <Section style={styles.actionButtons}>
+        <Button
+          label="📸 SCAN RATE CONFIRMATION"
           onPress={handleScanRateConfirmation}
-        >
-          <Text style={styles.buttonText}>📸 SCAN RATE CONFIRMATION</Text>
-        </TouchableOpacity>
-
-        <TouchableOpacity
-          style={[styles.button, styles.createButton]}
+          size="large"
+        />
+        <Button
+          label="+ CREATE LOAD"
           onPress={handleCreateLoad}
-        >
-          <Text style={styles.buttonText}>+ CREATE LOAD</Text>
-        </TouchableOpacity>
-      </View>
+          size="large"
+        />
+      </Section>
     </ScrollView>
   );
 }
