@@ -68,11 +68,6 @@
       },
       "backendUrl": "https://api.staging.integratedtech.ca"
     },
-    "runtimeVersion": {
-      "policy": "appVersion"
-    }
-  },
-  "cli": {
-    "appVersionSource": "manifest"
+    "runtimeVersion": "1.0.0"
   }
 }
