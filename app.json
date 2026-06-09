@@ -26,6 +26,9 @@
         "backgroundColor": "#030303"
       },
       "package": "com.integraatech.vault",
+      "compileSdkVersion": 34,
+      "targetSdkVersion": 34,
+      "minSdkVersion": 21,
       "permissions": [
         "android.permission.CAMERA",
         "android.permission.ACCESS_FINE_LOCATION",
@@ -68,5 +71,8 @@
     "runtimeVersion": {
       "policy": "appVersion"
     }
+  },
+  "cli": {
+    "appVersionSource": "manifest"
   }
 }
