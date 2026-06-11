@@ -3,38 +3,108 @@ import {
   View,
   ScrollView,
   StyleSheet,
-  TouchableOpacity,
+  Pressable,
   Text,
   ActivityIndicator,
   Alert,
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { getExpenses } from '../lib/api';
-import { colors } from '../lib/theme';
-
-const theme = colors.dark;
-
-const CATEGORIES = [
-  { id: 'fuel', label: 'Fuel', icon: '⛽' },
-  { id: 'tolls', label: 'Tolls', icon: '🛣️' },
-  { id: 'meals', label: 'Meals', icon: '🍔' },
-  { id: 'accommodation', label: 'Hotel', icon: '🏨' },
-  { id: 'maintenance', label: 'Maintenance', icon: '🔧' },
-  { id: 'parking', label: 'Parking', icon: '🅿️' },
-  { id: 'other', label: 'Other', icon: '📝' },
-];
+import { DARK_THEME as T, BRAND, TYPOGRAPHY, SPACING, createStatusBorderCard } from '../lib/theme';
 
 const TIME_PERIODS = [
-  { id: 'all', label: 'ALL TIME' },
   { id: 'week', label: 'THIS WEEK' },
   { id: 'month', label: 'THIS MONTH' },
   { id: 'year', label: 'THIS YEAR' },
+  { id: 'all', label: 'ALL TIME' },
 ];
 
+const RECENT_EXPENSES = [
+  { id: '1', description: 'Fuel Stop - Pilot #452', date: 'Sept 22, 2024 • 14:32', amount: -542.10, category: 'Fuel & DEF' },
+  { id: '2', description: 'Tire Replacement (Front Left)', date: 'Sept 20, 2024 • 09:15', amount: -1280.00, category: 'Maintenance' },
+  { id: '3', description: 'PA Turnpike Tolls', date: 'Sept 19, 2024 • 18:00', amount: -84.50, category: 'Tolls' },
+];
+
+const CHART_DATA = [
+  { month: 'APR', revenue: 60, expense: 40 },
+  { month: 'MAY', revenue: 75, expense: 45 },
+  { month: 'JUN', revenue: 65, expense: 55 },
+  { month: 'JUL', revenue: 85, expense: 50 },
+  { month: 'AUG', revenue: 70, expense: 42 },
+  { month: 'SEP', revenue: 95, expense: 48 },
+];
+
+function MetricCard({ label, value, change, borderColor, valueColor }) {
+  return (
+    <View style={[styles.metricCard, { borderLeftColor: borderColor }]}>
+      <Text style={styles.metricLabel}>{label}</Text>
+      <Text style={[styles.metricValue, { color: valueColor || T.text.primary }]}>{value}</Text>
+      {change ? (
+        <Text style={[styles.metricChange, { color: valueColor || T.text.secondary }]}>{change}</Text>
+      ) : null}
+    </View>
+  );
+}
+
+function BarChart({ data }) {
+  return (
+    <View>
+      <Text style={styles.chartTitle}>Revenue vs Expenses</Text>
+      <Text style={styles.chartSubtitle}>Last 6 Months Trend</Text>
+      <View style={styles.barChart}>
+        {data.map((d) => (
+          <View key={d.month} style={styles.barGroup}>
+            <View style={styles.barPair}>
+              <View style={[styles.bar, { height: `${d.revenue}%`, backgroundColor: BRAND.profitGreen }]} />
+              <View style={[styles.bar, { height: `${d.expense}%`, backgroundColor: T.primary }]} />
+            </View>
+            <Text style={styles.barLabel}>{d.month}</Text>
+          </View>
+        ))}
+      </View>
+      {/* Legend */}
+      <View style={styles.chartLegend}>
+        <View style={styles.legendItem}>
+          <View style={[styles.legendDot, { backgroundColor: BRAND.profitGreen }]} />
+          <Text style={styles.legendText}>Revenue</Text>
+        </View>
+        <View style={styles.legendItem}>
+          <View style={[styles.legendDot, { backgroundColor: T.primary }]} />
+          <Text style={styles.legendText}>Expenses</Text>
+        </View>
+      </View>
+    </View>
+  );
+}
+
+function ExpenseRow({ expense }) {
+  return (
+    <View style={styles.expenseRow}>
+      <View style={styles.expenseIcon}>
+        <Text style={{ fontSize: 20 }}>🧾</Text>
+      </View>
+      <View style={styles.expenseInfo}>
+        <Text style={styles.expenseDesc}>{expense.description}</Text>
+        <Text style={styles.expenseDate}>{expense.date}</Text>
+      </View>
+      <View style={styles.expenseAmountCol}>
+        <Text style={styles.expenseAmount}>{expense.amount.toFixed(2)}</Text>
+        <Text style={styles.expenseCategory}>{expense.category}</Text>
+      </View>
+    </View>
+  );
+}
+
 export default function ExpenseScreen() {
-  const [expenses, setExpenses] = useState([]);
-  const [loading, setLoading] = useState(false);
   const [selectedPeriod, setSelectedPeriod] = useState('month');
-  const [totalSpent, setTotalSpent] = useState(0);
+  const [expenses, setExpenses] = useState(RECENT_EXPENSES);
+  const [loading, setLoading] = useState(false);
+  const [totals] = useState({
+    collected: '$142,500',
+    expenses: '$84,320',
+    invoiced: '$58,180',
+    outstanding: '$12,450',
+  });
 
   useEffect(() => {
     loadExpenses();
@@ -43,336 +113,254 @@ export default function ExpenseScreen() {
   const loadExpenses = async () => {
     try {
       setLoading(true);
-      const filters = getDateFilters(selectedPeriod);
+      const now = new Date();
+      const filters = {};
+      if (selectedPeriod === 'week') {
+        filters.startDate = new Date(now - 7 * 86400000).toISOString();
+      } else if (selectedPeriod === 'month') {
+        filters.startDate = new Date(now.getFullYear(), now.getMonth(), 1).toISOString();
+      } else if (selectedPeriod === 'year') {
+        filters.startDate = new Date(now.getFullYear(), 0, 1).toISOString();
+      }
       const data = await getExpenses(filters);
-      setExpenses(data.expenses || []);
-
-      const total = (data.expenses || []).reduce(
-        (sum, exp) => sum + exp.amount,
-        0
-      );
-      setTotalSpent(total);
-    } catch (error) {
-      Alert.alert('Error', 'Failed to load expenses');
-      console.error('Load expenses error:', error);
+      if (data.expenses && data.expenses.length > 0) {
+        setExpenses(data.expenses.map((e) => ({
+          id: e.id,
+          description: e.description || 'Expense',
+          date: new Date(e.date).toLocaleDateString(),
+          amount: -Math.abs(e.amount),
+          category: e.category || 'Other',
+        })));
+      } else {
+        setExpenses(RECENT_EXPENSES);
+      }
+    } catch {
+      setExpenses(RECENT_EXPENSES);
     } finally {
       setLoading(false);
     }
   };
 
-  const getDateFilters = (period) => {
-    const now = new Date();
-    const filters = {};
-
-    switch (period) {
-      case 'week':
-        const weekAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
-        filters.startDate = weekAgo.toISOString();
-        filters.endDate = now.toISOString();
-        break;
-      case 'month':
-        const monthAgo = new Date(now.getFullYear(), now.getMonth(), 1);
-        filters.startDate = monthAgo.toISOString();
-        filters.endDate = now.toISOString();
-        break;
-      case 'year':
-        const yearAgo = new Date(now.getFullYear(), 0, 1);
-        filters.startDate = yearAgo.toISOString();
-        filters.endDate = now.toISOString();
-        break;
-    }
-
-    return filters;
-  };
-
-  const getCategoryBreakdown = () => {
-    const breakdown = {};
-    expenses.forEach((exp) => {
-      breakdown[exp.category] = (breakdown[exp.category] || 0) + exp.amount;
-    });
-    return breakdown;
-  };
-
-  const handleScanReceipt = () => {
-    Alert.alert(
-      'Scan Receipt',
-      'Receipt OCR coming in Phase 2B'
-    );
-  };
-
-  const handleAddExpense = () => {
-    Alert.alert(
-      'Add Expense',
-      'Manual expense form coming next'
-    );
-  };
-
-  const categoryBreakdown = getCategoryBreakdown();
-  const hasExpenses = expenses.length > 0;
-
   return (
-    <ScrollView style={styles.container}>
-      {/* Time Period Tabs */}
-      <View style={styles.periodTabs}>
-        {TIME_PERIODS.map((period) => (
-          <TouchableOpacity
-            key={period.id}
-            style={[
-              styles.periodTab,
-              selectedPeriod === period.id && styles.periodTabActive,
-            ]}
-            onPress={() => setSelectedPeriod(period.id)}
-          >
-            <Text
-              style={[
-                styles.periodTabText,
-                selectedPeriod === period.id && styles.periodTabTextActive,
-              ]}
-            >
-              {period.label}
-            </Text>
-          </TouchableOpacity>
-        ))}
-      </View>
-
-      {/* Total Spent */}
-      <View style={styles.totalSection}>
-        <Text style={styles.totalLabel}>TOTAL SPENT</Text>
-        <Text style={styles.totalAmount}>${totalSpent.toFixed(2)}</Text>
-      </View>
-
-      {loading ? (
-        <ActivityIndicator size="large" color="#FF3B30" style={styles.loader} />
-      ) : (
-        <>
-          {/* Category Breakdown */}
-          {hasExpenses && Object.keys(categoryBreakdown).length > 0 && (
-            <View style={styles.breakdownSection}>
-              {CATEGORIES.map((cat) => {
-                const amount = categoryBreakdown[cat.id] || 0;
-                if (amount === 0) return null;
-
-                const percentage =
-                  totalSpent > 0 ? (amount / totalSpent) * 100 : 0;
-
-                return (
-                  <View key={cat.id} style={styles.categoryRow}>
-                    <View style={styles.categoryInfo}>
-                      <Text style={styles.categoryIcon}>{cat.icon}</Text>
-                      <Text style={styles.categoryName}>{cat.label}</Text>
-                    </View>
-                    <View style={styles.categoryBar}>
-                      <View
-                        style={[
-                          styles.barFill,
-                          { width: `${percentage}%` },
-                        ]}
-                      />
-                    </View>
-                    <Text style={styles.categoryAmount}>
-                      ${amount.toFixed(2)}
-                    </Text>
-                  </View>
-                );
-              })}
-            </View>
-          )}
-
-          {/* Expense List */}
-          <View style={styles.expenseList}>
-            {!hasExpenses ? (
-              <Text style={styles.noExpenses}>No expenses recorded</Text>
-            ) : (
-              expenses.map((expense) => (
-                <View key={expense.id} style={styles.expenseItem}>
-                  <View style={styles.expenseInfo}>
-                    <Text style={styles.expenseCategory}>
-                      {CATEGORIES.find((c) => c.id === expense.category)
-                        ?.icon || '📝'}{' '}
-                      {expense.description}
-                    </Text>
-                    <Text style={styles.expenseDate}>
-                      {new Date(expense.date).toLocaleDateString()}
-                    </Text>
-                  </View>
-                  <Text style={styles.expenseAmount}>
-                    -${expense.amount.toFixed(2)}
-                  </Text>
-                </View>
-              ))
-            )}
+    <SafeAreaView style={styles.safe} edges={['top']}>
+      <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
+        {/* Header */}
+        <View style={styles.pageHeader}>
+          <Text style={styles.pageTitle}>📊  P&L View</Text>
+          <View style={styles.periodBadge}>
+            <Text style={styles.periodBadgeText}>Q3 FISCAL 2024</Text>
           </View>
-        </>
-      )}
+        </View>
 
-      {/* Action Buttons */}
-      <View style={styles.actionButtons}>
-        <TouchableOpacity
-          style={[styles.button, styles.scanButton]}
-          onPress={handleScanReceipt}
-        >
-          <Text style={styles.buttonText}>📸 SCAN</Text>
-        </TouchableOpacity>
+        {/* Summary metric cards 2x2 */}
+        <View style={styles.metricGrid}>
+          <MetricCard label="COLLECTED" value={totals.collected} change="↑ +12.4%" borderColor={BRAND.profitGreen} valueColor={BRAND.profitGreen} />
+          <MetricCard label="EXPENSES" value={totals.expenses} change="↓ -2.1%" borderColor={T.primary} valueColor={T.primary} />
+          <MetricCard label="INVOICED" value={totals.invoiced} change="Pending processing" borderColor={BRAND.vaultBlue} valueColor={T.secondary} />
+          <MetricCard label="OUTSTANDING" value={totals.outstanding} change="4 Overdue Loads" borderColor={BRAND.hazardOrange} valueColor={BRAND.hazardOrange} />
+        </View>
 
-        <TouchableOpacity
-          style={[styles.button, styles.addButton]}
-          onPress={handleAddExpense}
+        {/* Time period tabs */}
+        <View style={styles.periodTabs}>
+          {TIME_PERIODS.map((p) => (
+            <Pressable
+              key={p.id}
+              style={[styles.periodTab, selectedPeriod === p.id && styles.periodTabActive]}
+              onPress={() => setSelectedPeriod(p.id)}
+              accessibilityRole="tab"
+              accessibilityLabel={p.label}
+            >
+              <Text style={[styles.periodTabText, selectedPeriod === p.id && styles.periodTabTextActive]}>
+                {p.label}
+              </Text>
+            </Pressable>
+          ))}
+        </View>
+
+        {/* Chart */}
+        <View style={styles.chartCard}>
+          <BarChart data={CHART_DATA} />
+        </View>
+
+        {/* Recent Expenses */}
+        <View style={styles.sectionHeader}>
+          <Text style={styles.sectionTitle}>Recent Expenses</Text>
+          <Pressable accessibilityRole="button" accessibilityLabel="View all expenses">
+            <Text style={styles.viewAllText}>View All</Text>
+          </Pressable>
+        </View>
+
+        {loading ? (
+          <ActivityIndicator size="large" color={T.primary} style={{ marginTop: 20 }} />
+        ) : (
+          <View style={styles.expenseList}>
+            {expenses.map((e) => <ExpenseRow key={e.id} expense={e} />)}
+          </View>
+        )}
+
+        {/* Download button */}
+        <Pressable
+          style={({ pressed }) => [styles.downloadBtn, pressed && { opacity: 0.8 }]}
+          onPress={() => Alert.alert('Download', 'P&L Report download coming soon!')}
+          accessibilityRole="button"
+          accessibilityLabel="Download P&L Report"
         >
-          <Text style={styles.buttonText}>+ ADD EXPENSE</Text>
-        </TouchableOpacity>
-      </View>
-    </ScrollView>
+          <Text style={styles.downloadBtnText}>⬇  DOWNLOAD P&L REPORT</Text>
+        </Pressable>
+      </ScrollView>
+    </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: theme.background.primary,
-    padding: 16,
+  safe: { flex: 1, backgroundColor: T.background.base },
+  container: { flex: 1, backgroundColor: T.background.base, paddingBottom: 100 },
+
+  pageHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: SPACING.marginMobile,
+    paddingTop: SPACING.stackMd,
+    paddingBottom: SPACING.stackSm,
   },
+  pageTitle: { ...TYPOGRAPHY.headlineSm, color: T.text.primary, fontSize: 20 },
+  periodBadge: {
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: 20,
+    borderWidth: 1,
+    borderColor: T.border.variant,
+    backgroundColor: T.background.container,
+  },
+  periodBadgeText: { ...TYPOGRAPHY.labelData, color: T.text.secondary },
+
+  // Metric grid
+  metricGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    paddingHorizontal: SPACING.marginMobile,
+    gap: SPACING.stackSm,
+    marginBottom: SPACING.stackMd,
+  },
+  metricCard: {
+    width: '47.5%',
+    backgroundColor: T.background.card,
+    borderWidth: 1,
+    borderColor: T.border.variant,
+    borderLeftWidth: 4,
+    padding: SPACING.stackMd,
+    gap: 4,
+  },
+  metricLabel: { ...TYPOGRAPHY.labelData, color: T.text.secondary, letterSpacing: 0.5 },
+  metricValue: { ...TYPOGRAPHY.displayMetricsMobile, fontSize: 22, fontWeight: '700' },
+  metricChange: { ...TYPOGRAPHY.labelData, fontSize: 10 },
+
+  // Period tabs
   periodTabs: {
     flexDirection: 'row',
-    gap: 8,
-    marginBottom: 20,
+    paddingHorizontal: SPACING.marginMobile,
+    gap: SPACING.stackSm,
+    marginBottom: SPACING.stackMd,
   },
   periodTab: {
     flex: 1,
-    paddingVertical: 10,
-    paddingHorizontal: 8,
+    paddingVertical: 8,
     borderWidth: 1,
-    borderColor: theme.border.light,
-    borderRadius: 6,
+    borderColor: T.border.variant,
+    borderRadius: 4,
     alignItems: 'center',
-    backgroundColor: theme.background.secondary,
+    backgroundColor: T.background.containerHighest,
   },
-  periodTabActive: {
-    backgroundColor: theme.primary,
-    borderColor: theme.primary,
-  },
-  periodTabText: {
-    fontSize: 11,
-    fontWeight: '600',
-    color: theme.secondaryText,
-  },
-  periodTabTextActive: {
-    color: theme.primaryText,
-  },
-  totalSection: {
-    marginBottom: 24,
-  },
-  totalLabel: {
-    fontSize: 12,
-    color: theme.secondaryText,
-    marginBottom: 8,
-    letterSpacing: 1,
-  },
-  totalAmount: {
-    fontSize: 36,
-    fontWeight: 'bold',
-    color: theme.primary,
-  },
-  loader: {
-    marginTop: 40,
-  },
-  breakdownSection: {
-    backgroundColor: theme.background.secondary,
+  periodTabActive: { backgroundColor: T.primary, borderColor: T.primary },
+  periodTabText: { ...TYPOGRAPHY.labelData, color: T.text.secondary, fontSize: 9 },
+  periodTabTextActive: { color: '#ffffff' },
+
+  // Chart card
+  chartCard: {
+    marginHorizontal: SPACING.marginMobile,
+    marginBottom: SPACING.stackMd,
+    backgroundColor: T.background.card,
+    borderWidth: 1,
+    borderColor: T.border.variant,
     borderRadius: 8,
-    padding: 16,
-    marginBottom: 20,
+    padding: SPACING.stackMd,
   },
-  categoryRow: {
-    marginBottom: 12,
-  },
-  categoryInfo: {
+  chartTitle: { ...TYPOGRAPHY.headlineSm, color: T.text.primary, marginBottom: 2 },
+  chartSubtitle: { ...TYPOGRAPHY.labelData, color: T.text.secondary, marginBottom: SPACING.stackMd },
+  barChart: {
     flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 6,
+    height: 140,
+    alignItems: 'flex-end',
+    gap: 6,
+    paddingHorizontal: 4,
   },
-  categoryIcon: {
-    fontSize: 18,
-    marginRight: 8,
+  barGroup: { flex: 1, alignItems: 'center', gap: 4 },
+  barPair: { flex: 1, flexDirection: 'row', alignItems: 'flex-end', gap: 2, width: '100%' },
+  bar: { flex: 1, borderRadius: 2 },
+  barLabel: { ...TYPOGRAPHY.labelData, color: T.text.secondary, fontSize: 10 },
+  chartLegend: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    gap: 20,
+    marginTop: SPACING.stackMd,
+    paddingTop: SPACING.stackMd,
+    borderTopWidth: 1,
+    borderTopColor: T.border.variant,
   },
-  categoryName: {
-    color: theme.primaryText,
-    fontSize: 14,
-    fontWeight: '500',
-  },
-  categoryBar: {
-    height: 6,
-    backgroundColor: theme.border.light,
-    borderRadius: 3,
-    marginBottom: 6,
-    overflow: 'hidden',
-  },
-  barFill: {
-    height: '100%',
-    backgroundColor: theme.primary,
-  },
-  categoryAmount: {
-    color: theme.primary,
-    fontSize: 13,
-    fontWeight: '600',
-  },
-  expenseList: {
-    marginBottom: 20,
-  },
-  noExpenses: {
-    color: theme.secondaryText,
-    textAlign: 'center',
-    paddingVertical: 20,
-  },
-  expenseItem: {
+  legendItem: { flexDirection: 'row', alignItems: 'center', gap: 6 },
+  legendDot: { width: 10, height: 10, borderRadius: 5 },
+  legendText: { ...TYPOGRAPHY.labelData, color: T.text.secondary },
+
+  // Section header
+  sectionHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    paddingVertical: 12,
-    paddingHorizontal: 12,
-    backgroundColor: theme.background.secondary,
-    borderRadius: 6,
-    marginBottom: 8,
+    paddingHorizontal: SPACING.marginMobile,
+    marginBottom: SPACING.stackSm,
   },
-  expenseInfo: {
-    flex: 1,
-  },
-  expenseCategory: {
-    color: theme.primaryText,
-    fontSize: 14,
-    fontWeight: '500',
-    marginBottom: 4,
-  },
-  expenseDate: {
-    color: theme.secondaryText,
-    fontSize: 12,
-  },
-  expenseAmount: {
-    color: theme.primary,
-    fontSize: 14,
-    fontWeight: '600',
-  },
-  actionButtons: {
+  sectionTitle: { ...TYPOGRAPHY.headlineSm, color: T.text.primary },
+  viewAllText: { ...TYPOGRAPHY.labelData, color: T.secondary },
+
+  // Expense list
+  expenseList: { paddingHorizontal: SPACING.marginMobile, gap: 4, marginBottom: SPACING.stackLg },
+  expenseRow: {
     flexDirection: 'row',
-    gap: 12,
-    marginBottom: 20,
+    alignItems: 'center',
+    gap: SPACING.stackMd,
+    backgroundColor: T.background.card,
+    borderWidth: 1,
+    borderColor: T.border.variant,
+    paddingHorizontal: SPACING.stackMd,
+    height: 72,
   },
-  button: {
-    flex: 1,
-    paddingVertical: 14,
-    borderRadius: 8,
+  expenseIcon: {
+    width: 44,
+    height: 44,
+    borderRadius: 4,
+    backgroundColor: T.background.containerHighest,
+    borderWidth: 1,
+    borderColor: T.border.variant,
     alignItems: 'center',
     justifyContent: 'center',
   },
-  scanButton: {
-    backgroundColor: theme.primary,
-    borderWidth: 1,
-    borderColor: theme.primary,
+  expenseInfo: { flex: 1 },
+  expenseDesc: { ...TYPOGRAPHY.bodyMd, color: T.text.primary, fontWeight: '600' },
+  expenseDate: { ...TYPOGRAPHY.labelData, color: T.text.secondary, marginTop: 2 },
+  expenseAmountCol: { alignItems: 'flex-end' },
+  expenseAmount: { ...TYPOGRAPHY.labelData, color: T.primary },
+  expenseCategory: { ...TYPOGRAPHY.labelData, color: T.text.secondary, fontSize: 10, textTransform: 'uppercase', marginTop: 2 },
+
+  // Download button
+  downloadBtn: {
+    marginHorizontal: SPACING.marginMobile,
+    marginBottom: 100,
+    height: 56,
+    backgroundColor: T.primary,
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
   },
-  addButton: {
-    backgroundColor: theme.primary,
-  },
-  buttonText: {
-    color: theme.primaryText,
-    fontSize: 14,
-    fontWeight: '600',
-  },
+  downloadBtnText: { ...TYPOGRAPHY.headlineSm, color: '#ffffff', letterSpacing: 1.5, fontSize: 14 },
 });

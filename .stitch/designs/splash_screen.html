@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en" style=""><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>INTEGRA VAULT | Drive. Get Paid. Repeat.</title>
+<!-- Fonts & Icons -->
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Anton:wght@400;500;700&amp;family=Inter:wght@400;500;700&amp;family=Arimo:wght@400;500;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Archivo+Narrow:wght@100..900&amp;family=Inter:wght@100..900&amp;family=JetBrains+Mono:wght@100..900&amp;display=swap" rel="stylesheet"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">tailwind.config = {darkMode: "class", theme: {extend: {colors: {"on-secondary": "#5b1819", "surface-bright": "#423636", "primary-fixed-dim": "#ffb3ae", "on-surface-variant": "#e2bebc", "on-primary-fixed": "#410005", "on-tertiary": "#00344a", "inverse-primary": "#b3272c", "inverse-on-surface": "#392e2e", "surface-dark": "#0A0A0A", "surface-container-high": "#322727", "primary-fixed": "#ffdad7", "compliance-warning": "#3A2800", secondary: "#ffb3af", "outline-variant": "#5a413f", outline: "#a98987", "on-secondary-fixed": "#3f0307", surface: "#1a1111", "error-container": "#93000a", "on-surface": "#f1dede", "tertiary-container": "#477d9c", tertiary: "#98cdef", "on-error-container": "#ffdad6", "surface-container-lowest": "#150c0c", "on-secondary-fixed-variant": "#792e2d", "on-primary-container": "#5c0009", "on-error": "#690005", "primary-container": "#f95a59", "surface-card": "#1C1C1E", "hazard-orange": "#FF9500", "inverse-surface": "#f1dede", "tertiary-fixed-dim": "#98cdef", "secondary-fixed": "#ffdad7", background: "#1a1111", "surface-variant": "#3d3232", "surface-tint": "#ffb3ae", "surface-container": "#271d1d", "surface-dim": "#1a1111", "compliance-valid": "#1A3A38", error: "#ffb4ab", "on-primary-fixed-variant": "#910818", "compliance-critical": "#3A1A1A", "secondary-container": "#792e2d", "on-tertiary-fixed": "#001e2d", "surface-container-low": "#231919", "tertiary-fixed": "#c5e7ff", "surface-container-highest": "#3d3232", "profit-green": "#30B0C0", "on-tertiary-container": "#00060c", "on-secondary-container": "#ff9994", "on-primary": "#68000c", "on-tertiary-fixed-variant": "#074c69", primary: "#ffb3ae", "secondary-fixed-dim": "#ffb3af", "on-background": "#f1dede"}, borderRadius: {DEFAULT: "0.125rem", lg: "0.25rem", xl: "0.5rem", full: "0.75rem"}, spacing: {"stack-lg": "24px", "stack-md": "16px", "margin-mobile": "16px", "margin-desktop": "32px", gutter: "16px", base: "4px", "stack-sm": "8px"}, fontFamily: {"body-lg": ["Inter"], "headline-lg": ["Archivo Narrow"], "display-metrics": ["Archivo Narrow"], "body-md": ["Inter"], "display-metrics-mobile": ["Archivo Narrow"], "label-data": ["JetBrains Mono"], "headline-sm": ["Archivo Narrow"], headline: ["Anton"], display: ["Anton"], body: ["Inter"], label: ["Arimo"]}, fontSize: {"body-lg": ["16px", {lineHeight: "24px", fontWeight: "400"}], "headline-lg": ["28px", {lineHeight: "34px", fontWeight: "700"}], "display-metrics": ["36px", {lineHeight: "40px", letterSpacing: "-0.02em", fontWeight: "700"}], "body-md": ["14px", {lineHeight: "20px", fontWeight: "400"}], "display-metrics-mobile": ["30px", {lineHeight: "34px", fontWeight: "700"}], "label-data": ["12px", {lineHeight: "16px", fontWeight: "500"}], "headline-sm": ["18px", {lineHeight: "24px", fontWeight: "600"}]}}}};</script>
+<style>
+        body {
+            background-color: #0A0A0A;
+            color: #f9dcda;
+            overflow-x: hidden;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        .hex-pattern {
+            background-image: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M30 0l25.98 15v30L30 60 4.02 45V15z' fill-opacity='0.03' fill='%239E1520' fill-rule='evenodd'/%3E%3C/svg%3E");
+            background-repeat: repeat;
+        }
+
+        .red-slash {
+            position: absolute;
+            height: 4px;
+            width: 140%;
+            background: #9E1520;
+            top: 50%;
+            left: -20%;
+            transform: rotate(-8deg);
+            z-index: 10;
+            box-shadow: 0 0 20px rgba(158, 21, 32, 0.4);
+        }
+
+        .glitch-effect:hover {
+            text-shadow: 2px 0 #9E1520, -2px 0 #3e90ff;
+        }
+
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+
+        .btn-hover-expand::after {
+            content: '';
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            background: rgba(255, 255, 255, 0.1);
+            top: 0;
+            left: -100%;
+            transition: transform 0.4s ease;
+        }
+
+        .btn-hover-expand:hover::after {
+            transform: translateX(100%);
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="font-body-md text-on-surface">
+<!-- Background Layer -->
+<div class="fixed inset-0 z-0">
+<div class="absolute inset-0 hex-pattern" style="transform: translate(1.41026px, 9.83032px);"></div>
+<div class="absolute inset-0 bg-gradient-to-t from-surface-dark via-transparent to-surface-dark opacity-90"></div>
+<!-- High-Performance Accent Light -->
+<div class="absolute top-0 left-1/2 -translate-x-1/2 w-full h-[1px] bg-primary-container shadow-[0_0_15px_#9E1520]"></div>
+</div>
+<!-- Main Canvas -->
+<main class="relative z-10 flex flex-col items-center justify-between min-h-screen w-full max-w-md mx-auto px-margin-mobile py-stack-lg">
+<!-- Header / Logo Section -->
+<header class="w-full flex flex-col items-center animate-fade-in py-10" data-stitch-orig-opacity="1" style="transform: translateY(0px); transition: opacity 1s ease-out, transform 1s ease-out;">
+<div class="relative mb-stack-md group">
+<!-- Branding Container -->
+<div class="h-96 w-96 flex items-center justify-center overflow-hidden"><img alt="Integra Vault Emblem" class="w-full h-full object-contain" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCHO7TcQSU_Ob3z0EiELw_n9eSB9PnbnzKcIFqplzG2Qm-17cQ9IKTfhPzUSaqn7kmiFlRbuH9VTZs9qurt-2iC1zNMJPP6V-wcvlpFv92QdwIYWtTht9A72-z_SOah4l2uj7U_l2uNBlV6LlDJ93bT7XFrwvQoFC0geSm8XZIbgrfAlzCjalqAPONJ44By4pJ8VG6x8sZ8CU8qck6PK0Uy2GYjZj7imiOWWtAzWBqX9SRU0YryAqzQtnGl-3jaKkQUv-K1XrL0-2Sq"/></div>
+</div>
+</header>
+<!-- Content Area -->
+<section class="w-full flex flex-col items-center justify-center flex-grow py-stack-lg">
+<div class="relative w-full max-w-xs overflow-hidden py-10 flex flex-col items-center">
+<!-- Decorative Red Slash -->
+<div class="red-slash"></div>
+<div class="relative z-20 text-center space-y-stack-sm">
+<h2 class="font-display-metrics-mobile text-display-metrics-mobile text-on-surface tracking-tighter leading-none italic uppercase">
+                        DRIVE.
+                    </h2>
+<h2 class="font-display-metrics-mobile text-display-metrics-mobile text-primary tracking-tighter leading-none italic uppercase glitch-effect transition-all cursor-default">
+                        GET PAID.
+                    </h2>
+<h2 class="font-display-metrics-mobile text-display-metrics-mobile text-on-surface tracking-tighter leading-none italic uppercase">
+                        REPEAT.
+                    </h2>
+</div>
+</div>
+<div class="mt-stack-md text-center max-w-[280px]">
+<p class="font-body-md text-body-md text-on-surface-variant uppercase tracking-widest leading-relaxed">
+                    TOOLS BUILT FOR DRIVERS, <br/>
+<span class="text-on-surface font-bold">NOT SUITS</span>
+</p>
+</div>
+</section>
+<!-- Action Footer -->
+<footer class="w-full space-y-stack-md pb-12">
+<!-- Primary Action -->
+<button class="relative w-full h-16 bg-primary-container text-white font-headline-sm flex items-center justify-center uppercase tracking-widest rounded-lg active:scale-[0.98] transition-transform overflow-hidden btn-hover-expand shadow-lg shadow-black/40">
+<span class="relative z-10 flex items-center gap-2">
+                    GET STARTED
+                    <span class="material-symbols-outlined text-[20px]">arrow_forward</span>
+</span>
+</button>
+<!-- Secondary Action -->
+<button class="w-full h-14 bg-transparent border-2 border-outline-variant text-on-surface font-headline-sm flex items-center justify-center uppercase tracking-widest rounded-lg hover:border-primary transition-colors active:bg-surface-variant">
+                SIGN IN
+            </button>
+<!-- Compliance Footer -->
+<div class="flex justify-center items-center gap-4 pt-stack-sm opacity-40">
+<div class="flex items-center gap-1">
+<span class="material-symbols-outlined text-[14px]">verified_user</span>
+<span class="font-label-data text-[10px]">SECURE VAULT</span>
+</div>
+<div class="w-1 h-1 bg-outline-variant rounded-full"></div>
+<div class="flex items-center gap-1">
+<span class="material-symbols-outlined text-[14px]">speed</span>
+<span class="font-label-data text-[10px]">FAST PAY</span>
+</div>
+</div>
+</footer>
+</main>
+<!-- Micro-Interactions Script -->
+<script>
+        document.addEventListener('DOMContentLoaded', () => {
+            // Subtle parallax effect on hex background
+            document.addEventListener('mousemove', (e) => {
+                const x = e.clientX / window.innerWidth;
+                const y = e.clientY / window.innerHeight;
+                const pattern = document.querySelector('.hex-pattern');
+                if(pattern) pattern.style.transform = `translate(${x * 10}px, ${y * 10}px)`;
+            });
+
+            // Smooth fade-in sequence
+            const elements = document.querySelectorAll('.animate-fade-in');
+            elements.forEach((el, index) => {
+                el.style.opacity = '0';
+                el.style.transform = 'translateY(10px)';
+                el.style.transition = 'opacity 1s ease-out, transform 1s ease-out';
+                setTimeout(() => {
+                    el.style.opacity = '1';
+                    el.style.transform = 'translateY(0)';
+                }, index * 200);
+            });
+        });
+    </script>
+<style>
+        @keyframes fade-in {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .animate-fade-in {
+            animation: fade-in 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+        }
+    </style>
+</body></html>

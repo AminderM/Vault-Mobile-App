@@ -1,0 +1,366 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Integra Vault - P&amp;L View</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Archivo+Narrow:wght@400;600;700&amp;family=Inter:wght@400;500;600&amp;family=JetBrains+Mono:wght@500&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .compliance-shield-red { border-left: 4px solid #9E1520; }
+        .compliance-shield-blue { border-left: 4px solid #3e90ff; }
+        .compliance-shield-green { border-left: 4px solid #30B0C0; }
+        .compliance-shield-orange { border-left: 4px solid #FF9500; }
+        
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-track { background: #180a0a; }
+        ::-webkit-scrollbar-thumb { background: #433030; border-radius: 10px; }
+    </style>
+<script id="tailwind-config">
+        tailwind.config = {
+          darkMode: "class",
+          theme: {
+            extend: {
+              "colors": {
+                "background": "#1e0f0f",
+                "on-surface": "#f9dcda",
+                "surface-tint": "#ffb3b1",
+                "on-error": "#690005",
+                "primary-fixed-dim": "#ffb3b1",
+                "inverse-on-surface": "#3e2c2b",
+                "primary-fixed": "#ffdad8",
+                "surface-card": "#1C1C1E",
+                "on-secondary-fixed": "#001b3e",
+                "compliance-warning": "#3A2800",
+                "on-secondary": "#003064",
+                "on-tertiary-container": "#00302c",
+                "on-error-container": "#ffdad6",
+                "primary": "#ffb3b1",
+                "surface-container-high": "#372625",
+                "surface-bright": "#473534",
+                "secondary": "#aac7ff",
+                "outline": "#ab8987",
+                "compliance-valid": "#1A3A38",
+                "surface-container-highest": "#433030",
+                "on-secondary-fixed-variant": "#00468d",
+                "on-tertiary": "#003733",
+                "primary-container": "#9E1520",
+                "hazard-orange": "#FF9500",
+                "surface-variant": "#433030",
+                "on-primary-fixed-variant": "#92001c",
+                "error": "#ffb4ab",
+                "on-secondary-container": "#002957",
+                "surface-dark": "#0A0A0A",
+                "secondary-fixed-dim": "#aac7ff",
+                "compliance-critical": "#3A1A1A",
+                "tertiary-fixed": "#8cf4e8",
+                "inverse-primary": "#bb152c",
+                "surface": "#1e0f0f",
+                "outline-variant": "#5b403f",
+                "secondary-container": "#3e90ff",
+                "on-tertiary-fixed-variant": "#00504a",
+                "on-background": "#f9dcda",
+                "on-primary-fixed": "#410007",
+                "surface-container-lowest": "#180a0a",
+                "secondary-fixed": "#d6e3ff",
+                "tertiary": "#6fd8cc",
+                "tertiary-container": "#2fa096",
+                "tertiary-fixed-dim": "#6fd8cc",
+                "surface-container-low": "#271717",
+                "on-surface-variant": "#e4bebc",
+                "surface-dim": "#1e0f0f",
+                "profit-green": "#30B0C0",
+                "error-container": "#93000a",
+                "inverse-surface": "#f9dcda",
+                "on-tertiary-fixed": "#00201d",
+                "on-primary": "#680011",
+                "surface-container": "#2c1b1b",
+                "on-primary-container": "#f9dcda"
+              },
+              "borderRadius": {
+                "DEFAULT": "0.125rem",
+                "lg": "0.25rem",
+                "xl": "0.5rem",
+                "full": "0.75rem"
+              },
+              "spacing": {
+                "margin-mobile": "16px",
+                "stack-lg": "24px",
+                "stack-sm": "8px",
+                "margin-desktop": "32px",
+                "gutter": "16px",
+                "stack-md": "16px",
+                "base": "4px"
+              },
+              "fontFamily": {
+                "headline-lg": ["Archivo Narrow"],
+                "label-data": ["JetBrains Mono"],
+                "display-metrics": ["Archivo Narrow"],
+                "body-lg": ["Inter"],
+                "headline-sm": ["Archivo Narrow"],
+                "display-metrics-mobile": ["Archivo Narrow"],
+                "body-md": ["Inter"]
+              },
+              "fontSize": {
+                "headline-lg": ["28px", {"lineHeight": "34px", "fontWeight": "700"}],
+                "label-data": ["12px", {"lineHeight": "16px", "fontWeight": "500"}],
+                "display-metrics": ["36px", {"lineHeight": "40px", "letterSpacing": "-0.02em", "fontWeight": "700"}],
+                "body-lg": ["16px", {"lineHeight": "24px", "fontWeight": "400"}],
+                "headline-sm": ["18px", {"lineHeight": "24px", "fontWeight": "600"}],
+                "display-metrics-mobile": ["30px", {"lineHeight": "34px", "fontWeight": "700"}],
+                "body-md": ["14px", {"lineHeight": "20px", "fontWeight": "400"}]
+              }
+            },
+          },
+        }
+    </script>
+</head>
+<body class="bg-background text-on-surface font-body-md text-body-md min-h-screen pb-24">
+<header class="w-full top-0 sticky bg-surface dark:bg-surface border-b border-outline-variant z-40">
+<div class="flex items-center justify-between px-margin-mobile h-16 w-full">
+<div class="flex items-center gap-3">
+<img alt="Integra Vault Logo" class="h-10 w-auto object-contain" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAXAF5bec7QtTK4392lX3jWeO5TeU8OmBYBhj23FBkWNlU_ps8zM2RiSBVXF-Wur34fF0CROLOQGIQUsZxCEKeUmyGg07VCtfR0YuopSqNVJgXgSB3_q7a88yWA8lNHhIMaRrRdpzMN6fKRdafQrVqpze1JhbOhTMpqYbMYcLie9ujnbVV7xfTkfF0D3OzvP_2UO1xVl7M26wYSeYdcIwqhYHyQp5Pczj3uobKsAzH11Z0VhnMV-qEwxuv4uZyIgwuRMK5qDn5cCXBv"/>
+</div>
+<div class="flex items-center gap-4">
+<span class="material-symbols-outlined text-on-surface-variant hover:bg-surface-variant p-2 rounded-full cursor-pointer" data-icon="notifications">notifications</span>
+<div class="w-8 h-8 rounded-full bg-surface-container-highest border border-outline-variant overflow-hidden">
+<img alt="User Profile" class="w-full h-full object-cover" data-alt="A professional high-definition headshot of a logistics fleet manager in a modern office environment. The lighting is crisp and cool, emphasizing a high-performance corporate atmosphere. Subtle digital interface overlays suggest data-driven leadership. The color palette features deep blacks, primary reds, and industrial greys." src="https://lh3.googleusercontent.com/aida-public/AB6AXuCB5H1gwJqYWfnjiZte1_sY-PozUclURGGOk7YZabPopzxSY4u-wTubdKOTPyUUfRcYvRymOhWe_-GQmDHH7D_jyhSJwzyvL-7ssDWFVJyIcZCMqomT2bTrUEztLXEYBrl-PorxtSiC16qiGWxOnCktkskVtydGV5cdVmf6pEMLaYkt1TOw6eUxldSL4hsrz190Gbp_qT6-O_e-BNj-4vC-iWzZcdqBhoKqojAlrLJru4-SynaYdELxka7aASNE8Rt2_p8FwiJBKxft"/>
+</div>
+</div>
+</div>
+</header>
+<main class="max-w-7xl mx-auto px-margin-mobile pt-stack-lg flex flex-col gap-stack-lg">
+<section class="flex flex-col gap-stack-sm transition-all duration-700 opacity-100 translate-y-0">
+<div class="flex items-center justify-between">
+<h2 class="font-headline-sm-mobile text-headline-sm-mobile text-on-surface flex items-center gap-2">
+<span class="material-symbols-outlined" data-icon="monitoring">monitoring</span>
+                    P&amp;L View
+                </h2>
+<span class="font-label-data text-label-data text-on-surface-variant bg-surface-container px-3 py-1 rounded-full border border-outline-variant">Q3 FISCAL 2024</span>
+</div>
+</section>
+<section class="grid grid-cols-2 md:grid-cols-4 gap-4 transition-all duration-700 opacity-100 translate-y-0">
+<div class="bg-surface-card border border-outline-variant p-4 compliance-shield-green flex flex-col gap-1 shadow-sm">
+<span class="font-label-data text-label-data text-on-surface-variant uppercase tracking-wider">Collected</span>
+<div class="font-display-metrics-mobile text-display-metrics-mobile text-profit-green">$142,500</div>
+<div class="text-[10px] text-profit-green flex items-center gap-1 font-label-data">
+<span class="material-symbols-outlined text-[14px]" data-icon="trending_up">trending_up</span> +12.4%
+                </div>
+</div>
+<div class="bg-surface-card border border-outline-variant p-4 compliance-shield-red flex flex-col gap-1 shadow-sm">
+<span class="font-label-data text-label-data text-on-surface-variant uppercase tracking-wider">Expenses</span>
+<div class="font-display-metrics-mobile text-display-metrics-mobile text-primary-container">$84,320</div>
+<div class="text-[10px] text-primary-container flex items-center gap-1 font-label-data">
+<span class="material-symbols-outlined text-[14px]" data-icon="trending_down">trending_down</span> -2.1%
+                </div>
+</div>
+<div class="bg-surface-card border border-outline-variant p-4 compliance-shield-blue flex flex-col gap-1 shadow-sm">
+<span class="font-label-data text-label-data text-on-surface-variant uppercase tracking-wider">Invoiced</span>
+<div class="font-display-metrics-mobile text-display-metrics-mobile text-secondary">$58,180</div>
+<div class="text-[10px] text-on-surface-variant font-label-data">Pending processing</div>
+</div>
+<div class="bg-surface-card border border-outline-variant p-4 compliance-shield-orange flex flex-col gap-1 shadow-sm">
+<span class="font-label-data text-label-data text-on-surface-variant uppercase tracking-wider">Outstanding</span>
+<div class="font-display-metrics-mobile text-display-metrics-mobile text-hazard-orange">$12,450</div>
+<div class="text-[10px] text-hazard-orange font-label-data">4 Overdue Loads</div>
+</div>
+</section>
+<section class="bg-surface-card border border-outline-variant p-stack-md rounded-lg overflow-hidden relative transition-all duration-700 opacity-100 translate-y-0">
+<div class="flex flex-col gap-base mb-6">
+<h3 class="font-headline-sm text-on-surface">Revenue vs Expenses</h3>
+<p class="font-label-data text-label-data text-on-surface-variant">Last 6 Months Trend</p>
+</div>
+<div class="h-48 w-full flex items-end justify-between gap-2 px-2 relative">
+<div class="absolute inset-0 grid grid-rows-4 pointer-events-none opacity-10">
+<div class="border-t border-on-surface"></div>
+<div class="border-t border-on-surface"></div>
+<div class="border-t border-on-surface"></div>
+<div class="border-t border-on-surface"></div>
+</div>
+<div class="flex-1 flex flex-col items-center gap-2 h-full justify-end group">
+<div class="w-full flex gap-1 items-end h-full">
+<div class="bg-profit-green w-1/2 h-[60%] rounded-t-sm transition-all group-hover:brightness-110"></div>
+<div class="bg-primary-container w-1/2 h-[40%] rounded-t-sm transition-all group-hover:brightness-110"></div>
+</div>
+<span class="font-label-data text-[10px] text-on-surface-variant">APR</span>
+</div>
+<div class="flex-1 flex flex-col items-center gap-2 h-full justify-end group">
+<div class="w-full flex gap-1 items-end h-full">
+<div class="bg-profit-green w-1/2 h-[75%] rounded-t-sm transition-all group-hover:brightness-110"></div>
+<div class="bg-primary-container w-1/2 h-[45%] rounded-t-sm transition-all group-hover:brightness-110"></div>
+</div>
+<span class="font-label-data text-[10px] text-on-surface-variant">MAY</span>
+</div>
+<div class="flex-1 flex flex-col items-center gap-2 h-full justify-end group">
+<div class="w-full flex gap-1 items-end h-full">
+<div class="bg-profit-green w-1/2 h-[65%] rounded-t-sm transition-all group-hover:brightness-110"></div>
+<div class="bg-primary-container w-1/2 h-[55%] rounded-t-sm transition-all group-hover:brightness-110"></div>
+</div>
+<span class="font-label-data text-[10px] text-on-surface-variant">JUN</span>
+</div>
+<div class="flex-1 flex flex-col items-center gap-2 h-full justify-end group">
+<div class="w-full flex gap-1 items-end h-full">
+<div class="bg-profit-green w-1/2 h-[85%] rounded-t-sm transition-all group-hover:brightness-110"></div>
+<div class="bg-primary-container w-1/2 h-[50%] rounded-t-sm transition-all group-hover:brightness-110"></div>
+</div>
+<span class="font-label-data text-[10px] text-on-surface-variant">JUL</span>
+</div>
+<div class="flex-1 flex flex-col items-center gap-2 h-full justify-end group">
+<div class="w-full flex gap-1 items-end h-full">
+<div class="bg-profit-green w-1/2 h-[70%] rounded-t-sm transition-all group-hover:brightness-110"></div>
+<div class="bg-primary-container w-1/2 h-[42%] rounded-t-sm transition-all group-hover:brightness-110"></div>
+</div>
+<span class="font-label-data text-[10px] text-on-surface-variant">AUG</span>
+</div>
+<div class="flex-1 flex flex-col items-center gap-2 h-full justify-end group">
+<div class="w-full flex gap-1 items-end h-full relative">
+<div class="bg-profit-green w-1/2 h-[95%] rounded-t-sm transition-all group-hover:brightness-110"></div>
+<div class="bg-primary-container w-1/2 h-[48%] rounded-t-sm transition-all group-hover:brightness-110"></div>
+</div>
+<span class="font-label-data text-[10px] text-on-surface-variant">SEP</span>
+</div>
+</div>
+<div class="mt-6 flex justify-center gap-6 border-t border-outline-variant pt-4">
+<div class="flex items-center gap-2">
+<div class="w-3 h-3 bg-profit-green rounded-full"></div>
+<span class="font-label-data text-label-data text-on-surface-variant">Revenue</span>
+</div>
+<div class="flex items-center gap-2">
+<div class="w-3 h-3 bg-primary-container rounded-full"></div>
+<span class="font-label-data text-label-data text-on-surface-variant">Expenses</span>
+</div>
+</div>
+</section>
+<section class="flex flex-col gap-stack-sm transition-all duration-700 opacity-100 translate-y-0">
+<div class="flex items-center justify-between px-1">
+<h3 class="font-headline-sm text-on-surface">Recent Expenses</h3>
+<button class="text-secondary font-label-data text-label-data hover:underline">View All</button>
+</div>
+<div class="flex flex-col gap-2">
+<div class="bg-surface-card border border-outline-variant h-20 flex items-center px-4 gap-4 transition-colors hover:bg-surface-container-low group">
+<div class="w-12 h-12 bg-surface-container-highest rounded border border-outline-variant overflow-hidden flex-shrink-0 relative">
+<img alt="Fuel Receipt" class="w-full h-full object-cover opacity-80" data-alt="A ultra-high resolution close-up photograph of a fuel pump receipt showing technical print details and numeric data. The lighting is cool-toned, industrial, and highly detailed, emphasizing the texture of the thermal paper. The composition is sharp and clinical, fitting a financial vault aesthetic. The color palette is dominated by dark greys and whites with high-contrast text." src="https://lh3.googleusercontent.com/aida-public/AB6AXuDKBEbiafOPDX8BdZMGoWhfT4IVL9G-ZqYZf92oiJgvlAjgW8RJqcXD4YCs7wa8ER0U7kf0XAOo1HgmjO7d4-4jp8pVRLdkBLyaqoxg8b3YyfdCknY-TpaXcYojIwCOsPUsdeAhLy9GOme9yXKs2_s0_mE9fjTnoCI2qrXPQkDvzKTfcSLFiA5sQFkav_yUcTG2FfYn569rDfPp7rvbmRAQVVEGgmz-StBwMugTOrCGasmEoWTnJb2FW01aov4_svlKxR9P-zgVwRFp"/>
+<div class="absolute inset-0 bg-secondary/10 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+<span class="material-symbols-outlined text-secondary scale-75" data-icon="visibility">visibility</span>
+</div>
+</div>
+<div class="flex flex-col flex-grow">
+<span class="font-body-md text-on-surface font-semibold">Fuel Stop - Pilot #452</span>
+<span class="font-label-data text-label-data text-on-surface-variant">Sept 22, 2024 • 14:32</span>
+</div>
+<div class="text-right">
+<div class="font-label-data text-primary-container">-$542.10</div>
+<div class="text-[10px] text-on-surface-variant uppercase tracking-tighter">Fuel &amp; DEF</div>
+</div>
+<span class="material-symbols-outlined text-on-surface-variant opacity-40" data-icon="chevron_right">chevron_right</span>
+</div>
+<div class="bg-surface-card border border-outline-variant h-20 flex items-center px-4 gap-4 transition-colors hover:bg-surface-container-low group">
+<div class="w-12 h-12 bg-surface-container-highest rounded border border-outline-variant overflow-hidden flex-shrink-0 relative">
+<img alt="Repair Receipt" class="w-full h-full object-cover opacity-80" data-alt="A professional Macro photograph of a detailed mechanical service invoice lying on a dark metallic workbench. The lighting is cinematic with deep shadows and sharp highlights on the paper texture. The color palette is dark, industrial, and moody, punctuated by clinical blues and reds. The aesthetic is focused and business-centric." src="https://lh3.googleusercontent.com/aida-public/AB6AXuAQ2EGpNaj1MpdE_EBhnW9i7sU7Mea9LTPXOlwoxajOcSCyb5SDbM9x_HdVpAeGDg__G4SDcRMxT57Lx7KOfEzuD-oi80wFVityAoOlZfbXIA-wcpYvisiPgdoD8z4X6dlvW1yh96hTTqWEvOFFxgd102LQ4FnXYVJlH50eokZjDbBqdESgG2QaTjFF5hUVIEL3eOB-NNd0v9V6SwDGO87n0xstqyf32yb8scP6Lo-UqzVEK6UVdE_2r0awQK64ckbv48k2ybyKr9Hp"/>
+<div class="absolute inset-0 bg-secondary/10 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+<span class="material-symbols-outlined text-secondary scale-75" data-icon="visibility">visibility</span>
+</div>
+</div>
+<div class="flex flex-col flex-grow">
+<span class="font-body-md text-on-surface font-semibold">Tire Replacement (Front Left)</span>
+<span class="font-label-data text-label-data text-on-surface-variant">Sept 20, 2024 • 09:15</span>
+</div>
+<div class="text-right">
+<div class="font-label-data text-primary-container">-$1,280.00</div>
+<div class="text-[10px] text-on-surface-variant uppercase tracking-tighter">Maintenance</div>
+</div>
+<span class="material-symbols-outlined text-on-surface-variant opacity-40" data-icon="chevron_right">chevron_right</span>
+</div>
+<div class="bg-surface-card border border-outline-variant h-20 flex items-center px-4 gap-4 transition-colors hover:bg-surface-container-low group">
+<div class="w-12 h-12 bg-surface-container-highest rounded border border-outline-variant overflow-hidden flex-shrink-0 relative">
+<img alt="Toll Receipt" class="w-full h-full object-cover opacity-80" data-alt="A clean, minimalist digital scan of a toll road transponder receipt with sharp edges and clear text. The image is set against a dark carbon-fiber textured background to maintain the high-tech industrial aesthetic. Lighting is even and focused, highlighting the data fields. Colors are high-contrast black, white, and a signature secondary blue." src="https://lh3.googleusercontent.com/aida-public/AB6AXuCPoVAA-Lxbn509Hdv_vQwUsbkQy2NKWVB_RGHGaSHV5A7LChCTrC0Pyd4JJg7P2J0moY31oPvYfz0VNHp2FanAJCIYlS_hEl-Q0LWAJt07Zud9A4pvUwf_Q_csXei0pnt5871-whkV1qHnoA1te5ctgAKc2Qp89qB8OaGzqP9RlQPsSECO2atADslW10xk08SSxPSfptlSIDWpEfaHVsbz3_KcdkE-rV_HgvjMZLRyK1PVzKRrb_J4TUrg0pcgYmvQ5t0coI2xo3KV"/>
+<div class="absolute inset-0 bg-secondary/10 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+<span class="material-symbols-outlined text-secondary scale-75" data-icon="visibility">visibility</span>
+</div>
+</div>
+<div class="flex flex-col flex-grow">
+<span class="font-body-md text-on-surface font-semibold">PA Turnpike Tolls</span>
+<span class="font-label-data text-label-data text-on-surface-variant">Sept 19, 2024 • 18:00</span>
+</div>
+<div class="text-right">
+<div class="font-label-data text-primary-container">-$84.50</div>
+<div class="text-[10px] text-on-surface-variant uppercase tracking-tighter">Tolls</div>
+</div>
+<span class="material-symbols-outlined text-on-surface-variant opacity-40" data-icon="chevron_right">chevron_right</span>
+</div>
+</div>
+</section>
+<section class="mt-4 mb-8 transition-all duration-700 opacity-100 translate-y-0">
+<button class="w-full h-14 bg-primary-container text-on-primary-container font-headline-sm flex items-center justify-center gap-3 uppercase tracking-widest active:scale-95 transition-transform shadow-lg">
+<span class="material-symbols-outlined" data-icon="download">download</span>
+                Download P&amp;L Report
+            </button>
+</section>
+</main>
+<nav class="fixed bottom-0 w-full z-50 h-20 bg-surface-container-highest dark:bg-surface-container-highest border-t border-outline-variant">
+<div class="flex justify-around items-center w-full px-2 pb-2 h-full">
+<div class="flex flex-col items-center justify-center text-on-surface-variant hover:text-primary active:scale-90 duration-150 cursor-pointer">
+<span class="material-symbols-outlined" data-icon="local_shipping">local_shipping</span>
+<span class="font-label-data text-label-data">Loads</span>
+</div>
+<div class="flex flex-col items-center justify-center text-on-surface-variant hover:text-primary active:scale-90 duration-150 cursor-pointer">
+<span class="material-symbols-outlined" data-icon="folder_shared">folder_shared</span>
+<span class="font-label-data text-label-data">Vault</span>
+</div>
+<div class="relative -top-4">
+<div class="bg-primary-container w-16 h-16 rounded-full flex flex-col items-center justify-center text-on-primary-container shadow-2xl border-4 border-background active:scale-95 transition-transform cursor-pointer">
+<span class="material-symbols-outlined text-3xl" data-icon="document_scanner">document_scanner</span>
+<span class="font-label-data text-[10px] font-bold">SCAN</span>
+</div>
+</div>
+<div class="flex flex-col items-center justify-center bg-primary-container text-on-primary-container rounded-xl px-3 py-1 active:scale-90 duration-150 cursor-pointer">
+<span class="material-symbols-outlined" data-icon="payments">payments</span>
+<span class="font-label-data text-label-data">Finance</span>
+</div>
+<div class="flex flex-col items-center justify-center text-on-surface-variant hover:text-primary active:scale-90 duration-150 cursor-pointer">
+<span class="material-symbols-outlined" data-icon="groups">groups</span>
+<span class="font-label-data text-label-data">Fleet</span>
+</div>
+</div>
+</nav>
+<div class="fixed top-20 right-4 z-50 pointer-events-none">
+<div class="bg-compliance-valid/20 border border-profit-green/30 px-3 py-1 rounded-full flex items-center gap-2 backdrop-blur-md">
+<div class="w-2 h-2 bg-profit-green rounded-full animate-pulse"></div>
+<span class="text-[10px] font-label-data text-profit-green uppercase tracking-tighter tracking-wider">LATEST: P&amp;L Synced 1m ago</span>
+</div>
+</div>
+<script>
+        document.querySelectorAll('.active\\:scale-95').forEach(el => {
+            el.addEventListener('click', () => {
+                const icon = el.querySelector('.material-symbols-outlined');
+                if(icon) {
+                    icon.style.transition = 'transform 0.1s';
+                    icon.style.transform = 'scale(0.8)';
+                    setTimeout(() => icon.style.transform = 'scale(1)', 100);
+                }
+            });
+        });
+
+        const observerOptions = {
+            threshold: 0.1
+        };
+
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    entry.target.classList.add('opacity-100', 'translate-y-0');
+                    entry.target.classList.remove('opacity-0', 'translate-y-4');
+                }
+            });
+        }, observerOptions);
+
+        document.querySelectorAll('section').forEach(section => {
+            section.classList.add('transition-all', 'duration-700', 'opacity-0', 'translate-y-4');
+            observer.observe(section);
+        });
+    </script>
+</body></html>

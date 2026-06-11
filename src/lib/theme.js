@@ -1,147 +1,175 @@
-// Color Theme System
-// Provides consistent colors across light and dark modes
+// Integra Vault - Design Token System
+// Derived from Stitch "Unified Trucking Management Suite"
+// Dark-mode first, Industrial Brutalism aesthetic
 
-export const LIGHT_MODE = {
-  primary: '#FF3B30',
-  primaryText: '#ffffff',
-  secondaryText: '#999999',
-  tertiaryText: '#666666',
+export const BRAND = {
+  // Primary brand colors
+  crimsonRed: '#9E1520',
+  crimsonRedLight: '#ffb3b1',
+  vaultBlue: '#3e90ff',
 
-  background: {
-    primary: '#1a1a1a',
-    secondary: '#2a2a2a',
-    tertiary: '#333333',
-  },
+  // Semantic palette
+  profitGreen: '#30B0C0',
+  hazardOrange: '#FF9500',
 
-  border: {
-    light: '#333333',
-    medium: '#444444',
-    dark: '#555555',
-  },
-
-  status: {
-    success: '#34C759',
-    warning: '#FF9500',
-    error: '#FF3B30',
-    info: '#FF3B30',
-  },
-
-  interactive: {
-    pressed: 0.8, // opacity
-    disabled: 0.5,
-  },
+  // Compliance tint backgrounds
+  complianceValid: '#1A3A38',
+  complianceWarning: '#3A2800',
+  complianceCritical: '#3A1A1A',
 };
 
-export const DARK_MODE = {
-  primary: '#FF3B30',
+export const DARK_THEME = {
+  // Brand
+  primary: BRAND.crimsonRed,
+  primaryLight: BRAND.crimsonRedLight,
   primaryText: '#ffffff',
-  secondaryText: '#999999',
-  tertiaryText: '#666666',
 
+  // Secondary (Vault Blue)
+  secondary: '#aac7ff',
+  secondaryContainer: BRAND.vaultBlue,
+  secondaryText: '#003064',
+
+  // Tertiary / Teal
+  tertiary: '#6fd8cc',
+  tertiaryContainer: '#2fa096',
+
+  // Backgrounds / Surfaces
   background: {
-    primary: '#1a1a1a',
-    secondary: '#2a2a2a',
-    tertiary: '#333333',
+    base: '#1e0f0f',        // deepest background
+    dark: '#0A0A0A',        // pure obsidian
+    surface: '#1e0f0f',     // main content surface
+    card: '#1C1C1E',        // glass cards
+    container: '#2c1b1b',   // container bg
+    containerLow: '#271717',
+    containerHigh: '#372625',
+    containerHighest: '#433030',
+    variant: '#433030',
   },
 
-  border: {
-    light: '#333333',
-    medium: '#444444',
-    dark: '#555555',
+  // Text
+  text: {
+    primary: '#f9dcda',     // on-surface
+    secondary: '#e4bebc',   // on-surface-variant
+    muted: '#ab8987',       // outline
+    inverse: '#3e2c2b',
   },
 
+  // Status colors
   status: {
-    success: '#34C759',
-    warning: '#FF9500',
-    error: '#FF3B30',
-    info: '#FF3B30',
+    success: BRAND.profitGreen,
+    warning: BRAND.hazardOrange,
+    error: '#ffb4ab',
+    info: BRAND.vaultBlue,
   },
 
+  // Compliance
+  compliance: {
+    valid: BRAND.complianceValid,
+    warning: BRAND.complianceWarning,
+    critical: BRAND.complianceCritical,
+  },
+
+  // Border / Outline
+  border: {
+    default: '#ab8987',     // outline
+    variant: '#5b403f',     // outline-variant
+    muted: 'rgba(171, 137, 135, 0.2)',
+  },
+
+  // Interactive
   interactive: {
     pressed: 0.8,
-    disabled: 0.5,
+    disabled: 0.4,
   },
 };
 
-// Get current theme (default to dark mode)
-export const getTheme = (isDarkMode = true) => {
-  return isDarkMode ? DARK_MODE : LIGHT_MODE;
-};
+// Alias for backward compatibility
+export const LIGHT_MODE = DARK_THEME;
+export const DARK_MODE = DARK_THEME;
 
-// Helper to create pressed state style
-export const getPressedStyle = (baseOpacity = 1) => {
-  return {
-    opacity: baseOpacity * DARK_MODE.interactive.pressed,
-  };
-};
+export const getTheme = () => DARK_THEME;
 
-// Helper to create button style
-export const createButtonStyle = (theme, variant = 'primary') => {
-  const variants = {
-    primary: {
-      backgroundColor: theme.primary,
-      color: theme.primaryText,
-    },
-    secondary: {
-      backgroundColor: theme.background.secondary,
-      color: theme.primaryText,
-      borderWidth: 1,
-      borderColor: theme.border.light,
-    },
-    outline: {
-      backgroundColor: 'transparent',
-      color: theme.primary,
-      borderWidth: 1,
-      borderColor: theme.primary,
-    },
-  };
-
-  return variants[variant] || variants.primary;
-};
-
-// Helper to create text style
-export const createTextStyle = (theme, variant = 'body') => {
-  const variants = {
-    title: {
-      fontSize: 28,
-      fontWeight: 'bold',
-      color: theme.primaryText,
-    },
-    subtitle: {
-      fontSize: 18,
-      fontWeight: '600',
-      color: theme.primaryText,
-    },
-    body: {
-      fontSize: 14,
-      color: theme.primaryText,
-    },
-    caption: {
-      fontSize: 12,
-      color: theme.secondaryText,
-    },
-    small: {
-      fontSize: 11,
-      color: theme.tertiaryText,
-    },
-  };
-
-  return variants[variant] || variants.body;
-};
-
-// Helper to create card style
-export const createCardStyle = (theme) => {
-  return {
-    backgroundColor: theme.background.secondary,
-    borderRadius: 8,
-    padding: 16,
-    borderLeftWidth: 4,
-    borderLeftColor: theme.primary,
-  };
-};
-
-// Default theme colors for quick access
 export const colors = {
-  light: LIGHT_MODE,
-  dark: DARK_MODE,
+  light: DARK_THEME,
+  dark: DARK_THEME,
+};
+
+// Typography scale matching Stitch design tokens
+export const TYPOGRAPHY = {
+  displayMetrics: {
+    fontFamily: 'Archivo Narrow',
+    fontSize: 36,
+    fontWeight: '700',
+    lineHeight: 40,
+    letterSpacing: -0.72,
+  },
+  displayMetricsMobile: {
+    fontFamily: 'Archivo Narrow',
+    fontSize: 30,
+    fontWeight: '700',
+    lineHeight: 34,
+  },
+  headlineLg: {
+    fontFamily: 'Archivo Narrow',
+    fontSize: 28,
+    fontWeight: '700',
+    lineHeight: 34,
+  },
+  headlineSm: {
+    fontFamily: 'Archivo Narrow',
+    fontSize: 18,
+    fontWeight: '600',
+    lineHeight: 24,
+  },
+  bodyLg: {
+    fontFamily: 'Inter',
+    fontSize: 16,
+    fontWeight: '400',
+    lineHeight: 24,
+  },
+  bodyMd: {
+    fontFamily: 'Inter',
+    fontSize: 14,
+    fontWeight: '400',
+    lineHeight: 20,
+  },
+  labelData: {
+    fontFamily: 'monospace',
+    fontSize: 12,
+    fontWeight: '500',
+    lineHeight: 16,
+  },
+};
+
+// Spacing tokens (4px base grid)
+export const SPACING = {
+  base: 4,
+  stackSm: 8,
+  stackMd: 16,
+  stackLg: 24,
+  gutter: 16,
+  marginMobile: 16,
+};
+
+// Card style factories
+export const createGlassCard = () => ({
+  backgroundColor: DARK_THEME.background.card,
+  borderWidth: 1,
+  borderColor: DARK_THEME.border.muted,
+  borderRadius: 12,
+});
+
+export const createStatusBorderCard = (borderColor) => ({
+  ...createGlassCard(),
+  borderLeftWidth: 4,
+  borderLeftColor: borderColor,
+});
+
+export const createLoadCard = (pulseType = 'normal') => {
+  const borderColors = {
+    high: BRAND.profitGreen,        // High yield
+    urgent: BRAND.crimsonRed,       // Hazmat/Urgent
+    normal: DARK_THEME.border.default,
+  };
+  return createStatusBorderCard(borderColors[pulseType] || borderColors.normal);
 };

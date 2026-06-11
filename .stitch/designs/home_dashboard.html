@@ -1,0 +1,358 @@
+<!DOCTYPE html><html class="dark" lang="en"><head>
+<meta charset="utf-8">
+<meta content="width=device-width, initial-scale=1.0" name="viewport">
+<title>Integra Vault | Carrier Dashboard</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Archivo+Narrow:wght@400;500;700&amp;family=Inter:wght@400;500;700&amp;family=Jetbrains+Mono:wght@400;500;700&amp;display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet">
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        background: "#121414",
+                        "on-surface": "#e3e2e2",
+                        "surface-tint": "#ffb3af",
+                        "on-error": "#690005",
+                        "primary-fixed-dim": "#ffb3af",
+                        "inverse-on-surface": "#2f3031",
+                        "primary-fixed": "#ffdad7",
+                        "surface-card": "#1C1C1E",
+                        "on-secondary-fixed": "#1c1b1b",
+                        "compliance-warning": "#3A2800",
+                        "on-secondary": "#313030",
+                        "on-tertiary-container": "#c3c1c1",
+                        "on-error-container": "#ffdad6",
+                        primary: "#9E1520",
+                        "surface-container-high": "#292a2a",
+                        "surface-bright": "#383939",
+                        secondary: "#c8c6c5",
+                        outline: "#a98987",
+                        "compliance-valid": "#1A3A38",
+                        "surface-container-highest": "#343535",
+                        "on-secondary-fixed-variant": "#474746",
+                        "on-tertiary": "#303030",
+                        "primary-container": "#9e1520",
+                        "hazard-orange": "#FF9500",
+                        "surface-variant": "#343535",
+                        "on-primary-fixed-variant": "#910718",
+                        error: "#ffb4ab",
+                        "on-secondary-container": "#b7b5b4",
+                        "surface-dark": "#0A0A0A",
+                        "secondary-fixed-dim": "#c8c6c5",
+                        "compliance-critical": "#3A1A1A",
+                        "tertiary-fixed": "#e4e2e1",
+                        "inverse-primary": "#b3272d",
+                        surface: "#121414",
+                        "outline-variant": "#5a413f",
+                        "secondary-container": "#474746",
+                        "on-tertiary-fixed-variant": "#474746",
+                        "on-background": "#e3e2e2",
+                        "on-primary-fixed": "#410005",
+                        "surface-container-lowest": "#0d0e0f",
+                        "secondary-fixed": "#e5e2e1",
+                        tertiary: "#c8c6c5",
+                        "tertiary-container": "#504f4f",
+                        "tertiary-fixed-dim": "#c8c6c5",
+                        "surface-container-low": "#1b1c1c",
+                        "on-surface-variant": "#e2bebc",
+                        "surface-dim": "#121414",
+                        "profit-green": "#30B0C0",
+                        "error-container": "#93000a",
+                        "inverse-surface": "#e3e2e2",
+                        "on-tertiary-fixed": "#1b1c1c",
+                        "on-primary": "#ffffff",
+                        "surface-container": "#1f2020",
+                        "on-primary-container": "#ffada8"
+                    },
+                    borderRadius: {
+                        DEFAULT: "0.125rem",
+                        lg: "0.25rem",
+                        xl: "0.5rem",
+                        full: "0.75rem"
+                    },
+                    spacing: {
+                        "margin-mobile": "16px",
+                        "stack-lg": "24px",
+                        "stack-sm": "8px",
+                        "margin-desktop": "32px",
+                        gutter: "16px",
+                        "stack-md": "16px",
+                        base: "4px"
+                    },
+                    fontFamily: {
+                        "headline-lg": ["Archivo Narrow"],
+                        "label-data": ["JetBrains Mono"],
+                        "display-metrics": ["Archivo Narrow"],
+                        "body-lg": ["Inter"],
+                        "headline-sm": ["Archivo Narrow"],
+                        "display-metrics-mobile": ["Archivo Narrow"],
+                        "body-md": ["Inter"],
+                        headline: ["Archivo Narrow"],
+                        display: ["Archivo Narrow"],
+                        body: ["Inter"],
+                        label: ["Jetbrains Mono"]
+                    },
+                    fontSize: {
+                        "headline-lg": ["28px", {lineHeight: "34px", fontWeight: "700"}],
+                        "label-data": ["12px", {lineHeight: "16px", fontWeight: "500"}],
+                        "display-metrics": ["36px", {lineHeight: "40px", letterSpacing: "-0.02em", fontWeight: "700"}],
+                        "body-lg": ["16px", {lineHeight: "24px", fontWeight: "400"}],
+                        "headline-sm": ["18px", {lineHeight: "24px", fontWeight: "600"}],
+                        "display-metrics-mobile": ["30px", {lineHeight: "34px", fontWeight: "700"}],
+                        "body-md": ["14px", {lineHeight: "20px", fontWeight: "400"}]
+                    }
+                }
+            }
+        };
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .profit-border { border-left: 4px solid #30B0C0; }
+        .urgent-border { border-left: 4px solid #9E1520; }
+        .vault-border { border-left: 4px solid #3e90ff; }
+        .glass-card {
+            background: rgba(28, 28, 30, 0.7);
+            backdrop-filter: blur(12px);
+            border: 1px solid #444444;
+        }
+        body {
+            min-height: max(884px, 100dvh);
+        }
+    </style>
+</head>
+<body class="bg-background text-on-surface font-body-md min-h-screen pb-24 overflow-x-hidden">
+<!-- TopAppBar -->
+<header class="w-full top-0 sticky z-40 bg-surface border-b border-outline-variant flex items-center justify-between px-margin-mobile h-16 w-full">
+<div class="flex items-center gap-4">
+<button class="active:scale-95 transition-transform hover:bg-surface-variant p-2 rounded-lg">
+<span class="material-symbols-outlined text-primary" data-icon="menu">menu</span>
+</button>
+<img alt="Updated Integra Vault Logo" class="h-10 w-auto object-contain" src="https://lh3.googleusercontent.com/aida-public/AB6AXuD12TDA1l74nTrzH5yburYjtsGjmXzVQIZ9bCVvCrYp2EXkGK11AehT__w3h_4puTGQ7duKtp7FQ6UKootsHwACU-njrj7XLAflZu2vgq75lqPLV68gg4OUBbS9Jw1Thn7B9_o6gv4fhyrz1P8cabL6Ww9Q8JLXNwmDG4ImghsS0o3wOwhV7U9m_txjW-uKut4OkkPn8gwDJAKm9W5KynqLFBbJ8EsJ4bUXh08vPMA3J6SI4vApth9q9QUOsF70BJiKOWlvCjKrCNZR">
+</div>
+<div class="flex items-center gap-3">
+<div class="flex flex-col items-end mr-2 hidden md:flex">
+<span class="font-label-data text-on-surface text-[10px] uppercase tracking-widest opacity-70">Alpha Logistics</span>
+<span class="font-label-data text-profit-green text-[10px]">• PREMIUM</span>
+</div>
+<div class="w-10 h-10 rounded-full border border-outline overflow-hidden bg-surface-container-highest">
+<img alt="Carrier Avatar" class="w-full h-full object-cover" src="https://lh3.googleusercontent.com/aida-public/AB6AXuB3ZoEJ8XUiy7dADGTup8_2ynltRS4lWLmtRGGA8GC_VNU9v2X1d8nrJUpbGEvE3tFYlumOzWZEJvVAYQ6TAQ3mSmPKIM9zu5OxXqEof7o07QPZexlpa94Uh9ppdbo_yaMfhsl9C6xjA_mm_79Ym4eVdR4Z0cS3rl_A7s5NzX9DS3KYrBH2jzEInIbqcVpOBmVy1-cE0cTdpYBqOkcHCmeRDMyFU61zBBvPufC2APWe6HQMY6RmF_2QhnWI6x5FKfr7rPK9eio_scf8">
+</div>
+</div>
+</header>
+<main class="px-margin-mobile pt-stack-md max-w-5xl mx-auto space-y-stack-lg">
+<!-- Business Health Overview (Bento Style) -->
+<section class="grid grid-cols-2 md:grid-cols-4 gap-base">
+<div class="col-span-2 md:col-span-2 glass-card p-stack-md border-l-4 border-primary rounded-lg flex flex-col justify-between">
+  <div class="space-y-1">
+    <h1 class="font-headline-lg text-headline-lg text-on-surface">Good Afternoon, Jazzie</h1>
+    <div class="flex items-center gap-2 text-on-surface-variant font-label-data text-[12px]">
+      <span class="material-symbols-outlined text-sm" data-icon="partly_cloudy_day">partly_cloudy_day</span>
+      <span class="">72°F • Houston, TX</span>
+    </div>
+  </div>
+  <div class="mt-4 flex">
+    <div class="bg-primary/20 text-primary text-[10px] px-3 py-1 rounded-full font-label-data border border-primary/30 flex items-center gap-2">
+      <span class="material-symbols-outlined text-[14px]" data-icon="local_gas_station">local_gas_station</span>
+      <span class="uppercase tracking-wider">Shell • 0.8 mi away</span>
+    </div>
+  </div>
+</div>
+<div class="col-span-1 glass-card p-stack-md border-l-4 border-secondary rounded-lg">
+<span class="font-label-data text-on-surface-variant block mb-2">ACTIVE LOADS</span>
+<div class="font-display-metrics-mobile text-display-metrics-mobile text-secondary">08</div>
+</div>
+<div class="col-span-1 glass-card p-stack-md border-l-4 border-hazard-orange rounded-lg">
+<span class="font-label-data text-on-surface-variant block mb-2">RPM AVG</span>
+<div class="font-display-metrics-mobile text-display-metrics-mobile text-on-surface">$3.22</div>
+</div>
+</section>
+<!-- Quick Action Tiles -->
+<section class="grid grid-cols-2 md:grid-cols-4 gap-gutter">
+<button class="bg-surface-container-high border border-outline-variant p-stack-md flex flex-col items-center justify-center gap-2 rounded-xl active:scale-95 transition-transform group">
+<div class="w-12 h-12 bg-primary/20 rounded-full flex items-center justify-center group-hover:bg-primary transition-colors">
+<span class="material-symbols-outlined text-primary group-hover:text-white" data-icon="calculate">calculate</span>
+</div>
+<span class="font-label-data text-on-surface uppercase">Load Calc</span>
+</button>
+<button class="bg-surface-container-high border border-outline-variant p-stack-md flex flex-col items-center justify-center gap-2 rounded-xl active:scale-95 transition-transform group">
+<div class="w-12 h-12 bg-secondary-container/20 rounded-full flex items-center justify-center group-hover:bg-secondary-container transition-colors">
+<span class="material-symbols-outlined text-secondary-container group-hover:text-on-secondary-container" data-icon="description">description</span>
+</div>
+<span class="font-label-data text-on-surface uppercase">Invoices</span>
+</button>
+<button class="bg-surface-container-high border border-outline-variant p-stack-md flex flex-col items-center justify-center gap-2 rounded-xl active:scale-95 transition-transform group">
+<div class="w-12 h-12 bg-tertiary-container/20 rounded-full flex items-center justify-center group-hover:bg-tertiary-container transition-colors">
+<span class="material-symbols-outlined text-tertiary-container group-hover:text-on-tertiary-container" data-icon="receipt_long">receipt_long</span>
+</div>
+<span class="font-label-data text-on-surface uppercase">Expenses</span>
+</button>
+<button class="bg-surface-container-high border border-outline-variant p-stack-md flex flex-col items-center justify-center gap-2 rounded-xl active:scale-95 transition-transform group">
+<div class="w-12 h-12 bg-outline/20 rounded-full flex items-center justify-center group-hover:bg-outline transition-colors">
+<span class="material-symbols-outlined text-outline group-hover:text-on-surface" data-icon="folder_shared">folder_shared</span>
+</div>
+<span class="font-label-data text-on-surface uppercase">Doc Vault</span>
+</button>
+</section>
+<!-- Current Active Load (High Density) -->
+<section class="space-y-stack-sm">
+<div class="flex justify-between items-center px-1">
+<h2 class="font-headline-sm text-headline-sm text-on-surface uppercase tracking-tight">Current Load</h2>
+<button class="text-primary font-label-data uppercase text-[10px] hover:underline">View All Loads</button>
+</div>
+<div class="relative rounded-xl overflow-hidden glass-card urgent-border">
+<div class="absolute top-0 right-0 p-3">
+<div class="bg-primary/20 text-primary text-[10px] px-2 py-0.5 rounded-full font-label-data border border-primary/30 flex items-center gap-1">
+<span class="w-1.5 h-1.5 rounded-full bg-primary animate-pulse"></span>
+                        IN TRANSIT
+                    </div>
+</div>
+<div class="p-stack-md border-b border-outline-variant/50">
+<div class="flex items-center gap-3 mb-4">
+<div class="w-12 h-12 rounded bg-surface-container-highest flex items-center justify-center border border-outline-variant">
+<span class="material-symbols-outlined text-on-surface-variant" data-icon="local_shipping">local_shipping</span>
+</div>
+<div>
+<div class="font-headline-sm text-headline-sm">L-49208-TX</div>
+<div class="font-label-data text-on-surface-variant text-[11px]">Reefer | 42,000 lbs</div>
+</div>
+</div>
+<!-- Route Visualization -->
+<div class="grid grid-cols-1 md:grid-cols-2 gap-stack-lg relative py-2">
+<div class="flex items-start gap-3">
+<div class="flex flex-col items-center">
+<span class="material-symbols-outlined text-profit-green" data-icon="location_on">location_on</span>
+<div class="w-0.5 h-12 border-l border-dashed border-outline-variant"></div>
+</div>
+<div>
+<p class="font-label-data text-on-surface-variant text-[10px]">PICKUP</p>
+<p class="font-headline-sm text-on-surface">Houston, TX</p>
+<p class="font-body-md text-on-surface-variant text-[12px]">Oct 24, 08:00 AM</p>
+</div>
+</div>
+<div class="flex items-start gap-3">
+<div class="flex flex-col items-center">
+<span class="material-symbols-outlined text-primary" data-icon="near_me">near_me</span>
+</div>
+<div>
+<p class="font-label-data text-on-surface-variant text-[10px]">DELIVERY</p>
+<p class="font-headline-sm text-on-surface">Chicago, IL</p>
+<p class="font-body-md text-on-surface-variant text-[12px]">Oct 26, 02:00 PM</p>
+</div>
+</div>
+</div>
+</div>
+<!-- Load Metrics Row -->
+<div class="grid grid-cols-3 bg-surface-dark/50">
+<div class="p-4 border-r border-outline-variant text-center">
+<p class="font-label-data text-[10px] text-on-surface-variant">RATE</p>
+<p class="font-headline-sm text-profit-green">$3,450</p>
+</div>
+<div class="p-4 border-r border-outline-variant text-center">
+<p class="font-label-data text-[10px] text-on-surface-variant">MILES</p>
+<p class="font-headline-sm">1,082</p>
+</div>
+<div class="p-4 text-center">
+<p class="font-label-data text-[10px] text-on-surface-variant">RPM</p>
+<p class="font-headline-sm text-hazard-orange">$3.18</p>
+</div>
+</div>
+</div>
+</section>
+<!-- Dynamic Content Section -->
+<section class="grid grid-cols-1 md:grid-cols-2 gap-gutter pb-10">
+<!-- Compliance Status -->
+<div class="bg-surface-container-low border border-outline-variant p-stack-md rounded-xl space-y-4">
+<div class="flex justify-between items-center">
+<h3 class="font-headline-sm text-headline-sm uppercase tracking-tight">Compliance Status</h3>
+<span class="material-symbols-outlined text-profit-green" data-icon="verified_user">verified_user</span>
+</div>
+<div class="space-y-3">
+<div class="flex justify-between items-center p-2 bg-compliance-valid/30 rounded-lg border border-compliance-valid">
+<span class="font-label-data text-[11px]">ELD LOGS (24H)</span>
+<span class="font-label-data text-profit-green">• COMPLIANT</span>
+</div>
+<div class="flex justify-between items-center p-2 bg-compliance-warning/30 rounded-lg border border-compliance-warning">
+<span class="font-label-data text-[11px]">DQ FILES</span>
+<span class="font-label-data text-hazard-orange">• 1 EXPIRING</span>
+</div>
+<div class="flex justify-between items-center p-2 bg-surface-container-high rounded-lg border border-outline-variant">
+<span class="font-label-data text-[11px]">IFTA Q3</span>
+<span class="font-label-data text-on-surface-variant">SUBMITTED</span>
+</div>
+</div>
+</div>
+<!-- Recent Documents -->
+<div class="bg-surface-container-low border border-outline-variant p-stack-md rounded-xl space-y-4">
+<div class="flex justify-between items-center">
+<h3 class="font-headline-sm text-headline-sm uppercase tracking-tight">Vault Recent</h3>
+<button class="material-symbols-outlined text-on-surface-variant" data-icon="more_vert">more_vert</button>
+</div>
+<div class="space-y-2">
+<div class="flex items-center gap-3 p-2 hover:bg-surface-variant rounded-lg transition-colors cursor-pointer border border-transparent hover:border-outline-variant">
+<div class="w-10 h-10 bg-secondary-container/20 rounded flex items-center justify-center">
+<span class="material-symbols-outlined text-secondary-container" data-icon="picture_as_pdf">picture_as_pdf</span>
+</div>
+<div class="flex-1">
+<p class="font-label-data text-on-surface truncate">BOL_49208_SIGN.pdf</p>
+<p class="text-[10px] text-on-surface-variant uppercase">L-49208 • 2h ago</p>
+</div>
+</div>
+<div class="flex items-center gap-3 p-2 hover:bg-surface-variant rounded-lg transition-colors cursor-pointer border border-transparent hover:border-outline-variant">
+<div class="w-10 h-10 bg-secondary-container/20 rounded flex items-center justify-center">
+<span class="material-symbols-outlined text-secondary-container" data-icon="image">image</span>
+</div>
+<div class="flex-1">
+<p class="font-label-data text-on-surface truncate">FUEL_RECEIPT_391.jpg</p>
+<p class="text-[10px] text-on-surface-variant uppercase">EXPENSE • 5h ago</p>
+</div>
+</div>
+</div>
+</div>
+</section>
+</main>
+<!-- BottomNavBar -->
+<nav class="fixed bottom-0 w-full z-50 h-20 bg-surface-container-highest border-t border-outline-variant flex justify-around items-center w-full px-2 pb-2">
+<a class="flex flex-col items-center justify-center text-on-surface-variant hover:text-primary" href="#">
+<span class="material-symbols-outlined" data-icon="local_shipping">local_shipping</span>
+<span class="font-label-data text-label-data uppercase">Loads</span>
+</a>
+<a class="flex flex-col items-center justify-center text-on-surface-variant hover:text-primary" href="#">
+<span class="material-symbols-outlined" data-icon="folder_shared">folder_shared</span>
+<span class="font-label-data text-label-data uppercase">Vault</span>
+</a>
+<!-- Central SCAN Button -->
+<div class="relative -top-6">
+<button class="w-16 h-16 bg-primary text-white rounded-full shadow-lg shadow-primary/40 flex flex-col items-center justify-center active:scale-90 duration-150 border-4 border-background">
+<span class="material-symbols-outlined text-3xl" data-icon="document_scanner">document_scanner</span>
+<span class="font-label-data text-[9px] font-bold tracking-tighter">SCAN</span>
+</button>
+</div>
+<a class="flex flex-col items-center justify-center text-on-surface-variant hover:text-primary" href="#">
+<span class="material-symbols-outlined" data-icon="payments">payments</span>
+<span class="font-label-data text-label-data uppercase">Finance</span>
+</a>
+<a class="flex flex-col items-center justify-center text-on-surface-variant hover:text-primary" href="#">
+<span class="material-symbols-outlined" data-icon="groups">groups</span>
+<span class="font-label-data text-label-data uppercase">Fleet</span>
+</a>
+</nav>
+<!-- Floating Background Elements for Atmosphere -->
+<div class="fixed top-20 right-[-10%] w-[40%] h-[40%] bg-primary/5 rounded-full blur-[100px] -z-10 pointer-events-none"></div>
+<div class="fixed bottom-20 left-[-10%] w-[40%] h-[40%] bg-secondary/5 rounded-full blur-[100px] -z-10 pointer-events-none"></div>
+<script>
+        // Simple Interaction logic
+        document.querySelectorAll('button').forEach(btn => {
+            btn.addEventListener('click', () => {
+                console.log('Action triggered:', btn.innerText.trim());
+            });
+        });
+    </script>
+
+
+
+
+</body></html>
