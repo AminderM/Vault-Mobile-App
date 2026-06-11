@@ -1,4 +1,25 @@
+import AsyncStorage from '@react-native-async-storage/async-storage';
+
 const API_BASE = 'https://api.staging.integratedtech.ca';
+const LOCAL_DOCS_KEY = 'vault_local_documents';
+
+async function getLocalDocuments() {
+  try {
+    const val = await AsyncStorage.getItem(LOCAL_DOCS_KEY);
+    return val ? JSON.parse(val) : [];
+  } catch (e) {
+    console.error('Error reading local documents', e);
+    return [];
+  }
+}
+
+async function saveLocalDocuments(docs) {
+  try {
+    await AsyncStorage.setItem(LOCAL_DOCS_KEY, JSON.stringify(docs));
+  } catch (e) {
+    console.error('Error saving local documents', e);
+  }
+}
 
 export async function scanRateCon(file, api = API_BASE) {
   const formData = new FormData();
@@ -64,54 +85,138 @@ export async function scanIdentify(file, api = API_BASE) {
 }
 
 export async function getDocument(docId, api = API_BASE) {
-  const res = await fetch(`${api}/api/documents/${docId}`, {
-    method: 'GET',
-    headers: { 'Content-Type': 'application/json' },
-  });
+  try {
+    const res = await fetch(`${api}/api/documents/${docId}`, {
+      method: 'GET',
+      headers: { 'Content-Type': 'application/json' },
+    });
 
-  if (!res.ok) throw new Error('Failed to fetch document');
-  return res.json();
+    if (res.ok) {
+      return await res.json();
+    }
+  } catch (err) {
+    console.warn('Failed to fetch document from server, checking local cache', err);
+  }
+
+  const localDocs = await getLocalDocuments();
+  const found = localDocs.find(d => d.id === docId);
+  if (!found) throw new Error('Document not found');
+  return found;
 }
 
 export async function saveDocument(data, api = API_BASE) {
-  const res = await fetch(`${api}/api/documents`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(data),
-  });
+  try {
+    const res = await fetch(`${api}/api/documents`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(data),
+    });
 
-  if (!res.ok) throw new Error('Failed to save document');
-  return res.json();
+    if (res.ok) {
+      const saved = await res.json();
+      // Cache server document locally too
+      const localDocs = await getLocalDocuments();
+      if (!localDocs.some(d => d.id === saved.id)) {
+        localDocs.unshift(saved);
+        await saveLocalDocuments(localDocs);
+      }
+      return saved;
+    }
+  } catch (err) {
+    console.warn('Network call failed, saving document locally', err);
+  }
+
+  // Fallback: save to AsyncStorage
+  const localDocs = await getLocalDocuments();
+  const fallbackDoc = {
+    id: data.id || `doc_local_${Date.now()}`,
+    docType: data.docType || 'Other',
+    expiryDate: data.expiryDate || null,
+    description: data.description || '',
+    uploadedAt: data.uploadedAt || new Date().toISOString(),
+    status: 'active',
+  };
+  localDocs.unshift(fallbackDoc);
+  await saveLocalDocuments(localDocs);
+  return fallbackDoc;
 }
 
 export async function updateDocument(docId, data, api = API_BASE) {
-  const res = await fetch(`${api}/api/documents/${docId}`, {
-    method: 'PUT',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(data),
-  });
+  try {
+    const res = await fetch(`${api}/api/documents/${docId}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(data),
+    });
 
-  if (!res.ok) throw new Error('Failed to update document');
-  return res.json();
+    if (res.ok) {
+      const updated = await res.json();
+      const localDocs = await getLocalDocuments();
+      const idx = localDocs.findIndex(d => d.id === docId);
+      if (idx !== -1) {
+        localDocs[idx] = { ...localDocs[idx], ...updated };
+        await saveLocalDocuments(localDocs);
+      }
+      return updated;
+    }
+  } catch (err) {
+    console.warn('Failed to update document on server, updating locally', err);
+  }
+
+  // Fallback: update locally
+  const localDocs = await getLocalDocuments();
+  const idx = localDocs.findIndex(d => d.id === docId);
+  if (idx === -1) throw new Error('Document not found locally');
+  const updatedDoc = { ...localDocs[idx], ...data, updatedAt: new Date().toISOString() };
+  localDocs[idx] = updatedDoc;
+  await saveLocalDocuments(localDocs);
+  return updatedDoc;
 }
 
 export async function deleteDocument(docId, api = API_BASE) {
-  const res = await fetch(`${api}/api/documents/${docId}`, {
-    method: 'DELETE',
-  });
+  try {
+    await fetch(`${api}/api/documents/${docId}`, {
+      method: 'DELETE',
+    });
+    // Even if server returns 404 or fails, we proceed with local delete
+  } catch (err) {
+    console.warn('Failed to delete document on server, deleting locally', err);
+  }
 
-  if (!res.ok) throw new Error('Failed to delete document');
-  return res.json();
+  // Always delete locally if present
+  const localDocs = await getLocalDocuments();
+  const filtered = localDocs.filter(d => d.id !== docId);
+  await saveLocalDocuments(filtered);
+  return { id: docId, status: 'deleted' };
 }
 
 export async function listDocuments(api = API_BASE) {
-  const res = await fetch(`${api}/api/documents`, {
-    method: 'GET',
-    headers: { 'Content-Type': 'application/json' },
-  });
+  try {
+    const res = await fetch(`${api}/api/documents`, {
+      method: 'GET',
+      headers: { 'Content-Type': 'application/json' },
+    });
 
-  if (!res.ok) throw new Error('Failed to fetch documents');
-  return res.json();
+    if (res.ok) {
+      const resData = await res.json();
+      // Handle both flat array and { documents: [...] } object
+      const serverDocs = Array.isArray(resData) ? resData : (resData && Array.isArray(resData.documents) ? resData.documents : []);
+      
+      const localDocs = await getLocalDocuments();
+      const merged = [...serverDocs];
+      for (const local of localDocs) {
+        if (!merged.some(d => d.id === local.id)) {
+          merged.unshift(local); // Place local items at the top
+        }
+      }
+      return merged;
+    }
+  } catch (err) {
+    console.warn('Failed to fetch documents from server, returning local ones', err);
+  }
+
+  // Fallback: return AsyncStorage docs
+  return await getLocalDocuments();
 }
 
 export async function getExpenses(filters = {}, api = API_BASE) {
