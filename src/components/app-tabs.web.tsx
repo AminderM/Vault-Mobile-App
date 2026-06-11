@@ -10,7 +10,7 @@ import {
   Alert,
   Platform,
 } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import ExpenseScreen from '@/screens/ExpenseScreen';
 import DocumentVaultScreen from '@/screens/DocumentVaultScreen';
 import HomeScreen from '@/screens/HomeScreen';
@@ -455,6 +455,7 @@ class ErrorBoundary extends React.Component<{ children: React.ReactNode; t: any 
 }
 
 export default function AppTabs() {
+  const insets = useSafeAreaInsets();
   const [showSplash, setShowSplash] = useState(true);
   const [activeTab, setActiveTab] = useState<TabName>('loads');
   const [showTools, setShowTools] = useState(false);
@@ -516,6 +517,7 @@ export default function AppTabs() {
       style={[
         styles.themeToggleBtn,
         {
+          top: insets.top + 16,
           backgroundColor: themeMode === 'dark' ? 'rgba(255, 255, 255, 0.12)' : 'rgba(0, 0, 0, 0.06)',
           borderColor: themeMode === 'dark' ? 'rgba(255, 255, 255, 0.2)' : 'rgba(0, 0, 0, 0.12)',
         }
@@ -535,6 +537,7 @@ export default function AppTabs() {
       style={[
         styles.toolsBtn,
         {
+          top: insets.top + 16,
           backgroundColor: themeMode === 'dark' ? 'rgba(255, 255, 255, 0.12)' : 'rgba(0, 0, 0, 0.06)',
           borderColor: themeMode === 'dark' ? 'rgba(255, 255, 255, 0.2)' : 'rgba(0, 0, 0, 0.12)',
         }
@@ -690,11 +693,11 @@ export default function AppTabs() {
 
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: T.background.base }]} edges={['bottom']}>
+      <View style={[styles.content, { backgroundColor: T.background.base }]}>{renderScreen()}</View>
+
       {renderThemeToggle()}
       {renderToolsButton()}
       {renderToolsScreen()}
-
-      <View style={[styles.content, { backgroundColor: T.background.base }]}>{renderScreen()}</View>
 
       <View style={[styles.tabBar, { backgroundColor: T.background.dark, borderTopColor: T.border.variant }]}>
         {tabs.map((tab) => {
@@ -817,7 +820,6 @@ const styles = StyleSheet.create({
   },
   themeToggleBtn: {
     position: 'absolute',
-    top: 16,
     right: 16,
     width: 36,
     height: 36,
@@ -832,7 +834,6 @@ const styles = StyleSheet.create({
   },
   toolsBtn: {
     position: 'absolute',
-    top: 16,
     right: 60,
     width: 36,
     height: 36,
