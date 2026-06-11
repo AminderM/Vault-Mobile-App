@@ -7,6 +7,7 @@ import HomeScreen from '@/screens/HomeScreen';
 import LoadsScreen from '@/screens/LoadsScreen';
 import SmartScanScreen from '@/screens/SmartScanScreen';
 import { BRAND } from '@/lib/theme';
+import SplashScreen from '@/screens/SplashScreen';
 
 type TabName = 'loads' | 'vault' | 'scan' | 'finance' | 'fleet';
 
@@ -41,7 +42,12 @@ class ErrorBoundary extends React.Component<any, { hasError: boolean }> {
 }
 
 export default function AppTabs() {
+  const [showSplash, setShowSplash] = useState(true);
   const [activeTab, setActiveTab] = useState<TabName>('loads');
+
+  if (showSplash) {
+    return <SplashScreen onGetStarted={() => setShowSplash(false)} />;
+  }
 
   const renderScreen = () => {
     switch (activeTab) {
