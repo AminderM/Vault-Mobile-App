@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useMemo } from 'react';
 import {
   View,
   ScrollView,
@@ -37,7 +37,7 @@ export default function SmartScanScreen() {
   const [expiryDate, setExpiryDate] = useState('');
   const [referenceNo, setReferenceNo] = useState('');
   const [confidence, setConfidence] = useState('High');
-  const scanLineAnim = useRef(new Animated.Value(0)).current;
+  const scanLineAnim = useMemo(() => new Animated.Value(0), []);
 
   const startScanAnimation = () => {
     Animated.loop(
@@ -303,7 +303,7 @@ export default function SmartScanScreen() {
           <View style={styles.complianceBannerText}>
             <Text style={styles.complianceBannerTitle}>Compliance Alert</Text>
             <Text style={styles.complianceBannerBody}>
-              This document type requires a valid expiry date to maintain 'Premium' carrier status. Ensure the date matches the physical copy.
+              This document type requires a valid expiry date to maintain {"'Premium'"} carrier status. Ensure the date matches the physical copy.
             </Text>
           </View>
         </View>

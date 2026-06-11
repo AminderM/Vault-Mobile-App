@@ -176,33 +176,33 @@ export default function LoadsScreen() {
   const [activeTab, setActiveTab] = useState('available');
 
   useEffect(() => {
+    const loadLoads = async () => {
+      try {
+        setLoading(true);
+        const filters = activeTab !== 'available' ? { status: activeTab } : {};
+        const data = await getLoads(filters);
+        if (data.loads && data.loads.length > 0) {
+          const mapped = data.loads.map((l, i) => ({
+            ...l,
+            loadId: l.id,
+            rpm: l.rateAmount && l.distance
+              ? `$${(l.rateAmount / parseFloat(l.distance)).toFixed(2)}`
+              : '$3.22',
+            pulseType: i % 3 === 0 ? 'high' : i % 3 === 1 ? 'hazmat' : 'avg',
+          }));
+          setLoads(mapped);
+        } else {
+          setLoads(DEMO_LOADS);
+        }
+      } catch {
+        setLoads(DEMO_LOADS);
+      } finally {
+        setLoading(false);
+      }
+    };
+
     loadLoads();
   }, [activeTab]);
-
-  const loadLoads = async () => {
-    try {
-      setLoading(true);
-      const filters = activeTab !== 'available' ? { status: activeTab } : {};
-      const data = await getLoads(filters);
-      if (data.loads && data.loads.length > 0) {
-        const mapped = data.loads.map((l, i) => ({
-          ...l,
-          loadId: l.id,
-          rpm: l.rateAmount && l.distance
-            ? `$${(l.rateAmount / parseFloat(l.distance)).toFixed(2)}`
-            : '$3.22',
-          pulseType: i % 3 === 0 ? 'high' : i % 3 === 1 ? 'hazmat' : 'avg',
-        }));
-        setLoads(mapped);
-      } else {
-        setLoads(DEMO_LOADS);
-      }
-    } catch {
-      setLoads(DEMO_LOADS);
-    } finally {
-      setLoading(false);
-    }
-  };
 
   const handleAccept = (load) => {
     Alert.alert('Accept Load', `Accepting load ${load.loadId}?`, [

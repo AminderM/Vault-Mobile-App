@@ -9,7 +9,6 @@ export async function scheduleExpiryReminders(docId, label, docType, expiryDate)
   if (!expiryDate) return;
 
   const expiryMs = new Date(expiryDate).getTime();
-  const now = Date.now();
   const jobs = getJobs();
 
   THRESHOLDS.forEach(days => {

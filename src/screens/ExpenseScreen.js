@@ -10,7 +10,7 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { getExpenses } from '../lib/api';
-import { DARK_THEME as T, BRAND, TYPOGRAPHY, SPACING, createStatusBorderCard } from '../lib/theme';
+import { DARK_THEME as T, BRAND, TYPOGRAPHY, SPACING } from '../lib/theme';
 
 const TIME_PERIODS = [
   { id: 'week', label: 'THIS WEEK' },
@@ -107,39 +107,39 @@ export default function ExpenseScreen() {
   });
 
   useEffect(() => {
+    const loadExpenses = async () => {
+      try {
+        setLoading(true);
+        const now = new Date();
+        const filters = {};
+        if (selectedPeriod === 'week') {
+          filters.startDate = new Date(now - 7 * 86400000).toISOString();
+        } else if (selectedPeriod === 'month') {
+          filters.startDate = new Date(now.getFullYear(), now.getMonth(), 1).toISOString();
+        } else if (selectedPeriod === 'year') {
+          filters.startDate = new Date(now.getFullYear(), 0, 1).toISOString();
+        }
+        const data = await getExpenses(filters);
+        if (data.expenses && data.expenses.length > 0) {
+          setExpenses(data.expenses.map((e) => ({
+            id: e.id,
+            description: e.description || 'Expense',
+            date: new Date(e.date).toLocaleDateString(),
+            amount: -Math.abs(e.amount),
+            category: e.category || 'Other',
+          })));
+        } else {
+          setExpenses(RECENT_EXPENSES);
+        }
+      } catch {
+        setExpenses(RECENT_EXPENSES);
+      } finally {
+        setLoading(false);
+      }
+    };
+
     loadExpenses();
   }, [selectedPeriod]);
-
-  const loadExpenses = async () => {
-    try {
-      setLoading(true);
-      const now = new Date();
-      const filters = {};
-      if (selectedPeriod === 'week') {
-        filters.startDate = new Date(now - 7 * 86400000).toISOString();
-      } else if (selectedPeriod === 'month') {
-        filters.startDate = new Date(now.getFullYear(), now.getMonth(), 1).toISOString();
-      } else if (selectedPeriod === 'year') {
-        filters.startDate = new Date(now.getFullYear(), 0, 1).toISOString();
-      }
-      const data = await getExpenses(filters);
-      if (data.expenses && data.expenses.length > 0) {
-        setExpenses(data.expenses.map((e) => ({
-          id: e.id,
-          description: e.description || 'Expense',
-          date: new Date(e.date).toLocaleDateString(),
-          amount: -Math.abs(e.amount),
-          category: e.category || 'Other',
-        })));
-      } else {
-        setExpenses(RECENT_EXPENSES);
-      }
-    } catch {
-      setExpenses(RECENT_EXPENSES);
-    } finally {
-      setLoading(false);
-    }
-  };
 
   return (
     <SafeAreaView style={styles.safe} edges={['top']}>

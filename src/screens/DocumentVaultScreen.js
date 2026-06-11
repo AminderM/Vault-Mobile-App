@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import {
   View,
-  ScrollView,
   StyleSheet,
   TouchableOpacity,
   Text,
@@ -9,7 +8,6 @@ import {
   Alert,
   FlatList,
 } from 'react-native';
-import { useFocusEffect } from '@react-navigation/native';
 import { listDocuments, deleteDocument } from '../lib/api';
 import { cancelExpiryReminders } from '../lib/expiryNotifications';
 
@@ -17,24 +15,23 @@ export default function DocumentVaultScreen() {
   const [documents, setDocuments] = useState([]);
   const [loading, setLoading] = useState(true);
 
-  useFocusEffect(
-    React.useCallback(() => {
-      loadDocuments();
-    }, [])
-  );
-
   const loadDocuments = async () => {
     try {
       setLoading(true);
       const data = await listDocuments();
       setDocuments(Array.isArray(data) ? data : []);
-    } catch (error) {
+    } catch {
       Alert.alert('Error', 'Failed to load documents');
       setDocuments([]);
     } finally {
       setLoading(false);
     }
   };
+
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    loadDocuments();
+  }, []);
 
   const handleDelete = async (docId) => {
     Alert.alert(
@@ -49,7 +46,7 @@ export default function DocumentVaultScreen() {
               await deleteDocument(docId);
               await cancelExpiryReminders(docId);
               loadDocuments();
-            } catch (error) {
+            } catch {
               Alert.alert('Error', 'Failed to delete document');
             }
           },
