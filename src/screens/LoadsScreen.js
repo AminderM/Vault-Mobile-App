@@ -10,9 +10,9 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { getLoads } from '../lib/api';
-import { DARK_THEME as T, BRAND, TYPOGRAPHY, SPACING, createGlassCard } from '../lib/theme';
+import { BRAND, TYPOGRAPHY, SPACING, createGlassCard, useTheme, createThemedStyleSheet } from '../lib/theme';
 
-const STATUS_STYLES = {
+const getStatusStyles = (T) => ({
   high: {
     badge: { backgroundColor: T.compliance.valid, borderColor: BRAND.profitGreen + '4D' },
     badgeText: { color: BRAND.profitGreen },
@@ -37,7 +37,7 @@ const STATUS_STYLES = {
     label: 'PULSE: AVG',
     icon: '≈',
   },
-};
+});
 
 const TABS = [
   { id: 'available', label: 'Available' },
@@ -46,6 +46,8 @@ const TABS = [
 ];
 
 function MetricsRow({ distance, estTime, rate }) {
+  const { t: T } = useTheme();
+  const styles = useStyles();
   return (
     <View style={styles.metricsGrid}>
       <View style={[styles.metricCell, styles.metricBorderRight]}>
@@ -65,6 +67,9 @@ function MetricsRow({ distance, estTime, rate }) {
 }
 
 function LoadCard({ load, pulseType = 'avg', onViewRoute, onAccept }) {
+  const { t: T } = useTheme();
+  const styles = useStyles();
+  const STATUS_STYLES = getStatusStyles(T);
   const pulse = STATUS_STYLES[pulseType] || STATUS_STYLES.avg;
   return (
     <View style={[styles.loadCard, { borderLeftColor: pulse.leftBorder }]}>
@@ -174,6 +179,8 @@ export default function LoadsScreen() {
   const [loads, setLoads] = useState(DEMO_LOADS);
   const [loading, setLoading] = useState(false);
   const [activeTab, setActiveTab] = useState('available');
+  const { t: T } = useTheme();
+  const styles = useStyles();
 
   useEffect(() => {
     const loadLoads = async () => {
@@ -269,7 +276,7 @@ export default function LoadsScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+const useStyles = createThemedStyleSheet((T) => StyleSheet.create({
   safe: { flex: 1, backgroundColor: T.background.base },
   container: { flex: 1, backgroundColor: T.background.base },
 
@@ -395,4 +402,4 @@ const styles = StyleSheet.create({
   },
   acceptBtnText: { ...TYPOGRAPHY.headlineSm, color: '#ffffff', fontWeight: '700', fontSize: 13 },
   pressed: { opacity: 0.75 },
-});
+}));

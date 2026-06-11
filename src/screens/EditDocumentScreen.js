@@ -8,6 +8,7 @@ import {
   TextInput,
   Alert,
 } from 'react-native';
+import { BRAND, TYPOGRAPHY, SPACING, useTheme, createThemedStyleSheet } from '../lib/theme';
 
 export default function EditDocumentScreen({
   navigation,
@@ -17,6 +18,8 @@ export default function EditDocumentScreen({
 
   const [formData, setFormData] = useState(extractedData || {});
   const [isLoading, setIsLoading] = useState(false);
+  const { t: T } = useTheme();
+  const styles = useStyles();
 
   const handleFieldChange = (field, value) => {
     setFormData({
@@ -82,7 +85,7 @@ export default function EditDocumentScreen({
               value={String(value || '')}
               onChangeText={(text) => handleFieldChange(key, text)}
               placeholder={`Enter ${key}`}
-              placeholderTextColor="#999"
+              placeholderTextColor={T.text.muted}
               multiline={key.includes('description') || key.includes('text')}
               numberOfLines={key.includes('description') ? 4 : 1}
             />
@@ -113,13 +116,13 @@ export default function EditDocumentScreen({
   );
 }
 
-const styles = StyleSheet.create({
+const useStyles = createThemedStyleSheet((T) => StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#f5f5f5',
+    backgroundColor: T.background.base,
   },
   header: {
-    backgroundColor: '#007AFF',
+    backgroundColor: T.primary,
     padding: 20,
     paddingTop: 12,
   },
@@ -131,7 +134,7 @@ const styles = StyleSheet.create({
   },
   subtitle: {
     fontSize: 16,
-    color: '#e8f0fe',
+    color: T.text.secondary,
   },
   formContainer: {
     padding: 16,
@@ -142,18 +145,18 @@ const styles = StyleSheet.create({
   label: {
     fontSize: 14,
     fontWeight: '600',
-    color: '#333',
+    color: T.text.primary,
     marginBottom: 8,
     textTransform: 'capitalize',
   },
   input: {
-    backgroundColor: '#fff',
+    backgroundColor: T.background.card,
     borderWidth: 1,
-    borderColor: '#ddd',
+    borderColor: T.border.default,
     borderRadius: 8,
     padding: 12,
     fontSize: 16,
-    color: '#333',
+    color: T.text.primary,
     minHeight: 44,
   },
   buttonContainer: {
@@ -170,17 +173,17 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   cancelButton: {
-    backgroundColor: '#f0f0f0',
+    backgroundColor: T.background.container,
     borderWidth: 1,
-    borderColor: '#ddd',
+    borderColor: T.border.variant,
   },
   cancelButtonText: {
-    color: '#666',
+    color: T.text.secondary,
     fontSize: 16,
     fontWeight: '600',
   },
   saveButton: {
-    backgroundColor: '#007AFF',
+    backgroundColor: T.primary,
   },
   saveButtonText: {
     color: '#fff',
@@ -190,4 +193,4 @@ const styles = StyleSheet.create({
   buttonDisabled: {
     opacity: 0.6,
   },
-});
+}));

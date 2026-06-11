@@ -7,21 +7,7 @@ import {
   Text,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { DARK_THEME as T, BRAND, TYPOGRAPHY, SPACING, createGlassCard } from '../lib/theme';
-
-// Quick action tiles data
-const QUICK_ACTIONS = [
-  { id: 'calc', label: 'LOAD CALC', icon: '🧮', color: T?.primary || '#9E1520' },
-  { id: 'invoices', label: 'INVOICES', icon: '📋', color: '#aac7ff' },
-  { id: 'expenses', label: 'EXPENSES', icon: '🧾', color: '#6fd8cc' },
-  { id: 'vault', label: 'DOC VAULT', icon: '🗄', color: '#ab8987' },
-];
-
-const COMPLIANCE_ITEMS = [
-  { id: 'eld', label: 'ELD LOGS (24H)', status: '• COMPLIANT', statusColor: BRAND.profitGreen, bg: '#1A3A38', border: '#1A3A38' },
-  { id: 'dq', label: 'DQ FILES', status: '• 1 EXPIRING', statusColor: BRAND.hazardOrange, bg: '#3A2800', border: '#3A2800' },
-  { id: 'ifta', label: 'IFTA Q3', status: 'SUBMITTED', statusColor: '#a98987', bg: '#292a2a', border: '#5a413f' },
-];
+import { BRAND, TYPOGRAPHY, SPACING, createGlassCard, useTheme, createThemedStyleSheet } from '../lib/theme';
 
 const VAULT_RECENT = [
   { id: '1', name: 'BOL_49208_SIGN.pdf', context: 'L-49208 • 2h ago', icon: '📄' },
@@ -30,6 +16,21 @@ const VAULT_RECENT = [
 
 export default function HomeScreen() {
   const [currentTime, setCurrentTime] = useState(new Date());
+  const { t: T } = useTheme();
+  const styles = useStyles();
+
+  const QUICK_ACTIONS = [
+    { id: 'calc', label: 'LOAD CALC', icon: '🧮', color: T.primary },
+    { id: 'invoices', label: 'INVOICES', icon: '📋', color: T.secondary },
+    { id: 'expenses', label: 'EXPENSES', icon: '🧾', color: T.tertiary },
+    { id: 'vault', label: 'DOC VAULT', icon: '🗄', color: T.text.muted },
+  ];
+
+  const COMPLIANCE_ITEMS = [
+    { id: 'eld', label: 'ELD LOGS (24H)', status: '• COMPLIANT', statusColor: T.status.success, bg: T.compliance.valid, border: T.compliance.valid },
+    { id: 'dq', label: 'DQ FILES', status: '• 1 EXPIRING', statusColor: T.status.warning, bg: T.compliance.warning, border: T.compliance.warning },
+    { id: 'ifta', label: 'IFTA Q3', status: 'SUBMITTED', statusColor: T.text.muted, bg: T.background.container, border: T.border.variant },
+  ];
 
   useEffect(() => {
     const timer = setInterval(() => setCurrentTime(new Date()), 60000);
@@ -204,7 +205,7 @@ export default function HomeScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+const useStyles = createThemedStyleSheet((T) => StyleSheet.create({
   safe: { flex: 1, backgroundColor: T.background.base },
   container: { flex: 1, backgroundColor: T.background.base },
 
@@ -404,4 +405,4 @@ const styles = StyleSheet.create({
   vaultItemContext: { ...TYPOGRAPHY.labelData, color: T.text.secondary, fontSize: 9, textTransform: 'uppercase', marginTop: 2 },
 
   pressed: { opacity: 0.75 },
-});
+}));

@@ -1,9 +1,10 @@
 import React from 'react';
 import { View, StyleSheet, Text, Image, Pressable, ScrollView } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { BRAND, TYPOGRAPHY, SPACING } from '../lib/theme';
+import { BRAND, TYPOGRAPHY, SPACING, createThemedStyleSheet } from '../lib/theme';
 
 export default function SplashScreen({ onGetStarted }) {
+  const styles = useStyles();
   return (
     <SafeAreaView style={styles.safe}>
       {/* Decorative High-Performance Accent Light at the top */}
@@ -81,10 +82,10 @@ export default function SplashScreen({ onGetStarted }) {
   );
 }
 
-const styles = StyleSheet.create({
+const useStyles = createThemedStyleSheet((T) => StyleSheet.create({
   safe: {
     flex: 1,
-    backgroundColor: '#0A0A0A',
+    backgroundColor: T.background.base,
   },
   topAccent: {
     position: 'absolute',
@@ -147,14 +148,14 @@ const styles = StyleSheet.create({
   },
   sloganTextWhite: {
     ...TYPOGRAPHY.displayMetricsMobile,
-    color: '#ffffff',
+    color: T.text.primary,
     fontStyle: 'italic',
     fontWeight: '900',
     textTransform: 'uppercase',
   },
   sloganTextRed: {
     ...TYPOGRAPHY.displayMetricsMobile,
-    color: BRAND.crimsonRedLight,
+    color: T.primary,
     fontStyle: 'italic',
     fontWeight: '900',
     textTransform: 'uppercase',
@@ -165,14 +166,14 @@ const styles = StyleSheet.create({
   },
   subtextMuted: {
     ...TYPOGRAPHY.labelData,
-    color: '#ab8987',
+    color: T.text.muted,
     letterSpacing: 2,
     fontWeight: '700',
     textAlign: 'center',
   },
   subtextWhite: {
     ...TYPOGRAPHY.labelData,
-    color: '#ffffff',
+    color: T.text.primary,
     letterSpacing: 2,
     fontWeight: '900',
     textAlign: 'center',
@@ -207,14 +208,14 @@ const styles = StyleSheet.create({
     height: 50,
     backgroundColor: 'transparent',
     borderWidth: 2,
-    borderColor: '#5a413f',
+    borderColor: T.border.default,
     borderRadius: 8,
     alignItems: 'center',
     justifyContent: 'center',
   },
   secondaryBtnText: {
     ...TYPOGRAPHY.headlineSm,
-    color: '#ffffff',
+    color: T.text.primary,
     fontWeight: '600',
     letterSpacing: 2,
   },
@@ -237,17 +238,17 @@ const styles = StyleSheet.create({
   complianceText: {
     ...TYPOGRAPHY.labelData,
     fontSize: 9,
-    color: '#ffffff',
+    color: T.text.muted,
     letterSpacing: 1,
   },
   dot: {
     width: 3,
     height: 3,
     borderRadius: 1.5,
-    backgroundColor: '#5a413f',
+    backgroundColor: T.border.variant,
   },
   pressed: {
     opacity: 0.85,
     transform: [{ scale: 0.98 }],
   },
-});
+}));

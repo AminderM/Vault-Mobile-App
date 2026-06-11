@@ -13,7 +13,7 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import * as ImagePicker from 'expo-image-picker';
 import { scanIdentify, saveDocument } from '../lib/api';
-import { DARK_THEME as T, BRAND, TYPOGRAPHY, SPACING } from '../lib/theme';
+import { BRAND, TYPOGRAPHY, SPACING, useTheme, createThemedStyleSheet } from '../lib/theme';
 
 const DOC_CATEGORIES = [
   { id: 'bol', label: 'Bill of Lading' },
@@ -38,6 +38,8 @@ export default function SmartScanScreen() {
   const [referenceNo, setReferenceNo] = useState('');
   const [confidence, setConfidence] = useState('High');
   const scanLineAnim = useMemo(() => new Animated.Value(0), []);
+  const { t: T } = useTheme();
+  const styles = useStyles();
 
   const startScanAnimation = () => {
     Animated.loop(
@@ -312,7 +314,7 @@ export default function SmartScanScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+const useStyles = createThemedStyleSheet((T) => StyleSheet.create({
   safe: { flex: 1, backgroundColor: T.background.base },
   container: { flex: 1, backgroundColor: T.background.base, paddingBottom: 100 },
 
@@ -480,4 +482,4 @@ const styles = StyleSheet.create({
   complianceBannerBody: { ...TYPOGRAPHY.bodyMd, color: T.text.secondary, fontSize: 12 },
 
   pressed: { opacity: 0.75 },
-});
+}));

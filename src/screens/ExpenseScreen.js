@@ -10,7 +10,7 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { getExpenses } from '../lib/api';
-import { DARK_THEME as T, BRAND, TYPOGRAPHY, SPACING } from '../lib/theme';
+import { BRAND, TYPOGRAPHY, SPACING, useTheme, createThemedStyleSheet } from '../lib/theme';
 
 const TIME_PERIODS = [
   { id: 'week', label: 'THIS WEEK' },
@@ -35,6 +35,8 @@ const CHART_DATA = [
 ];
 
 function MetricCard({ label, value, change, borderColor, valueColor }) {
+  const { t: T } = useTheme();
+  const styles = useStyles();
   return (
     <View style={[styles.metricCard, { borderLeftColor: borderColor }]}>
       <Text style={styles.metricLabel}>{label}</Text>
@@ -47,6 +49,8 @@ function MetricCard({ label, value, change, borderColor, valueColor }) {
 }
 
 function BarChart({ data }) {
+  const { t: T } = useTheme();
+  const styles = useStyles();
   return (
     <View>
       <Text style={styles.chartTitle}>Revenue vs Expenses</Text>
@@ -78,6 +82,7 @@ function BarChart({ data }) {
 }
 
 function ExpenseRow({ expense }) {
+  const styles = useStyles();
   return (
     <View style={styles.expenseRow}>
       <View style={styles.expenseIcon}>
@@ -99,6 +104,8 @@ export default function ExpenseScreen() {
   const [selectedPeriod, setSelectedPeriod] = useState('month');
   const [expenses, setExpenses] = useState(RECENT_EXPENSES);
   const [loading, setLoading] = useState(false);
+  const { t: T } = useTheme();
+  const styles = useStyles();
   const [totals] = useState({
     collected: '$142,500',
     expenses: '$84,320',
@@ -212,7 +219,7 @@ export default function ExpenseScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+const useStyles = createThemedStyleSheet((T) => StyleSheet.create({
   safe: { flex: 1, backgroundColor: T.background.base },
   container: { flex: 1, backgroundColor: T.background.base, paddingBottom: 100 },
 
@@ -363,4 +370,4 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   downloadBtnText: { ...TYPOGRAPHY.headlineSm, color: '#ffffff', letterSpacing: 1.5, fontSize: 14 },
-});
+}));

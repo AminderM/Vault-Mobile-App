@@ -10,10 +10,28 @@ import {
 } from 'react-native';
 import { listDocuments, deleteDocument } from '../lib/api';
 import { cancelExpiryReminders } from '../lib/expiryNotifications';
+import { BRAND, TYPOGRAPHY, SPACING, useTheme, createThemedStyleSheet } from '../lib/theme';
+
+const getStatusStyles = (T) => ({
+  overdue: {
+    container: { borderLeftColor: T.status.error, backgroundColor: T.compliance.critical },
+    text: { color: T.status.error, fontWeight: '600' },
+  },
+  'expiring-soon': {
+    container: { borderLeftColor: BRAND.hazardOrange, backgroundColor: T.compliance.warning },
+    text: { color: BRAND.hazardOrange, fontWeight: '600' },
+  },
+  valid: {
+    container: { borderLeftColor: BRAND.profitGreen, backgroundColor: T.compliance.valid },
+    text: { color: T.text.secondary },
+  },
+});
 
 export default function DocumentVaultScreen() {
   const [documents, setDocuments] = useState([]);
   const [loading, setLoading] = useState(true);
+  const { t: T } = useTheme();
+  const styles = useStyles();
 
   const loadDocuments = async () => {
     try {
@@ -75,11 +93,12 @@ export default function DocumentVaultScreen() {
 
   const renderDocument = ({ item }) => {
     const status = getExpiryStatus(item.expiryDate);
+    const statusStyle = status ? getStatusStyles(T)[status] : null;
 
     return (
       <View style={styles.documentCard}>
         <View style={styles.documentHeader}>
-          <View>
+          <View style={{ flex: 1, marginRight: 8 }}>
             <Text style={styles.documentType}>{item.docType || 'Document'}</Text>
             <Text style={styles.documentDate}>
               Uploaded: {formatDate(item.uploadedAt)}
@@ -93,21 +112,9 @@ export default function DocumentVaultScreen() {
           </TouchableOpacity>
         </View>
 
-        {item.expiryDate && (
-          <View
-            style={[
-              styles.expiryInfo,
-              status === 'overdue' && styles.expiryOverdue,
-              status === 'expiring-soon' && styles.expiryExpiringSoon,
-            ]}
-          >
-            <Text
-              style={[
-                styles.expiryText,
-                (status === 'overdue' || status === 'expiring-soon') &&
-                  styles.expiryTextWarning,
-              ]}
-            >
+        {item.expiryDate && statusStyle && (
+          <View style={[styles.expiryInfo, statusStyle.container]}>
+            <Text style={[styles.expiryText, statusStyle.text]}>
               Expires: {formatDate(item.expiryDate)}
               {status === 'overdue' && ' (OVERDUE)'}
               {status === 'expiring-soon' && ' (EXPIRING SOON)'}
@@ -125,7 +132,7 @@ export default function DocumentVaultScreen() {
   if (loading) {
     return (
       <View style={styles.centerContainer}>
-        <ActivityIndicator size="large" color="#007AFF" />
+        <ActivityIndicator size="large" color={T.primary} />
       </View>
     );
   }
@@ -153,24 +160,27 @@ export default function DocumentVaultScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+const useStyles = createThemedStyleSheet((T) => StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#f5f5f5',
+    backgroundColor: T.background.base,
   },
   centerContainer: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
+    backgroundColor: T.background.base,
   },
   listContainer: {
     padding: 12,
   },
   documentCard: {
-    backgroundColor: '#fff',
+    backgroundColor: T.background.card,
     borderRadius: 8,
     padding: 16,
     marginBottom: 12,
+    borderWidth: 1,
+    borderColor: T.border.variant,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
@@ -186,15 +196,15 @@ const styles = StyleSheet.create({
   documentType: {
     fontSize: 16,
     fontWeight: '600',
-    color: '#000',
+    color: T.text.primary,
     marginBottom: 4,
   },
   documentDate: {
     fontSize: 12,
-    color: '#999',
+    color: T.text.secondary,
   },
   deleteButton: {
-    backgroundColor: '#FF3B30',
+    backgroundColor: T.primary,
     paddingVertical: 6,
     paddingHorizontal: 12,
     borderRadius: 4,
@@ -205,48 +215,34 @@ const styles = StyleSheet.create({
     fontWeight: '600',
   },
   expiryInfo: {
-    backgroundColor: '#f0f0f0',
     paddingVertical: 8,
     paddingHorizontal: 12,
     borderRadius: 4,
     marginBottom: 12,
     borderLeftWidth: 4,
-    borderLeftColor: '#34C759',
-  },
-  expiryExpiringSoon: {
-    borderLeftColor: '#FF9500',
-    backgroundColor: '#fff3cd',
-  },
-  expiryOverdue: {
-    borderLeftColor: '#FF3B30',
-    backgroundColor: '#ffebee',
   },
   expiryText: {
     fontSize: 13,
-    color: '#333',
-  },
-  expiryTextWarning: {
-    fontWeight: '600',
-    color: '#d32f2f',
   },
   documentDescription: {
     fontSize: 14,
-    color: '#666',
+    color: T.text.secondary,
     lineHeight: 20,
   },
   emptyContainer: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
+    backgroundColor: T.background.base,
   },
   emptyText: {
     fontSize: 18,
     fontWeight: '600',
-    color: '#333',
+    color: T.text.primary,
     marginBottom: 8,
   },
   emptySubtext: {
     fontSize: 14,
-    color: '#999',
+    color: T.text.secondary,
   },
-});
+}));

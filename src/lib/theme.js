@@ -1,3 +1,6 @@
+import React, { useState, useEffect } from 'react';
+import { StyleSheet } from 'react-native';
+
 // Integra Vault - Design Token System
 // Derived from Stitch "Unified Trucking Management Suite"
 // Dark-mode first, Industrial Brutalism aesthetic
@@ -83,58 +86,164 @@ export const DARK_THEME = {
   },
 };
 
-// Alias for backward compatibility
-export const LIGHT_MODE = DARK_THEME;
-export const DARK_MODE = DARK_THEME;
+export const LIGHT_THEME = {
+  // Brand
+  primary: BRAND.crimsonRed,
+  primaryLight: '#ffdad7',
+  primaryText: '#000000',
 
-export const getTheme = () => DARK_THEME;
+  // Secondary (Vault Blue)
+  secondary: '#005faf',
+  secondaryContainer: BRAND.vaultBlue,
+  secondaryText: '#ffffff',
+
+  // Tertiary / Teal
+  tertiary: '#006a60',
+  tertiaryContainer: '#6fd8cc',
+
+  // Backgrounds / Surfaces
+  background: {
+    base: '#fdf8f8',        // light grey-red tint
+    dark: '#ffffff',        // pure white
+    surface: '#fff8f7',     // main content surface
+    card: '#ffffff',        // clean white cards
+    container: '#f4dddc',   // container bg
+    containerLow: '#fae3e2',
+    containerHigh: '#eed2d1',
+    containerHighest: '#e5c5c4',
+    variant: '#eed2d1',
+  },
+
+  // Text
+  text: {
+    primary: '#221515',     // dark on-surface
+    secondary: '#51403f',   // secondary dark
+    muted: '#857372',       // outline
+    inverse: '#ffffff',
+  },
+
+  // Status colors
+  status: {
+    success: '#006874',
+    warning: '#8a5100',
+    error: '#ba1a1a',
+    info: BRAND.vaultBlue,
+  },
+
+  // Compliance
+  compliance: {
+    valid: '#ccebe7',
+    warning: '#ffe09d',
+    critical: '#ffdad6',
+  },
+
+  // Border / Outline
+  border: {
+    default: '#857372',
+    variant: '#d8c2c1',
+    muted: 'rgba(133, 115, 114, 0.2)',
+  },
+
+  // Interactive
+  interactive: {
+    pressed: 0.8,
+    disabled: 0.4,
+  },
+};
+
+// Dynamic theme state
+let currentTheme = 'dark';
+let themeListeners = [];
+
+// Mutable theme object for static render-time utility function support
+export const T = { ...DARK_THEME };
+
+export const useTheme = () => {
+  const [theme, setTheme] = useState(currentTheme);
+  useEffect(() => {
+    themeListeners.push(setTheme);
+    return () => {
+      themeListeners = themeListeners.filter((l) => l !== setTheme);
+    };
+  }, []);
+  return {
+    mode: theme,
+    t: theme === 'light' ? LIGHT_THEME : DARK_THEME,
+  };
+};
+
+export const toggleTheme = () => {
+  currentTheme = currentTheme === 'dark' ? 'light' : 'dark';
+  const newTheme = currentTheme === 'light' ? LIGHT_THEME : DARK_THEME;
+  
+  // Mutate T for static call compatibility
+  Object.assign(T, newTheme);
+  
+  themeListeners.forEach((listener) => listener(currentTheme));
+};
+
+export const getThemeMode = () => currentTheme;
+
+export function createThemedStyleSheet(factory) {
+  return () => {
+    const { t } = useTheme();
+    return React.useMemo(() => factory(t), [t]);
+  };
+}
+
+// Alias for backward compatibility
+export const DARK_THEME_STATIC = DARK_THEME;
+export const LIGHT_MODE = T;
+export const DARK_MODE = T;
+
+export const getTheme = () => T;
 
 export const colors = {
-  light: DARK_THEME,
-  dark: DARK_THEME,
+  light: T,
+  dark: T,
 };
 
 // Typography scale matching Stitch design tokens
 export const TYPOGRAPHY = {
   displayMetrics: {
-    fontFamily: 'Archivo Narrow',
+    fontFamily: 'System',
     fontSize: 36,
     fontWeight: '700',
     lineHeight: 40,
     letterSpacing: -0.72,
   },
   displayMetricsMobile: {
-    fontFamily: 'Archivo Narrow',
+    fontFamily: 'System',
     fontSize: 30,
     fontWeight: '700',
     lineHeight: 34,
   },
   headlineLg: {
-    fontFamily: 'Archivo Narrow',
+    fontFamily: 'System',
     fontSize: 28,
     fontWeight: '700',
     lineHeight: 34,
   },
   headlineSm: {
-    fontFamily: 'Archivo Narrow',
+    fontFamily: 'System',
     fontSize: 18,
     fontWeight: '600',
     lineHeight: 24,
   },
   bodyLg: {
-    fontFamily: 'Inter',
+    fontFamily: 'System',
     fontSize: 16,
     fontWeight: '400',
     lineHeight: 24,
   },
   bodyMd: {
-    fontFamily: 'Inter',
+    fontFamily: 'System',
     fontSize: 14,
     fontWeight: '400',
     lineHeight: 20,
   },
   labelData: {
-    fontFamily: 'monospace',
+    fontFamily: 'System',
     fontSize: 12,
     fontWeight: '500',
     lineHeight: 16,
@@ -153,9 +262,9 @@ export const SPACING = {
 
 // Card style factories
 export const createGlassCard = () => ({
-  backgroundColor: DARK_THEME.background.card,
+  backgroundColor: T.background.card,
   borderWidth: 1,
-  borderColor: DARK_THEME.border.muted,
+  borderColor: T.border.muted,
   borderRadius: 12,
 });
 
@@ -169,7 +278,7 @@ export const createLoadCard = (pulseType = 'normal') => {
   const borderColors = {
     high: BRAND.profitGreen,        // High yield
     urgent: BRAND.crimsonRed,       // Hazmat/Urgent
-    normal: DARK_THEME.border.default,
+    normal: T.border.default,
   };
   return createStatusBorderCard(borderColors[pulseType] || borderColors.normal);
 };
