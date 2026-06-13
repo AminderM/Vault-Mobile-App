@@ -1,5 +1,6 @@
-import React, { useState, useEffect } from 'react';
-import { Platform } from 'react-native';
+import React, { useState, useEffect, useRef } from 'react';
+import { Platform, View } from 'react-native';
+import { GlassView } from 'expo-glass-effect';
 
 // Integra Vault - Design Token System
 // Derived from Stitch "Unified Trucking Management Suite"
@@ -38,15 +39,15 @@ export const DARK_THEME = {
 
   // Backgrounds / Surfaces
   background: {
-    base: '#1e0f0f',        // deepest background
-    dark: '#0A0A0A',        // pure obsidian
-    surface: '#1e0f0f',     // main content surface
-    card: 'rgba(28, 28, 30, 0.45)',        // glass cards
-    container: '#2c1b1b',   // container bg
-    containerLow: '#271717',
-    containerHigh: '#372625',
-    containerHighest: '#433030',
-    variant: '#433030',
+    base: '#0d0404',        // deepest background (obsidian crimson)
+    dark: '#050202',        // pure obsidian dark
+    surface: '#0d0404',     // main content surface
+    card: 'rgba(30, 20, 20, 0.55)',        // glass cards
+    container: '#1c1010',   // container bg
+    containerLow: '#170c0c',
+    containerHigh: '#271616',
+    containerHighest: '#331e1e',
+    variant: '#331e1e',
   },
 
   // Text
@@ -260,17 +261,38 @@ export const SPACING = {
   marginMobile: 16,
 };
 
+// CSS injection for Web backdrop-filter support
+if (Platform.OS === 'web' && typeof document !== 'undefined') {
+  const styleId = 'integra-glass-styles';
+  if (!document.getElementById(styleId)) {
+    const style = document.createElement('style');
+    style.id = styleId;
+    style.type = 'text/css';
+    style.appendChild(document.createTextNode(`
+      .glass-effect-web {
+        backdrop-filter: blur(20px) saturate(180%) !important;
+        -webkit-backdrop-filter: blur(20px) saturate(180%) !important;
+      }
+    `));
+    document.head.appendChild(style);
+  }
+}
+
 // Card style factories
-export const createGlassCard = () => ({
-  backgroundColor: T.background.card,
-  borderWidth: 1,
-  borderColor: T.border.muted,
-  borderRadius: 12,
-  ...(Platform.OS === 'web' && {
-    backdropFilter: 'blur(20px) saturate(180%)',
-    WebkitBackdropFilter: 'blur(20px) saturate(180%)',
-  }),
-});
+export const createGlassCard = () => {
+  const isDark = currentTheme === 'dark';
+  return {
+    backgroundColor: isDark ? 'rgba(255, 255, 255, 0.08)' : 'rgba(255, 255, 255, 0.65)',
+    borderWidth: 1,
+    borderColor: isDark ? 'rgba(255, 255, 255, 0.18)' : 'rgba(0, 0, 0, 0.08)',
+    borderRadius: 12,
+    ...(Platform.OS === 'web' && {
+      backdropFilter: 'blur(20px) saturate(180%)',
+      WebkitBackdropFilter: 'blur(20px) saturate(180%)',
+      boxShadow: isDark ? '0 8px 32px 0 rgba(0, 0, 0, 0.37)' : '0 8px 32px 0 rgba(31, 38, 135, 0.07)',
+    }),
+  };
+};
 
 export const createStatusBorderCard = (borderColor) => ({
   ...createGlassCard(),
@@ -285,4 +307,80 @@ export const createLoadCard = (pulseType = 'normal') => {
     normal: T.border.default,
   };
   return createStatusBorderCard(borderColors[pulseType] || borderColors.normal);
+};
+
+export const GlassCard = ({ style, children, ...props }) => {
+  const { mode } = useTheme();
+  const cardRef = useRef(null);
+
+  useEffect(() => {
+    if (Platform.OS === 'web' && cardRef.current) {
+      const el = cardRef.current;
+      if (el && el.style) {
+        el.style.backdropFilter = 'blur(20px) saturate(180%)';
+        el.style.webkitBackdropFilter = 'blur(20px) saturate(180%)';
+      }
+    }
+  }, []);
+
+  if (Platform.OS === 'web') {
+    return (
+      <View
+        ref={cardRef}
+        style={[createGlassCard(), style]}
+        {...props}
+      >
+        {children}
+      </View>
+    );
+  }
+
+  return (
+    <GlassView
+      glassEffectStyle="regular"
+      colorScheme={mode}
+      style={[createGlassCard(), style]}
+      {...props}
+    >
+      {children}
+    </GlassView>
+  );
+};
+
+export const StatusBorderCard = ({ borderColor, style, children, ...props }) => {
+  const { mode } = useTheme();
+  const cardRef = useRef(null);
+
+  useEffect(() => {
+    if (Platform.OS === 'web' && cardRef.current) {
+      const el = cardRef.current;
+      if (el && el.style) {
+        el.style.backdropFilter = 'blur(20px) saturate(180%)';
+        el.style.webkitBackdropFilter = 'blur(20px) saturate(180%)';
+      }
+    }
+  }, []);
+
+  if (Platform.OS === 'web') {
+    return (
+      <View
+        ref={cardRef}
+        style={[createStatusBorderCard(borderColor), style]}
+        {...props}
+      >
+        {children}
+      </View>
+    );
+  }
+
+  return (
+    <GlassView
+      glassEffectStyle="regular"
+      colorScheme={mode}
+      style={[createStatusBorderCard(borderColor), style]}
+      {...props}
+    >
+      {children}
+    </GlassView>
+  );
 };

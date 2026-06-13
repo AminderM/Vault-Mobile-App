@@ -10,7 +10,7 @@ import {
 } from 'react-native';
 import { listDocuments, deleteDocument } from '../lib/api';
 import { cancelExpiryReminders } from '../lib/expiryNotifications';
-import { BRAND, TYPOGRAPHY, SPACING, createGlassCard, useTheme, createThemedStyleSheet } from '../lib/theme';
+import { BRAND, TYPOGRAPHY, SPACING, GlassCard, createGlassCard, useTheme, createThemedStyleSheet } from '../lib/theme';
 
 const getStatusStyles = (T) => ({
   overdue: {
@@ -96,7 +96,7 @@ export default function DocumentVaultScreen() {
     const statusStyle = status ? getStatusStyles(T)[status] : null;
 
     return (
-      <View style={styles.documentCard}>
+      <GlassCard style={styles.documentCard}>
         <View style={styles.documentHeader}>
           <View style={{ flex: 1, marginRight: 8 }}>
             <Text style={styles.documentType}>{item.docType || 'Document'}</Text>
@@ -125,7 +125,7 @@ export default function DocumentVaultScreen() {
         {item.description && (
           <Text style={styles.documentDescription}>{item.description}</Text>
         )}
-      </View>
+      </GlassCard>
     );
   };
 
@@ -175,7 +175,6 @@ const useStyles = createThemedStyleSheet((T) => StyleSheet.create({
     padding: 12,
   },
   documentCard: {
-    ...createGlassCard(),
     padding: 16,
     marginBottom: 12,
     shadowColor: '#000',

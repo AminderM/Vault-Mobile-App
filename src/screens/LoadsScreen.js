@@ -10,7 +10,7 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { getLoads } from '../lib/api';
-import { BRAND, TYPOGRAPHY, SPACING, createGlassCard, useTheme, createThemedStyleSheet } from '../lib/theme';
+import { BRAND, TYPOGRAPHY, SPACING, StatusBorderCard, useTheme, createThemedStyleSheet } from '../lib/theme';
 
 const getStatusStyles = (T) => ({
   high: {
@@ -73,7 +73,7 @@ function LoadCard({ load, pulseType = 'avg', onViewRoute, onAccept }) {
   const STATUS_STYLES = getStatusStyles(T);
   const pulse = STATUS_STYLES[pulseType] || STATUS_STYLES.avg;
   return (
-    <View style={[styles.loadCard, { borderLeftColor: pulse.leftBorder }]}>
+    <StatusBorderCard borderColor={pulse.leftBorder} style={styles.loadCard}>
       {/* Load Header */}
       <View style={styles.loadCardHeader}>
         <View>
@@ -135,7 +135,7 @@ function LoadCard({ load, pulseType = 'avg', onViewRoute, onAccept }) {
           <Text style={styles.acceptBtnText}>ACCEPT LOAD</Text>
         </Pressable>
       </View>
-    </View>
+    </StatusBorderCard>
   );
 }
 
@@ -475,7 +475,6 @@ const useStyles = createThemedStyleSheet((T) => StyleSheet.create({
 
   // Load card
   loadCard: {
-    ...createGlassCard(),
     borderLeftWidth: 4,
     padding: SPACING.stackMd,
     gap: SPACING.stackMd,

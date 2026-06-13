@@ -13,7 +13,7 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import * as ImagePicker from 'expo-image-picker';
 import { scanIdentify, saveDocument } from '../lib/api';
-import { BRAND, TYPOGRAPHY, SPACING, createGlassCard, useTheme, createThemedStyleSheet } from '../lib/theme';
+import { BRAND, TYPOGRAPHY, SPACING, GlassCard, StatusBorderCard, createGlassCard, useTheme, createThemedStyleSheet } from '../lib/theme';
 
 const DOC_CATEGORIES = [
   { id: 'bol', label: 'Bill of Lading' },
@@ -179,37 +179,43 @@ export default function SmartScanScreen() {
         {/* Quick Actions */}
         <View style={styles.actionsGrid}>
           <Pressable
-            style={({ pressed }) => [styles.actionBtn, pressed && styles.pressed]}
+            style={({ pressed }) => [pressed && styles.pressed, { flex: 1 }]}
             onPress={handleTakePhoto}
             accessibilityRole="button"
             accessibilityLabel="Take photo"
           >
-            <Text style={styles.actionIcon}>📷</Text>
-            <Text style={styles.actionLabel}>TAKE PHOTO</Text>
+            <GlassCard style={styles.actionBtn}>
+              <Text style={styles.actionIcon}>📷</Text>
+              <Text style={styles.actionLabel}>TAKE PHOTO</Text>
+            </GlassCard>
           </Pressable>
           <Pressable
-            style={({ pressed }) => [styles.actionBtn, pressed && styles.pressed]}
+            style={({ pressed }) => [pressed && styles.pressed, { flex: 1 }]}
             onPress={handleGallery}
             accessibilityRole="button"
             accessibilityLabel="Pick from gallery"
           >
-            <Text style={styles.actionIcon}>🖼</Text>
-            <Text style={styles.actionLabel}>GALLERY</Text>
+            <GlassCard style={styles.actionBtn}>
+              <Text style={styles.actionIcon}>🖼</Text>
+              <Text style={styles.actionLabel}>GALLERY</Text>
+            </GlassCard>
           </Pressable>
           <Pressable
-            style={({ pressed }) => [styles.actionBtn, pressed && styles.pressed]}
+            style={({ pressed }) => [pressed && styles.pressed, { flex: 1 }]}
             onPress={handleUpload}
             accessibilityRole="button"
             accessibilityLabel="Upload file"
           >
-            <Text style={styles.actionIcon}>📤</Text>
-            <Text style={styles.actionLabel}>UPLOAD</Text>
+            <GlassCard style={styles.actionBtn}>
+              <Text style={styles.actionIcon}>📤</Text>
+              <Text style={styles.actionLabel}>UPLOAD</Text>
+            </GlassCard>
           </Pressable>
         </View>
 
         {/* Classification Result Panel */}
         {(scanState === SCAN_STATES.RESULT || scanState === SCAN_STATES.SAVING) && (
-          <View style={styles.resultPanel}>
+          <StatusBorderCard borderColor={BRAND.profitGreen} style={styles.resultPanel}>
             {/* Result header */}
             <View style={styles.resultHeader}>
               <Text style={styles.resultTitle}>Classification Result</Text>
@@ -296,7 +302,7 @@ export default function SmartScanScreen() {
                 : <Text style={styles.saveBtnText}>✓  SAVE TO VAULT</Text>
               }
             </Pressable>
-          </View>
+          </StatusBorderCard>
         )}
 
         {/* Compliance Banner */}
@@ -366,8 +372,8 @@ const useStyles = createThemedStyleSheet((T) => StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     gap: 6,
-    ...createGlassCard(),
     paddingVertical: SPACING.stackMd,
+    borderRadius: 8, // Square buttons with rounded edges (radius 8) as requested
   },
   actionIcon: { fontSize: 28 },
   actionLabel: { ...TYPOGRAPHY.labelData, color: T.text.primary },
@@ -376,9 +382,6 @@ const useStyles = createThemedStyleSheet((T) => StyleSheet.create({
   resultPanel: {
     marginHorizontal: SPACING.marginMobile,
     marginTop: SPACING.stackMd,
-    ...createGlassCard(),
-    borderLeftWidth: 4,
-    borderLeftColor: BRAND.profitGreen,
     overflow: 'hidden',
   },
   resultHeader: {

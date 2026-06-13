@@ -10,7 +10,7 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { getExpenses } from '../lib/api';
-import { BRAND, TYPOGRAPHY, SPACING, createGlassCard, useTheme, createThemedStyleSheet } from '../lib/theme';
+import { BRAND, TYPOGRAPHY, SPACING, GlassCard, StatusBorderCard, createGlassCard, useTheme, createThemedStyleSheet } from '../lib/theme';
 
 const TIME_PERIODS = [
   { id: 'week', label: 'THIS WEEK' },
@@ -38,13 +38,13 @@ function MetricCard({ label, value, change, borderColor, valueColor }) {
   const { t: T } = useTheme();
   const styles = useStyles();
   return (
-    <View style={[styles.metricCard, { borderLeftColor: borderColor }]}>
+    <StatusBorderCard borderColor={borderColor} style={styles.metricCard}>
       <Text style={styles.metricLabel}>{label}</Text>
       <Text style={[styles.metricValue, { color: valueColor || T.text.primary }]}>{value}</Text>
       {change ? (
         <Text style={[styles.metricChange, { color: valueColor || T.text.secondary }]}>{change}</Text>
       ) : null}
-    </View>
+    </StatusBorderCard>
   );
 }
 
@@ -84,7 +84,7 @@ function BarChart({ data }) {
 function ExpenseRow({ expense }) {
   const styles = useStyles();
   return (
-    <View style={styles.expenseRow}>
+    <GlassCard style={styles.expenseRow}>
       <View style={styles.expenseIcon}>
         <Text style={{ fontSize: 20 }}>🧾</Text>
       </View>
@@ -96,7 +96,7 @@ function ExpenseRow({ expense }) {
         <Text style={styles.expenseAmount}>{expense.amount.toFixed(2)}</Text>
         <Text style={styles.expenseCategory}>{expense.category}</Text>
       </View>
-    </View>
+    </GlassCard>
   );
 }
 
@@ -185,9 +185,9 @@ export default function ExpenseScreen() {
         </View>
 
         {/* Chart */}
-        <View style={styles.chartCard}>
+        <GlassCard style={styles.chartCard}>
           <BarChart data={CHART_DATA} />
-        </View>
+        </GlassCard>
 
         {/* Recent Expenses */}
         <View style={styles.sectionHeader}>
@@ -252,7 +252,6 @@ const useStyles = createThemedStyleSheet((T) => StyleSheet.create({
   },
   metricCard: {
     width: '47.5%',
-    ...createGlassCard(),
     borderLeftWidth: 4,
     padding: SPACING.stackMd,
     gap: 4,
@@ -285,7 +284,6 @@ const useStyles = createThemedStyleSheet((T) => StyleSheet.create({
   chartCard: {
     marginHorizontal: SPACING.marginMobile,
     marginBottom: SPACING.stackMd,
-    ...createGlassCard(),
     padding: SPACING.stackMd,
   },
   chartTitle: { ...TYPOGRAPHY.headlineSm, color: T.text.primary, marginBottom: 2 },
@@ -331,7 +329,6 @@ const useStyles = createThemedStyleSheet((T) => StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: SPACING.stackMd,
-    ...createGlassCard(),
     paddingHorizontal: SPACING.stackMd,
     height: 72,
   },

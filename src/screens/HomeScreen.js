@@ -9,7 +9,7 @@ import {
   Platform,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { BRAND, TYPOGRAPHY, SPACING, createGlassCard, createStatusBorderCard, useTheme, createThemedStyleSheet } from '../lib/theme';
+import { BRAND, TYPOGRAPHY, SPACING, GlassCard, StatusBorderCard, createGlassCard, createStatusBorderCard, useTheme, createThemedStyleSheet } from '../lib/theme';
 
 
 
@@ -44,7 +44,7 @@ export default function HomeScreen({ onNavigateToMarketplace, onNavigate }) {
         {/* ── Bento Stats Grid ── */}
         <View style={styles.bentoGrid}>
           {/* Greeting card – spans full width */}
-          <View style={[styles.greetingCard, createStatusBorderCard(T.primary)]}>
+          <StatusBorderCard borderColor={T.primary} style={styles.greetingCard}>
             <View>
               <Text style={styles.greetingText}>{getGreeting()}, Jazzie</Text>
               <View style={styles.locationRow}>
@@ -55,19 +55,19 @@ export default function HomeScreen({ onNavigateToMarketplace, onNavigate }) {
             <View style={styles.fuelBadge}>
               <Text style={styles.fuelBadgeText}>⛽  SHELL • 0.8 MI AWAY</Text>
             </View>
-          </View>
+          </StatusBorderCard>
 
           {/* Active Loads */}
-          <View style={[styles.statCard, createStatusBorderCard(T.secondary)]}>
+          <StatusBorderCard borderColor={T.secondary} style={styles.statCard}>
             <Text style={styles.statLabel}>ACTIVE LOADS</Text>
             <Text style={[styles.statNumber, { color: T.secondary }]}>08</Text>
-          </View>
+          </StatusBorderCard>
 
           {/* RPM Average */}
-          <View style={[styles.statCard, createStatusBorderCard(BRAND.hazardOrange)]}>
+          <StatusBorderCard borderColor={BRAND.hazardOrange} style={styles.statCard}>
             <Text style={styles.statLabel}>RPM AVG</Text>
             <Text style={[styles.statNumber, { color: T.text.primary }]}>$3.22</Text>
-          </View>
+          </StatusBorderCard>
         </View>
 
         {/* ── Quick Actions Grid ── */}
@@ -75,7 +75,7 @@ export default function HomeScreen({ onNavigateToMarketplace, onNavigate }) {
           {QUICK_ACTIONS.map((action) => (
             <Pressable
               key={action.id}
-              style={({ pressed }) => [styles.quickActionTile, pressed && styles.pressed]}
+              style={({ pressed }) => [pressed && styles.pressed, { width: '21.5%' }]}
               accessibilityRole="button"
               accessibilityLabel={action.label}
               onPress={() => {
@@ -87,10 +87,12 @@ export default function HomeScreen({ onNavigateToMarketplace, onNavigate }) {
                 }
               }}
             >
-              <View style={[styles.quickActionIcon, { backgroundColor: action.color + '33' }]}>
-                <Text style={styles.quickActionEmoji}>{action.icon}</Text>
-              </View>
-              <Text style={styles.quickActionLabel}>{action.label}</Text>
+              <GlassCard style={styles.quickActionTile}>
+                <View style={[styles.quickActionIcon, { backgroundColor: action.color + '33' }]}>
+                  <Text style={styles.quickActionEmoji}>{action.icon}</Text>
+                </View>
+                <Text style={styles.quickActionLabel}>{action.label}</Text>
+              </GlassCard>
             </Pressable>
           ))}
         </View>
@@ -107,7 +109,7 @@ export default function HomeScreen({ onNavigateToMarketplace, onNavigate }) {
           </Pressable>
         </View>
 
-        <View style={[styles.loadCard, createStatusBorderCard(T.primary)]}>
+        <StatusBorderCard borderColor={T.primary} style={styles.loadCard}>
           <Pressable onPress={onNavigateToMarketplace} style={{ gap: 12 }}>
             {/* Status badge */}
             <View style={styles.inTransitBadge}>
@@ -187,7 +189,7 @@ export default function HomeScreen({ onNavigateToMarketplace, onNavigate }) {
               <Text style={styles.viewRouteBtnText}>🗺️  VIEW ROUTE</Text>
             </Pressable>
           </View>
-        </View>
+        </StatusBorderCard>
       </ScrollView>
     </SafeAreaView>
   );
@@ -241,8 +243,6 @@ const useStyles = createThemedStyleSheet((T) => StyleSheet.create({
     gap: SPACING.gutter,
   },
   quickActionTile: {
-    width: '21.5%',
-    ...createGlassCard(),
     borderColor: BRAND.crimsonRed + '80',
     borderWidth: 1.5,
     padding: SPACING.stackMd,

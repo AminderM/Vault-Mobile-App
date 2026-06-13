@@ -18,7 +18,7 @@ import HomeScreen from '@/screens/HomeScreen';
 import LoadsScreen from '@/screens/LoadsScreen';
 import SmartScanScreen from '@/screens/SmartScanScreen';
 import SplashScreen from '@/screens/SplashScreen';
-import { BRAND, useTheme, toggleTheme } from '@/lib/theme';
+import { BRAND, useTheme, toggleTheme, StatusBorderCard } from '@/lib/theme';
 import { saveDocument } from '../lib/api';
 
 type TabName = 'loads' | 'vault' | 'scan' | 'finance' | 'tools';
@@ -870,25 +870,25 @@ export default function AppTabs() {
             <Pressable
               key={tool.id}
               style={({ pressed }) => [
-                styles.toolCard,
-                { 
-                  backgroundColor: T.background.card, 
-                  borderColor: T.border.variant,
-                  borderLeftColor: BRAND.crimsonRed,
-                },
-                pressed && { opacity: 0.8 },
+                { width: '48%', marginBottom: 4 },
+                pressed && { opacity: 0.8 }
               ]}
               onPress={tool.action}
               accessibilityRole="button"
               accessibilityLabel={`Open ${tool.title}`}
             >
-              <View style={[styles.toolIconBox, { backgroundColor: themeMode === 'dark' ? '#2A2A2F' : '#EAEAEF' }]}>
-                {tool.icon}
-              </View>
-              <View style={{ flex: 1, justifyContent: 'flex-end' }}>
-                <Text style={[styles.toolTitle, { color: T.text.primary }]}>{tool.title}</Text>
-                <Text style={[styles.toolDesc, { color: T.text.muted, marginTop: 4 }]} numberOfLines={2}>{tool.desc}</Text>
-              </View>
+              <StatusBorderCard
+                borderColor={BRAND.crimsonRed}
+                style={[styles.toolCard, { width: '100%', marginBottom: 0, borderRadius: 8 }]}
+              >
+                <View style={[styles.toolIconBox, { backgroundColor: themeMode === 'dark' ? '#2A2A2F' : '#EAEAEF' }]}>
+                  {tool.icon}
+                </View>
+                <View style={{ flex: 1, justifyContent: 'flex-end' }}>
+                  <Text style={[styles.toolTitle, { color: T.text.primary }]}>{tool.title}</Text>
+                  <Text style={[styles.toolDesc, { color: T.text.muted, marginTop: 4 }]} numberOfLines={2}>{tool.desc}</Text>
+                </View>
+              </StatusBorderCard>
             </Pressable>
           ))}
         </View>
@@ -1229,26 +1229,39 @@ export default function AppTabs() {
         pointerEvents="none"
         style={{
           position: 'absolute',
-          top: '10%',
-          right: '-20%',
-          width: 320,
-          height: 320,
-          borderRadius: 160,
-          backgroundColor: themeMode === 'dark' ? 'rgba(158, 21, 32, 0.15)' : 'rgba(158, 21, 32, 0.08)',
-          ...(Platform.OS === 'web' && { filter: 'blur(80px)' }),
+          top: '5%',
+          right: '-25%',
+          width: 360,
+          height: 360,
+          borderRadius: 180,
+          backgroundColor: themeMode === 'dark' ? 'rgba(158, 21, 32, 0.38)' : 'rgba(158, 21, 32, 0.16)',
+          ...(Platform.OS === 'web' && { filter: 'blur(90px)' }),
         }} 
       />
       <View 
         pointerEvents="none"
         style={{
           position: 'absolute',
-          bottom: '20%',
-          left: '-20%',
-          width: 380,
-          height: 380,
-          borderRadius: 190,
-          backgroundColor: themeMode === 'dark' ? 'rgba(62, 144, 255, 0.12)' : 'rgba(62, 144, 255, 0.06)',
-          ...(Platform.OS === 'web' && { filter: 'blur(80px)' }),
+          top: '40%',
+          left: '-30%',
+          width: 350,
+          height: 350,
+          borderRadius: 175,
+          backgroundColor: themeMode === 'dark' ? 'rgba(48, 176, 192, 0.22)' : 'rgba(48, 176, 192, 0.10)',
+          ...(Platform.OS === 'web' && { filter: 'blur(90px)' }),
+        }} 
+      />
+      <View 
+        pointerEvents="none"
+        style={{
+          position: 'absolute',
+          bottom: '15%',
+          right: '-10%',
+          width: 400,
+          height: 400,
+          borderRadius: 200,
+          backgroundColor: themeMode === 'dark' ? 'rgba(62, 144, 255, 0.32)' : 'rgba(62, 144, 255, 0.14)',
+          ...(Platform.OS === 'web' && { filter: 'blur(100px)' }),
         }} 
       />
 
