@@ -42,7 +42,7 @@ export const DARK_THEME = {
     base: '#0d0404',        // deepest background (obsidian crimson)
     dark: '#050202',        // pure obsidian dark
     surface: '#0d0404',     // main content surface
-    card: 'rgba(30, 20, 20, 0.55)',        // glass cards
+    card: 'rgba(255, 255, 255, 0.07)',        // premium glass cards
     container: '#1c1010',   // container bg
     containerLow: '#170c0c',
     containerHigh: '#271616',
@@ -107,7 +107,7 @@ export const LIGHT_THEME = {
     base: '#fdf8f8',        // light grey-red tint
     dark: '#ffffff',        // pure white
     surface: '#fff8f7',     // main content surface
-    card: 'rgba(255, 255, 255, 0.65)',        // clean white cards
+    card: 'rgba(255, 255, 255, 0.35)',        // premium frosted glass cards
     container: '#f4dddc',   // container bg
     containerLow: '#fae3e2',
     containerHigh: '#eed2d1',

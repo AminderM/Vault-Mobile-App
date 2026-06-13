@@ -85,7 +85,7 @@ export default function SplashScreen({ onGetStarted }) {
 const useStyles = createThemedStyleSheet((T) => StyleSheet.create({
   safe: {
     flex: 1,
-    backgroundColor: T.background.base,
+    backgroundColor: 'transparent',
   },
   topAccent: {
     position: 'absolute',

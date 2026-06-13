@@ -1,7 +1,138 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
+// ============== CONFIGURATION ==============
+
 const API_BASE = 'https://api.staging.integratedtech.ca';
+const AUTH_TOKEN_KEY = 'auth_token';
+const AUTH_USER_KEY = 'auth_user';
 const LOCAL_DOCS_KEY = 'vault_local_documents';
+
+// ============== AUTH TOKEN HELPERS ==============
+
+export async function getAuthToken() {
+  try {
+    return await AsyncStorage.getItem(AUTH_TOKEN_KEY);
+  } catch {
+    return null;
+  }
+}
+
+export async function getAuthUser() {
+  try {
+    const val = await AsyncStorage.getItem(AUTH_USER_KEY);
+    return val ? JSON.parse(val) : null;
+  } catch {
+    return null;
+  }
+}
+
+async function authHeaders() {
+  const token = await getAuthToken();
+  const headers = { 'Content-Type': 'application/json' };
+  if (token) {
+    headers['Authorization'] = `Bearer ${token}`;
+  }
+  return headers;
+}
+
+async function authHeadersNoContentType() {
+  const token = await getAuthToken();
+  const headers = {};
+  if (token) {
+    headers['Authorization'] = `Bearer ${token}`;
+  }
+  return headers;
+}
+
+// ============== AUTH ENDPOINTS ==============
+
+export async function login(email, password, api = API_BASE) {
+  const res = await fetch(`${api}/api/driver-mobile/login`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ email, password }),
+  });
+
+  if (!res.ok) {
+    const status = res.status;
+    if (status === 401) {
+      const data = await res.json().catch(() => ({}));
+      throw new Error(data.detail || 'Invalid email or password');
+    }
+    if (status === 403) throw new Error('Account is deactivated');
+    throw new Error('Login failed');
+  }
+
+  const data = await res.json();
+  const token = data.token || data.access_token;
+  if (token) {
+    await AsyncStorage.setItem(AUTH_TOKEN_KEY, token);
+  }
+  if (data.user) {
+    await AsyncStorage.setItem(AUTH_USER_KEY, JSON.stringify(data.user));
+  }
+  return data;
+}
+
+export async function signup(token, phone, password, api = API_BASE) {
+  const res = await fetch(`${api}/api/driver-mobile/signup`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ token, phone, password }),
+  });
+
+  if (!res.ok) {
+    const data = await res.json().catch(() => ({}));
+    throw new Error(data.detail || 'Signup failed');
+  }
+
+  return res.json();
+}
+
+export async function signupOpen(payload, api = API_BASE) {
+  const res = await fetch(`${api}/api/driver-mobile/signup/open`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(payload),
+  });
+
+  if (!res.ok) {
+    const data = await res.json().catch(() => ({}));
+    throw new Error(data.detail || 'Signup failed');
+  }
+
+  const data = await res.json();
+  const authToken = data.token || data.access_token;
+  if (authToken) {
+    await AsyncStorage.setItem(AUTH_TOKEN_KEY, authToken);
+  }
+  if (data.user) {
+    await AsyncStorage.setItem(AUTH_USER_KEY, JSON.stringify(data.user));
+  }
+  return data;
+}
+
+export async function logout() {
+  await AsyncStorage.multiRemove([AUTH_TOKEN_KEY, AUTH_USER_KEY]);
+}
+
+export async function isAuthenticated() {
+  const token = await getAuthToken();
+  return !!token;
+}
+
+export async function getMe(api = API_BASE) {
+  const headers = await authHeaders();
+  const res = await fetch(`${api}/api/driver-mobile/me`, {
+    method: 'GET',
+    headers,
+  });
+
+  if (!res.ok) throw new Error('Failed to fetch profile');
+  return res.json();
+}
+
+// ============== LOCAL DOCUMENT CACHE ==============
 
 async function getLocalDocuments() {
   try {
@@ -21,12 +152,16 @@ async function saveLocalDocuments(docs) {
   }
 }
 
+// ============== DOCUMENT SCANNING ==============
+
 export async function scanRateCon(file, api = API_BASE) {
   const formData = new FormData();
   formData.append('file', file);
 
+  const headers = await authHeadersNoContentType();
   const res = await fetch(`${api}/api/driver-mobile/rate-con/parse`, {
     method: 'POST',
+    headers,
     body: formData,
   });
 
@@ -46,8 +181,10 @@ export async function scanReceipt(file, api = API_BASE) {
   const formData = new FormData();
   formData.append('file', file);
 
+  const headers = await authHeadersNoContentType();
   const res = await fetch(`${api}/api/driver-mobile/receipt/parse`, {
     method: 'POST',
+    headers,
     body: formData,
   });
 
@@ -67,8 +204,10 @@ export async function scanIdentify(file, api = API_BASE) {
   const formData = new FormData();
   formData.append('file', file);
 
+  const headers = await authHeadersNoContentType();
   const res = await fetch(`${api}/api/driver-mobile/scan/identify`, {
     method: 'POST',
+    headers,
     body: formData,
   });
 
@@ -84,15 +223,23 @@ export async function scanIdentify(file, api = API_BASE) {
   return res.json();
 }
 
+// ============== VAULT DOCUMENTS ==============
+// Backend path: /api/driver-mobile/vault/documents
+
 export async function getDocument(docId, api = API_BASE) {
+  // The backend doesn't have a single-doc GET on vault,
+  // so we fetch the list and find by ID, falling back to local cache.
   try {
-    const res = await fetch(`${api}/api/documents/${docId}`, {
+    const headers = await authHeaders();
+    const res = await fetch(`${api}/api/driver-mobile/vault/documents`, {
       method: 'GET',
-      headers: { 'Content-Type': 'application/json' },
+      headers,
     });
 
     if (res.ok) {
-      return await res.json();
+      const docs = await res.json();
+      const found = docs.find(d => d.id === docId);
+      if (found) return found;
     }
   } catch (err) {
     console.warn('Failed to fetch document from server, checking local cache', err);
@@ -106,10 +253,27 @@ export async function getDocument(docId, api = API_BASE) {
 
 export async function saveDocument(data, api = API_BASE) {
   try {
-    const res = await fetch(`${api}/api/documents`, {
+    // Backend expects multipart/form-data with specific fields
+    const formData = new FormData();
+    formData.append('doc_type', data.docType || data.doc_type || 'other');
+    if (data.label || data.description) {
+      formData.append('label', data.label || data.description || '');
+    }
+    if (data.expiryDate || data.expiry_date) {
+      formData.append('expiry_date', data.expiryDate || data.expiry_date);
+    }
+    if (data.notes) {
+      formData.append('notes', data.notes);
+    }
+    if (data.file) {
+      formData.append('file', data.file);
+    }
+
+    const headers = await authHeadersNoContentType();
+    const res = await fetch(`${api}/api/driver-mobile/vault/documents`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(data),
+      headers,
+      body: formData,
     });
 
     if (res.ok) {
@@ -130,9 +294,15 @@ export async function saveDocument(data, api = API_BASE) {
   const localDocs = await getLocalDocuments();
   const fallbackDoc = {
     id: data.id || `doc_local_${Date.now()}`,
-    docType: data.docType || 'Other',
-    expiryDate: data.expiryDate || null,
-    description: data.description || '',
+    doc_type: data.docType || data.doc_type || 'other',
+    label: data.label || data.description || '',
+    expiry_date: data.expiryDate || data.expiry_date || null,
+    notes: data.notes || '',
+    created_at: data.uploadedAt || new Date().toISOString(),
+    // Keep backward compat fields for screens that read these
+    docType: data.docType || data.doc_type || 'other',
+    description: data.description || data.label || '',
+    expiryDate: data.expiryDate || data.expiry_date || null,
     uploadedAt: data.uploadedAt || new Date().toISOString(),
     status: 'active',
   };
@@ -142,28 +312,8 @@ export async function saveDocument(data, api = API_BASE) {
 }
 
 export async function updateDocument(docId, data, api = API_BASE) {
-  try {
-    const res = await fetch(`${api}/api/documents/${docId}`, {
-      method: 'PUT',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(data),
-    });
-
-    if (res.ok) {
-      const updated = await res.json();
-      const localDocs = await getLocalDocuments();
-      const idx = localDocs.findIndex(d => d.id === docId);
-      if (idx !== -1) {
-        localDocs[idx] = { ...localDocs[idx], ...updated };
-        await saveLocalDocuments(localDocs);
-      }
-      return updated;
-    }
-  } catch (err) {
-    console.warn('Failed to update document on server, updating locally', err);
-  }
-
-  // Fallback: update locally
+  // The backend vault doesn't have a PUT/PATCH endpoint.
+  // Update locally only.
   const localDocs = await getLocalDocuments();
   const idx = localDocs.findIndex(d => d.id === docId);
   if (idx === -1) throw new Error('Document not found locally');
@@ -175,8 +325,10 @@ export async function updateDocument(docId, data, api = API_BASE) {
 
 export async function deleteDocument(docId, api = API_BASE) {
   try {
-    await fetch(`${api}/api/documents/${docId}`, {
+    const headers = await authHeaders();
+    await fetch(`${api}/api/driver-mobile/vault/documents/${docId}`, {
       method: 'DELETE',
+      headers,
     });
     // Even if server returns 404 or fails, we proceed with local delete
   } catch (err) {
@@ -192,18 +344,19 @@ export async function deleteDocument(docId, api = API_BASE) {
 
 export async function listDocuments(api = API_BASE) {
   try {
-    const res = await fetch(`${api}/api/documents`, {
+    const headers = await authHeaders();
+    const res = await fetch(`${api}/api/driver-mobile/vault/documents`, {
       method: 'GET',
-      headers: { 'Content-Type': 'application/json' },
+      headers,
     });
 
     if (res.ok) {
-      const resData = await res.json();
-      // Handle both flat array and { documents: [...] } object
-      const serverDocs = Array.isArray(resData) ? resData : (resData && Array.isArray(resData.documents) ? resData.documents : []);
-      
+      const serverDocs = await res.json();
+      // Backend returns a flat array of vault documents
+      const docs = Array.isArray(serverDocs) ? serverDocs : [];
+
       const localDocs = await getLocalDocuments();
-      const merged = [...serverDocs];
+      const merged = [...docs];
       for (const local of localDocs) {
         if (!merged.some(d => d.id === local.id)) {
           merged.unshift(local); // Place local items at the top
@@ -219,6 +372,9 @@ export async function listDocuments(api = API_BASE) {
   return await getLocalDocuments();
 }
 
+// ============== EXPENSES ==============
+// Backend path: /api/driver-mobile/expenses
+
 export async function getExpenses(filters = {}, api = API_BASE) {
   const params = new URLSearchParams();
 
@@ -231,19 +387,23 @@ export async function getExpenses(filters = {}, api = API_BASE) {
     ? `${api}/api/driver-mobile/expenses?${queryString}`
     : `${api}/api/driver-mobile/expenses`;
 
+  const headers = await authHeaders();
   const res = await fetch(url, {
     method: 'GET',
-    headers: { 'Content-Type': 'application/json' },
+    headers,
   });
 
   if (!res.ok) throw new Error('Failed to fetch expenses');
-  return res.json();
+  // Backend returns a flat array, normalize for compatibility
+  const data = await res.json();
+  return Array.isArray(data) ? data : (data.expenses || []);
 }
 
 export async function createExpense(expenseData, api = API_BASE) {
+  const headers = await authHeaders();
   const res = await fetch(`${api}/api/driver-mobile/expenses`, {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
+    headers,
     body: JSON.stringify(expenseData),
   });
 
@@ -251,32 +411,48 @@ export async function createExpense(expenseData, api = API_BASE) {
   return res.json();
 }
 
+export async function updateExpense(expenseId, expenseData, api = API_BASE) {
+  const headers = await authHeaders();
+  const res = await fetch(`${api}/api/driver-mobile/expenses/${expenseId}`, {
+    method: 'PUT',
+    headers,
+    body: JSON.stringify(expenseData),
+  });
+
+  if (!res.ok) throw new Error('Failed to update expense');
+  return res.json();
+}
+
 export async function deleteExpense(expenseId, api = API_BASE) {
+  const headers = await authHeaders();
   const res = await fetch(`${api}/api/driver-mobile/expenses/${expenseId}`, {
     method: 'DELETE',
-    headers: { 'Content-Type': 'application/json' },
+    headers,
   });
 
   if (!res.ok) throw new Error('Failed to delete expense');
-  return res.json();
+  // Backend returns 204 No Content — don't try to parse JSON
+  return { id: expenseId, status: 'deleted' };
 }
+
+// ============== LOADS (MY-LOADS for CRUD, /loads for TMS read) ==============
 
 export async function getLoads(filters = {}, api = API_BASE) {
   const params = new URLSearchParams();
 
   if (filters.status) params.append('status', filters.status);
-  if (filters.startDate) params.append('startDate', filters.startDate);
-  if (filters.endDate) params.append('endDate', filters.endDate);
-  if (filters.carrier) params.append('carrier', filters.carrier);
+  // Note: the backend /my-loads only supports ?status= filter
+  // Date/carrier filters are not supported on /my-loads
 
   const queryString = params.toString();
   const url = queryString
-    ? `${api}/api/driver-mobile/loads?${queryString}`
-    : `${api}/api/driver-mobile/loads`;
+    ? `${api}/api/driver-mobile/my-loads?${queryString}`
+    : `${api}/api/driver-mobile/my-loads`;
 
+  const headers = await authHeaders();
   const res = await fetch(url, {
     method: 'GET',
-    headers: { 'Content-Type': 'application/json' },
+    headers,
   });
 
   if (!res.ok) throw new Error('Failed to fetch loads');
@@ -284,19 +460,30 @@ export async function getLoads(filters = {}, api = API_BASE) {
 }
 
 export async function getLoad(loadId, api = API_BASE) {
-  const res = await fetch(`${api}/api/driver-mobile/loads/${loadId}`, {
-    method: 'GET',
-    headers: { 'Content-Type': 'application/json' },
-  });
+  // Try TMS loads first (has single-load GET), fallback to finding in my-loads
+  const headers = await authHeaders();
+  try {
+    const res = await fetch(`${api}/api/driver-mobile/loads/${loadId}`, {
+      method: 'GET',
+      headers,
+    });
+    if (res.ok) return res.json();
+  } catch {
+    // Fall through
+  }
 
-  if (!res.ok) throw new Error('Failed to fetch load');
-  return res.json();
+  // Fallback: fetch from my-loads list and find by ID
+  const loads = await getLoads({}, api);
+  const found = Array.isArray(loads) ? loads.find(l => l.id === loadId) : null;
+  if (!found) throw new Error('Load not found');
+  return found;
 }
 
 export async function createLoad(loadData, api = API_BASE) {
-  const res = await fetch(`${api}/api/driver-mobile/loads`, {
+  const headers = await authHeaders();
+  const res = await fetch(`${api}/api/driver-mobile/my-loads`, {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
+    headers,
     body: JSON.stringify(loadData),
   });
 
@@ -305,9 +492,10 @@ export async function createLoad(loadData, api = API_BASE) {
 }
 
 export async function updateLoad(loadId, loadData, api = API_BASE) {
-  const res = await fetch(`${api}/api/driver-mobile/loads/${loadId}`, {
-    method: 'PUT',
-    headers: { 'Content-Type': 'application/json' },
+  const headers = await authHeaders();
+  const res = await fetch(`${api}/api/driver-mobile/my-loads/${loadId}`, {
+    method: 'PATCH',
+    headers,
     body: JSON.stringify(loadData),
   });
 
@@ -316,14 +504,28 @@ export async function updateLoad(loadId, loadData, api = API_BASE) {
 }
 
 export async function deleteLoad(loadId, api = API_BASE) {
-  const res = await fetch(`${api}/api/driver-mobile/loads/${loadId}`, {
+  const headers = await authHeaders();
+  const res = await fetch(`${api}/api/driver-mobile/my-loads/${loadId}`, {
     method: 'DELETE',
-    headers: { 'Content-Type': 'application/json' },
+    headers,
   });
 
   if (!res.ok) throw new Error('Failed to delete load');
   return res.json();
 }
+
+export async function getLoadHistory(api = API_BASE) {
+  const headers = await authHeaders();
+  const res = await fetch(`${api}/api/driver-mobile/my-loads/history`, {
+    method: 'GET',
+    headers,
+  });
+
+  if (!res.ok) throw new Error('Failed to fetch load history');
+  return res.json();
+}
+
+// ============== FILE UPLOAD ==============
 
 export async function uploadFileToVault(fileData, api = API_BASE) {
   const formData = new FormData();
@@ -332,16 +534,21 @@ export async function uploadFileToVault(fileData, api = API_BASE) {
     type: fileData.file.type,
     name: fileData.file.name,
   });
-  formData.append('category', fileData.category);
+  formData.append('doc_type', fileData.category || 'other');
+  if (fileData.label) {
+    formData.append('label', fileData.label);
+  }
   if (fileData.expiryDate) {
-    formData.append('expiryDate', fileData.expiryDate);
+    formData.append('expiry_date', fileData.expiryDate);
   }
   if (fileData.notes) {
     formData.append('notes', fileData.notes);
   }
 
-  const res = await fetch(`${api}/api/documents/upload`, {
+  const headers = await authHeadersNoContentType();
+  const res = await fetch(`${api}/api/driver-mobile/vault/documents`, {
     method: 'POST',
+    headers,
     body: formData,
   });
 

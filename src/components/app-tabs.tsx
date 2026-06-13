@@ -18,8 +18,9 @@ import HomeScreen from '@/screens/HomeScreen';
 import LoadsScreen from '@/screens/LoadsScreen';
 import SmartScanScreen from '@/screens/SmartScanScreen';
 import SplashScreen from '@/screens/SplashScreen';
+import LoginScreen from '@/screens/LoginScreen';
 import { BRAND, useTheme, toggleTheme, StatusBorderCard } from '@/lib/theme';
-import { saveDocument } from '../lib/api';
+import { saveDocument, logout, isAuthenticated, getAuthUser } from '../lib/api';
 
 type TabName = 'loads' | 'vault' | 'scan' | 'finance' | 'tools';
 
@@ -637,7 +638,9 @@ const generateCarrierProfilePDF = (profile: {
 
 export default function AppTabs() {
   const insets = useSafeAreaInsets();
-  const [showSplash, setShowSplash] = useState(true);
+  // Auth flow state: 'splash' → 'login' → 'app'
+  const [appState, setAppState] = useState<'splash' | 'login' | 'app'>('splash');
+  const [authUser, setAuthUser] = useState<any>(null);
   const [activeTab, setActiveTab] = useState<TabName>('loads');
   const [activeToolView, setActiveToolView] = useState<'hub' | 'calculator' | 'invoices' | 'loads'>('hub');
   const [homeScreenView, setHomeScreenView] = useState<'home' | 'marketplace'>('home');
@@ -656,6 +659,23 @@ export default function AppTabs() {
     nsc: false,
     ifta: true,
   });
+
+  // Check for existing auth token on mount
+  React.useEffect(() => {
+    const checkAuth = async () => {
+      try {
+        const hasAuth = await isAuthenticated();
+        if (hasAuth) {
+          const user = await getAuthUser();
+          setAuthUser(user);
+          setAppState('app');
+        }
+      } catch {
+        // No stored token — stay on splash
+      }
+    };
+    checkAuth();
+  }, []);
 
   // Load from AsyncStorage
   React.useEffect(() => {
@@ -702,6 +722,42 @@ export default function AppTabs() {
   };
 
   const renderScreen = () => {
+    if (appState === 'splash') {
+      return <SplashScreen onGetStarted={() => setAppState('login')} />;
+    }
+
+    if (appState === 'login') {
+      return (
+        <LoginScreen
+          onLoginSuccess={(result: any) => {
+            setAuthUser(result?.user || null);
+            // Populate profile from server user data
+            if (result?.user) {
+              const u = result.user;
+              if (u.full_name) {
+                setProfileName(u.full_name);
+                AsyncStorage.setItem('profile_name', u.full_name).catch(() => {});
+              }
+              if (u.company_name) {
+                setProfileCompany(u.company_name);
+                AsyncStorage.setItem('profile_company', u.company_name).catch(() => {});
+              }
+            }
+            setAppState('app');
+          }}
+          onSwitchToSignup={() => {
+            // For now, show alert — signup form is Phase 2
+            if (Platform.OS === 'web') {
+              alert('Sign up is currently available by invite only. Contact your fleet administrator.');
+            } else {
+              Alert.alert('Sign Up', 'Sign up is currently available by invite only. Contact your fleet administrator.');
+            }
+          }}
+          onBack={() => setAppState('splash')}
+        />
+      );
+    }
+
     switch (activeTab) {
       case 'loads':
         return (
@@ -1206,21 +1262,31 @@ export default function AppTabs() {
               >
                 <Text style={styles.saveToVaultBtnText}>📄 GENERATE CARRIER PROFILE PDF</Text>
               </Pressable>
+
+              {/* Sign Out Button */}
+              <Pressable
+                style={({ pressed }) => [
+                  styles.saveToVaultBtn,
+                  { backgroundColor: 'rgba(158, 21, 32, 0.15)', borderWidth: 1.5, borderColor: BRAND.crimsonRed, marginTop: 8 },
+                  pressed && { opacity: 0.8 }
+                ]}
+                onPress={async () => {
+                  await logout();
+                  setAuthUser(null);
+                  setShowProfile(false);
+                  setAppState('splash');
+                }}
+                accessibilityRole="button"
+                accessibilityLabel="Sign out of account"
+              >
+                <Text style={[styles.saveToVaultBtnText, { color: BRAND.crimsonRed }]}>⏻ SIGN OUT</Text>
+              </Pressable>
             </View>
           </ScrollView>
         </View>
       </View>
     );
   };
-
-  if (showSplash) {
-    return (
-      <View style={styles.flex1}>
-        <SplashScreen onGetStarted={() => setShowSplash(false)} />
-        {renderThemeToggle()}
-      </View>
-    );
-  }
 
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: T.background.base, overflow: 'hidden' }]} edges={['bottom']}>
@@ -1234,7 +1300,7 @@ export default function AppTabs() {
           width: 360,
           height: 360,
           borderRadius: 180,
-          backgroundColor: themeMode === 'dark' ? 'rgba(158, 21, 32, 0.38)' : 'rgba(158, 21, 32, 0.16)',
+          backgroundColor: themeMode === 'dark' ? 'rgba(158, 21, 32, 0.38)' : 'rgba(190, 26, 40, 0.28)',
           ...(Platform.OS === 'web' && { filter: 'blur(90px)' }),
         }} 
       />
@@ -1247,7 +1313,7 @@ export default function AppTabs() {
           width: 350,
           height: 350,
           borderRadius: 175,
-          backgroundColor: themeMode === 'dark' ? 'rgba(48, 176, 192, 0.22)' : 'rgba(48, 176, 192, 0.10)',
+          backgroundColor: themeMode === 'dark' ? 'rgba(48, 176, 192, 0.22)' : 'rgba(48, 176, 192, 0.22)',
           ...(Platform.OS === 'web' && { filter: 'blur(90px)' }),
         }} 
       />
@@ -1260,16 +1326,22 @@ export default function AppTabs() {
           width: 400,
           height: 400,
           borderRadius: 200,
-          backgroundColor: themeMode === 'dark' ? 'rgba(62, 144, 255, 0.32)' : 'rgba(62, 144, 255, 0.14)',
+          backgroundColor: themeMode === 'dark' ? 'rgba(62, 144, 255, 0.32)' : 'rgba(62, 144, 255, 0.24)',
           ...(Platform.OS === 'web' && { filter: 'blur(100px)' }),
         }} 
       />
 
       <View style={[styles.content, { backgroundColor: 'transparent' }]}>{renderScreen()}</View>
 
-      {shouldHideFloatingButtons() ? null : renderThemeToggle()}
-      {shouldHideFloatingButtons() ? null : renderProfileButton()}
-      {renderProfileScreen()}
+      {appState === 'app' ? (
+        <>
+          {shouldHideFloatingButtons() ? null : renderThemeToggle()}
+          {shouldHideFloatingButtons() ? null : renderProfileButton()}
+          {renderProfileScreen()}
+        </>
+      ) : (
+        renderThemeToggle()
+      )}
 
       <View style={[styles.tabBar, { backgroundColor: T.background.dark, borderTopColor: T.border.variant }]}>
         {tabs.map((tab) => {
