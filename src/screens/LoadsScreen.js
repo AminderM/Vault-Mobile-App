@@ -40,6 +40,7 @@ const getStatusStyles = (T) => ({
 });
 
 const TABS = [
+  { id: 'marketplace', label: 'Market Place' },
   { id: 'available', label: 'Available' },
   { id: 'active', label: 'Active' },
   { id: 'history', label: 'History' },
@@ -175,10 +176,10 @@ const DEMO_LOADS = [
   },
 ];
 
-export default function LoadsScreen() {
+export default function LoadsScreen({ onBackToHome, onOpenProfile }) {
   const [loads, setLoads] = useState(DEMO_LOADS);
   const [loading, setLoading] = useState(false);
-  const [activeTab, setActiveTab] = useState('available');
+  const [activeTab, setActiveTab] = useState('marketplace');
   const { t: T } = useTheme();
   const styles = useStyles();
 
@@ -186,7 +187,7 @@ export default function LoadsScreen() {
     const loadLoads = async () => {
       try {
         setLoading(true);
-        const filters = activeTab !== 'available' ? { status: activeTab } : {};
+        const filters = activeTab !== 'marketplace' && activeTab !== 'available' ? { status: activeTab } : {};
         const data = await getLoads(filters);
         if (data.loads && data.loads.length > 0) {
           const mapped = data.loads.map((l, i) => ({
@@ -197,12 +198,24 @@ export default function LoadsScreen() {
               : '$3.22',
             pulseType: i % 3 === 0 ? 'high' : i % 3 === 1 ? 'hazmat' : 'avg',
           }));
-          setLoads(mapped);
+          if (activeTab === 'marketplace') {
+            setLoads(mapped.filter(l => l.pulseType === 'high' || l.pulseType === 'hazmat'));
+          } else {
+            setLoads(mapped);
+          }
+        } else {
+          if (activeTab === 'marketplace') {
+            setLoads(DEMO_LOADS.filter(l => l.pulseType === 'high' || l.pulseType === 'hazmat'));
+          } else {
+            setLoads(DEMO_LOADS);
+          }
+        }
+      } catch {
+        if (activeTab === 'marketplace') {
+          setLoads(DEMO_LOADS.filter(l => l.pulseType === 'high' || l.pulseType === 'hazmat'));
         } else {
           setLoads(DEMO_LOADS);
         }
-      } catch {
-        setLoads(DEMO_LOADS);
       } finally {
         setLoading(false);
       }
@@ -224,6 +237,44 @@ export default function LoadsScreen() {
 
   return (
     <SafeAreaView style={styles.safe} edges={['top']}>
+      {/* Top Header Bar */}
+      <View style={styles.topHeader}>
+        <View style={styles.headerLeft}>
+          {onBackToHome ? (
+            <Pressable 
+              style={({ pressed }) => [styles.headerBtn, pressed && styles.pressed]}
+              onPress={onBackToHome}
+              accessibilityRole="button"
+              accessibilityLabel="Back to Home"
+            >
+              <Text style={styles.headerIconText}>←</Text>
+            </Pressable>
+          ) : (
+            <Pressable style={({ pressed }) => [styles.headerBtn, pressed && styles.pressed]}>
+              <Text style={styles.headerIconText}>☰</Text>
+            </Pressable>
+          )}
+          <View style={styles.logoBadge}>
+            <Text style={{ fontSize: 16 }}>🛡️</Text>
+          </View>
+        </View>
+        <View style={styles.headerRight}>
+          <Pressable style={({ pressed }) => [styles.headerBtn, pressed && styles.pressed]}>
+            <Text style={styles.headerIconText}>🔍</Text>
+          </Pressable>
+          <Pressable 
+            style={styles.avatarBtn}
+            onPress={() => onOpenProfile && onOpenProfile()}
+            accessibilityRole="button"
+            accessibilityLabel="Open Profile"
+          >
+            <View style={styles.avatarCircle}>
+              <Text style={styles.avatarText}>👤</Text>
+            </View>
+          </Pressable>
+        </View>
+      </View>
+
       <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
         {/* Segmented Tabs */}
         <View style={styles.tabBar}>
@@ -272,6 +323,18 @@ export default function LoadsScreen() {
           </View>
         )}
       </ScrollView>
+
+      {/* Floating Action Map Button */}
+      <Pressable
+        style={({ pressed }) => [styles.fabMap, pressed && styles.pressed]}
+        onPress={() => {
+          Alert.alert("Map View", "Loading interactive loads route map...");
+        }}
+        accessibilityRole="button"
+        accessibilityLabel="Show Map"
+      >
+        <Text style={styles.fabMapText}>🗺️</Text>
+      </Pressable>
     </SafeAreaView>
   );
 }
@@ -279,6 +342,87 @@ export default function LoadsScreen() {
 const useStyles = createThemedStyleSheet((T) => StyleSheet.create({
   safe: { flex: 1, backgroundColor: T.background.base },
   container: { flex: 1, backgroundColor: T.background.base },
+
+  topHeader: {
+    height: 56,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    backgroundColor: T.background.dark,
+    borderBottomWidth: 1,
+    borderBottomColor: T.border.variant,
+    paddingHorizontal: 16,
+  },
+  headerLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+  },
+  headerRight: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+  },
+  headerBtn: {
+    width: 40,
+    height: 40,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  headerIconText: {
+    fontSize: 22,
+    color: T.text.primary,
+  },
+  logoBadge: {
+    width: 32,
+    height: 32,
+    borderRadius: 6,
+    backgroundColor: T.background.containerHighest,
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: T.border.variant,
+  },
+  avatarBtn: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    overflow: 'hidden',
+  },
+  avatarCircle: {
+    width: '100%',
+    height: '100%',
+    borderRadius: 18,
+    backgroundColor: T.background.containerHighest,
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderWidth: 1.5,
+    borderColor: T.primary,
+  },
+  avatarText: {
+    fontSize: 16,
+    color: T.text.primary,
+  },
+  fabMap: {
+    position: 'absolute',
+    bottom: 24,
+    right: 24,
+    width: 56,
+    height: 56,
+    borderRadius: 28,
+    backgroundColor: T.primary,
+    justifyContent: 'center',
+    alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 4,
+    elevation: 6,
+    zIndex: 1000,
+  },
+  fabMapText: {
+    fontSize: 24,
+  },
 
   // Tabs
   tabBar: {

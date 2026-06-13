@@ -5,16 +5,15 @@ import {
   StyleSheet,
   Pressable,
   Text,
+  Alert,
+  Platform,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { BRAND, TYPOGRAPHY, SPACING, createGlassCard, useTheme, createThemedStyleSheet } from '../lib/theme';
 
-const VAULT_RECENT = [
-  { id: '1', name: 'BOL_49208_SIGN.pdf', context: 'L-49208 • 2h ago', icon: '📄' },
-  { id: '2', name: 'FUEL_RECEIPT_391.jpg', context: 'EXPENSE • 5h ago', icon: '🖼' },
-];
 
-export default function HomeScreen() {
+
+export default function HomeScreen({ onNavigateToMarketplace, onNavigate }) {
   const [currentTime, setCurrentTime] = useState(new Date());
   const { t: T } = useTheme();
   const styles = useStyles();
@@ -24,12 +23,6 @@ export default function HomeScreen() {
     { id: 'invoices', label: 'INVOICES', icon: '📋', color: T.secondary },
     { id: 'expenses', label: 'EXPENSES', icon: '🧾', color: T.tertiary },
     { id: 'vault', label: 'DOC VAULT', icon: '🗄', color: T.text.muted },
-  ];
-
-  const COMPLIANCE_ITEMS = [
-    { id: 'eld', label: 'ELD LOGS (24H)', status: '• COMPLIANT', statusColor: T.status.success, bg: T.compliance.valid, border: T.compliance.valid },
-    { id: 'dq', label: 'DQ FILES', status: '• 1 EXPIRING', statusColor: T.status.warning, bg: T.compliance.warning, border: T.compliance.warning },
-    { id: 'ifta', label: 'IFTA Q3', status: 'SUBMITTED', statusColor: T.text.muted, bg: T.background.container, border: T.border.variant },
   ];
 
   useEffect(() => {
@@ -46,7 +39,7 @@ export default function HomeScreen() {
 
   return (
     <SafeAreaView style={styles.safe} edges={['top']}>
-      <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
+      <ScrollView style={styles.container} contentContainerStyle={{ paddingBottom: 100 }} showsVerticalScrollIndicator={false}>
 
         {/* ── Bento Stats Grid ── */}
         <View style={styles.bentoGrid}>
@@ -85,6 +78,14 @@ export default function HomeScreen() {
               style={({ pressed }) => [styles.quickActionTile, pressed && styles.pressed]}
               accessibilityRole="button"
               accessibilityLabel={action.label}
+              onPress={() => {
+                if (onNavigate) {
+                  if (action.id === 'calc') onNavigate('tools', 'calculator');
+                  else if (action.id === 'invoices') onNavigate('tools', 'invoices');
+                  else if (action.id === 'expenses') onNavigate('finance');
+                  else if (action.id === 'vault') onNavigate('vault');
+                }
+              }}
             >
               <View style={[styles.quickActionIcon, { backgroundColor: action.color + '33' }]}>
                 <Text style={styles.quickActionEmoji}>{action.icon}</Text>
@@ -97,107 +98,94 @@ export default function HomeScreen() {
         {/* ── Current Active Load ── */}
         <View style={styles.sectionHeader}>
           <Text style={styles.sectionTitle}>CURRENT LOAD</Text>
-          <Pressable accessibilityRole="button" accessibilityLabel="View all loads">
+          <Pressable 
+            accessibilityRole="button" 
+            accessibilityLabel="View all loads"
+            onPress={onNavigateToMarketplace}
+          >
             <Text style={styles.viewAllText}>View All Loads</Text>
           </Pressable>
         </View>
 
         <View style={[styles.loadCard, createGlassCard(), { borderLeftColor: T.primary }]}>
-          {/* Status badge */}
-          <View style={styles.inTransitBadge}>
-            <View style={styles.pulseDot} />
-            <Text style={styles.inTransitText}>IN TRANSIT</Text>
-          </View>
+          <Pressable onPress={onNavigateToMarketplace} style={{ gap: 12 }}>
+            {/* Status badge */}
+            <View style={styles.inTransitBadge}>
+              <View style={styles.pulseDot} />
+              <Text style={styles.inTransitText}>IN TRANSIT</Text>
+            </View>
 
-          {/* Load ID row */}
-          <View style={styles.loadIdRow}>
-            <View style={styles.truckIconBox}>
-              <Text style={{ fontSize: 22 }}>🚛</Text>
-            </View>
-            <View>
-              <Text style={styles.loadIdText}>L-49208-TX</Text>
-              <Text style={styles.loadSubtext}>Reefer | 42,000 lbs</Text>
-            </View>
-          </View>
-
-          {/* Route visualization */}
-          <View style={styles.routeVisualization}>
-            <View style={styles.routeStop}>
-              <Text style={[styles.routeStopDot, { color: BRAND.profitGreen }]}>📍</Text>
-              <View style={styles.routeDash} />
-            </View>
-            <View style={styles.routeInfo}>
-              <View>
-                <Text style={styles.routeStopLabel}>PICKUP</Text>
-                <Text style={styles.routeCity}>Houston, TX</Text>
-                <Text style={styles.routeDate}>Oct 24, 08:00 AM</Text>
+            {/* Load ID row */}
+            <View style={styles.loadIdRow}>
+              <View style={styles.truckIconBox}>
+                <Text style={{ fontSize: 22 }}>🚛</Text>
               </View>
               <View>
-                <Text style={styles.routeStopLabel}>DELIVERY</Text>
-                <Text style={styles.routeCity}>Chicago, IL</Text>
-                <Text style={styles.routeDate}>Oct 26, 02:00 PM</Text>
+                <Text style={styles.loadIdText}>L-49208-TX</Text>
+                <Text style={styles.loadSubtext}>Reefer | 42,000 lbs</Text>
               </View>
             </View>
-            <View style={styles.routeStop}>
-              <Text style={[styles.routeStopDot, { color: T.primary }]}>➤</Text>
-            </View>
-          </View>
 
-          {/* Metrics row */}
-          <View style={styles.loadMetrics}>
-            <View style={[styles.metricCol, styles.metricBorderRight]}>
-              <Text style={styles.metricLabel}>RATE</Text>
-              <Text style={[styles.metricValue, { color: BRAND.profitGreen }]}>$3,450</Text>
-            </View>
-            <View style={[styles.metricCol, styles.metricBorderRight]}>
-              <Text style={styles.metricLabel}>MILES</Text>
-              <Text style={styles.metricValue}>1,082</Text>
-            </View>
-            <View style={styles.metricCol}>
-              <Text style={styles.metricLabel}>RPM</Text>
-              <Text style={[styles.metricValue, { color: BRAND.hazardOrange }]}>$3.18</Text>
-            </View>
-          </View>
-        </View>
-
-        {/* ── Bottom panels: Compliance + Vault Recent ── */}
-        <View style={styles.bottomPanels}>
-          {/* Compliance Status */}
-          <View style={[styles.panel, { backgroundColor: T.background.containerLow, borderColor: T.border.variant }]}>
-            <View style={styles.panelHeader}>
-              <Text style={styles.panelTitle}>COMPLIANCE STATUS</Text>
-              <Text style={{ color: BRAND.profitGreen }}>✓</Text>
-            </View>
-            {COMPLIANCE_ITEMS.map((item) => (
-              <View key={item.id} style={[styles.complianceItem, { backgroundColor: item.bg + '4D', borderColor: item.border }]}>
-                <Text style={styles.complianceLabel}>{item.label}</Text>
-                <Text style={[styles.complianceStatus, { color: item.statusColor }]}>{item.status}</Text>
+            {/* Route visualization */}
+            <View style={styles.routeVisualization}>
+              <View style={styles.routeStop}>
+                <Text style={[styles.routeStopDot, { color: BRAND.profitGreen }]}>📍</Text>
+                <View style={styles.routeDash} />
               </View>
-            ))}
-          </View>
-
-          {/* Vault Recent */}
-          <View style={[styles.panel, { backgroundColor: T.background.containerLow, borderColor: T.border.variant }]}>
-            <View style={styles.panelHeader}>
-              <Text style={styles.panelTitle}>VAULT RECENT</Text>
-              <Text style={{ color: T.text.secondary }}>⋮</Text>
+              <View style={styles.routeInfo}>
+                <View>
+                  <Text style={styles.routeStopLabel}>PICKUP</Text>
+                  <Text style={styles.routeCity}>Houston, TX</Text>
+                  <Text style={styles.routeDate}>Oct 24, 08:00 AM</Text>
+                </View>
+                <View style={styles.routeInfoSeparator} />
+                <View>
+                  <Text style={styles.routeStopLabel}>DELIVERY</Text>
+                  <Text style={styles.routeCity}>Chicago, IL</Text>
+                  <Text style={styles.routeDate}>Oct 26, 02:00 PM</Text>
+                </View>
+              </View>
+              <View style={styles.routeStop}>
+                <Text style={[styles.routeStopDot, { color: T.primary }]}>➤</Text>
+              </View>
             </View>
-            {VAULT_RECENT.map((doc) => (
-              <Pressable
-                key={doc.id}
-                style={({ pressed }) => [styles.vaultItem, pressed && styles.pressed]}
-                accessibilityRole="button"
-                accessibilityLabel={doc.name}
-              >
-                <View style={styles.vaultItemIcon}>
-                  <Text style={{ fontSize: 20 }}>{doc.icon}</Text>
-                </View>
-                <View style={styles.vaultItemInfo}>
-                  <Text style={styles.vaultItemName} numberOfLines={1}>{doc.name}</Text>
-                  <Text style={styles.vaultItemContext}>{doc.context}</Text>
-                </View>
-              </Pressable>
-            ))}
+
+            {/* Metrics row */}
+            <View style={styles.loadMetrics}>
+              <View style={[styles.metricCol, styles.metricBorderRight]}>
+                <Text style={styles.metricLabel}>RATE</Text>
+                <Text style={[styles.metricValue, { color: BRAND.profitGreen }]}>$3,450</Text>
+              </View>
+              <View style={[styles.metricCol, styles.metricBorderRight]}>
+                <Text style={styles.metricLabel}>MILES</Text>
+                <Text style={styles.metricValue}>1,082</Text>
+              </View>
+              <View style={styles.metricCol}>
+                <Text style={styles.metricLabel}>RPM</Text>
+                <Text style={[styles.metricValue, { color: BRAND.hazardOrange }]}>$3.18</Text>
+              </View>
+            </View>
+          </Pressable>
+
+          {/* Actions */}
+          <View style={{ flexDirection: 'row', gap: 10, marginTop: 4 }}>
+            <Pressable
+              style={({ pressed }) => [
+                styles.viewRouteBtn,
+                pressed && styles.pressed
+              ]}
+              onPress={() => {
+                if (Platform.OS === 'web') {
+                  alert("Route Details:\nHouston, TX → Chicago, IL\nDistance: 1,082 mi\nEst. Time: 18.5 hrs");
+                } else {
+                  Alert.alert("Route Details", "Houston, TX → Chicago, IL\nDistance: 1,082 mi\nEst. Time: 18.5 hrs");
+                }
+              }}
+              accessibilityRole="button"
+              accessibilityLabel="View Route"
+            >
+              <Text style={styles.viewRouteBtnText}>🗺️  VIEW ROUTE</Text>
+            </Pressable>
           </View>
         </View>
       </ScrollView>
@@ -348,61 +336,31 @@ const useStyles = createThemedStyleSheet((T) => StyleSheet.create({
   metricLabel: { ...TYPOGRAPHY.labelData, color: T.text.secondary, fontSize: 10 },
   metricValue: { ...TYPOGRAPHY.headlineSm, color: T.text.primary, marginTop: 2 },
 
-  // Bottom panels
-  bottomPanels: {
-    flexDirection: 'row',
-    paddingHorizontal: SPACING.marginMobile,
-    paddingTop: SPACING.stackLg,
-    gap: SPACING.gutter,
-    paddingBottom: 100,
+  routeInfoSeparator: {
+    height: 1,
+    backgroundColor: T.border.muted,
+    marginVertical: 4,
   },
-  panel: {
+
+  viewRouteBtn: {
     flex: 1,
-    borderWidth: 1,
-    borderRadius: 12,
-    padding: SPACING.stackMd,
-    gap: SPACING.stackSm,
-  },
-  panelHeader: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 4,
-  },
-  panelTitle: { ...TYPOGRAPHY.headlineSm, color: T.text.primary, fontSize: 13, letterSpacing: 0.5 },
-
-  // Compliance items
-  complianceItem: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingHorizontal: 8,
-    paddingVertical: 6,
-    borderRadius: 6,
-    borderWidth: 1,
-  },
-  complianceLabel: { ...TYPOGRAPHY.labelData, color: T.text.primary, fontSize: 10 },
-  complianceStatus: { ...TYPOGRAPHY.labelData, fontSize: 10 },
-
-  // Vault recent items
-  vaultItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-    padding: 6,
-    borderRadius: 8,
-  },
-  vaultItemIcon: {
-    width: 36,
-    height: 36,
-    borderRadius: 4,
-    backgroundColor: T.background.containerHighest + '33',
     alignItems: 'center',
     justifyContent: 'center',
+    gap: 6,
+    paddingVertical: 12,
+    borderRadius: 8,
+    backgroundColor: T.background.containerHighest,
+    borderWidth: 1,
+    borderColor: T.border.variant,
+    marginTop: 4,
   },
-  vaultItemInfo: { flex: 1 },
-  vaultItemName: { ...TYPOGRAPHY.labelData, color: T.text.primary, fontSize: 11 },
-  vaultItemContext: { ...TYPOGRAPHY.labelData, color: T.text.secondary, fontSize: 9, textTransform: 'uppercase', marginTop: 2 },
+  viewRouteBtnText: {
+    ...TYPOGRAPHY.headlineSm,
+    color: T.text.primary,
+    fontSize: 13,
+    fontWeight: '600',
+  },
 
   pressed: { opacity: 0.75 },
 }));

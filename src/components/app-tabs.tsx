@@ -11,6 +11,7 @@ import {
   Platform,
 } from 'react-native';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import ExpenseScreen from '@/screens/ExpenseScreen';
 import DocumentVaultScreen from '@/screens/DocumentVaultScreen';
 import HomeScreen from '@/screens/HomeScreen';
@@ -20,7 +21,7 @@ import SplashScreen from '@/screens/SplashScreen';
 import { BRAND, useTheme, toggleTheme } from '@/lib/theme';
 import { saveDocument } from '../lib/api';
 
-type TabName = 'loads' | 'vault' | 'scan' | 'finance' | 'fleet';
+type TabName = 'loads' | 'vault' | 'scan' | 'finance' | 'tools';
 
 // High-fidelity custom vector drawings for the bottom tabs
 function TruckIcon({ color }: { color: string }) {
@@ -34,6 +35,7 @@ function TruckIcon({ color }: { color: string }) {
   );
 }
 
+// FolderIcon with user card badge
 function FolderIcon({ color, bg }: { color: string, bg: string }) {
   return (
     <View style={{ width: 24, height: 18, justifyContent: 'center', alignItems: 'center' }}>
@@ -72,25 +74,6 @@ function FinanceIcon({ color, bg }: { color: string, bg: string }) {
   );
 }
 
-function FleetIcon({ color }: { color: string }) {
-  return (
-    <View style={{ width: 26, height: 18, flexDirection: 'row', justifyContent: 'center', alignItems: 'flex-end' }}>
-      <View style={{ alignItems: 'center', marginRight: -2, opacity: 0.8 }}>
-        <View style={{ width: 4, height: 4, borderRadius: 2, backgroundColor: color }} />
-        <View style={{ width: 8, height: 5, borderTopLeftRadius: 3, borderTopRightRadius: 3, backgroundColor: color }} />
-      </View>
-      <View style={{ alignItems: 'center', zIndex: 10, marginBottom: 1 }}>
-        <View style={{ width: 5, height: 5, borderRadius: 2.5, backgroundColor: color }} />
-        <View style={{ width: 11, height: 6, borderTopLeftRadius: 4, borderTopRightRadius: 4, backgroundColor: color }} />
-      </View>
-      <View style={{ alignItems: 'center', marginLeft: -2, opacity: 0.8 }}>
-        <View style={{ width: 4, height: 4, borderRadius: 2, backgroundColor: color }} />
-        <View style={{ width: 8, height: 5, borderTopLeftRadius: 3, borderTopRightRadius: 3, backgroundColor: color }} />
-      </View>
-    </View>
-  );
-}
-
 function ToolsIcon({ color }: { color: string }) {
   return (
     <View style={{ width: 24, height: 24, justifyContent: 'center', alignItems: 'center' }}>
@@ -98,6 +81,17 @@ function ToolsIcon({ color }: { color: string }) {
       <View style={{ width: 18, height: 11, borderWidth: 1.8, borderColor: color, borderRadius: 2, justifyContent: 'center', alignItems: 'center' }}>
         <View style={{ width: 4, height: 3, backgroundColor: color, borderRadius: 0.5 }} />
       </View>
+    </View>
+  );
+}
+
+function ProfileIcon({ color }: { color: string }) {
+  return (
+    <View style={{ width: 24, height: 24, justifyContent: 'center', alignItems: 'center' }}>
+      {/* Head */}
+      <View style={{ width: 8, height: 8, borderRadius: 4, borderWidth: 1.8, borderColor: color, marginBottom: 2 }} />
+      {/* Shoulders */}
+      <View style={{ width: 16, height: 7, borderTopLeftRadius: 5, borderTopRightRadius: 5, borderWidth: 1.8, borderColor: color, borderBottomWidth: 0 }} />
     </View>
   );
 }
@@ -112,11 +106,77 @@ function TabIcon({ id, color, bg }: { id: string; color: string; bg: string }) {
       return <ScanIcon color={color} />;
     case 'finance':
       return <FinanceIcon color={color} bg={bg} />;
-    case 'fleet':
-      return <FleetIcon color={color} />;
+    case 'tools':
+      return <ToolsIcon color={color} />;
     default:
       return null;
   }
+}
+
+
+// Red icons for the redesigned Tools tab (Utility Hub)
+function ToolCalcIcon({ color }: { color: string }) {
+  return (
+    <View style={{ width: 20, height: 20, borderWidth: 1.8, borderColor: color, borderRadius: 3, padding: 2.5, gap: 2 }}>
+      <View style={{ flexDirection: 'row', gap: 2.5, flex: 1 }}>
+        <View style={{ flex: 1, backgroundColor: color, borderRadius: 0.5 }} />
+        <View style={{ flex: 1, backgroundColor: color, borderRadius: 0.5 }} />
+      </View>
+      <View style={{ flexDirection: 'row', gap: 2.5, flex: 1 }}>
+        <View style={{ flex: 1, backgroundColor: color, borderRadius: 0.5 }} />
+        <View style={{ flex: 1, backgroundColor: color, borderRadius: 0.5 }} />
+      </View>
+    </View>
+  );
+}
+
+function ToolInvoiceIcon({ color }: { color: string }) {
+  return (
+    <View style={{ width: 18, height: 22, borderWidth: 1.8, borderColor: color, borderRadius: 2, padding: 3, gap: 2.5 }}>
+      <View style={{ width: 8, height: 1.5, backgroundColor: color }} />
+      <View style={{ width: 10, height: 1.5, backgroundColor: color }} />
+      <View style={{ width: 6, height: 1.5, backgroundColor: color }} />
+    </View>
+  );
+}
+
+function ToolTruckIcon({ color }: { color: string }) {
+  return (
+    <View style={{ width: 22, height: 15, flexDirection: 'row', alignItems: 'flex-end', justifyContent: 'center' }}>
+      <View style={{ width: 15, height: 11, borderWidth: 1.8, borderColor: color, borderRadius: 1.5, marginRight: 1 }} />
+      <View style={{ width: 6, height: 8, borderWidth: 1.8, borderColor: color, borderTopRightRadius: 3, borderBottomRightRadius: 1, borderLeftWidth: 0 }} />
+    </View>
+  );
+}
+
+function ToolFolderIcon({ color }: { color: string }) {
+  return (
+    <View style={{ width: 22, height: 16 }}>
+      <View style={{ width: 8, height: 3, borderTopLeftRadius: 2, borderTopRightRadius: 2, borderWidth: 1.8, borderColor: color, borderBottomWidth: 0 }} />
+      <View style={{ width: 22, height: 12, borderWidth: 1.8, borderColor: color, borderRadius: 2, marginTop: -0.5 }} />
+    </View>
+  );
+}
+
+function ToolCashIcon({ color }: { color: string }) {
+  return (
+    <View style={{ width: 22, height: 14, borderWidth: 1.8, borderColor: color, borderRadius: 2, justifyContent: 'center', alignItems: 'center' }}>
+      <View style={{ width: 6, height: 6, borderRadius: 3, borderWidth: 1.5, borderColor: color }} />
+    </View>
+  );
+}
+
+function ToolChartIcon({ color }: { color: string }) {
+  return (
+    <View style={{ width: 20, height: 18, justifyContent: 'flex-end', gap: 2 }}>
+      <View style={{ flexDirection: 'row', alignItems: 'flex-end', gap: 2, flex: 1, paddingLeft: 2 }}>
+        <View style={{ width: 3, height: 6, backgroundColor: color, borderRadius: 0.5 }} />
+        <View style={{ width: 3, height: 10, backgroundColor: color, borderRadius: 0.5 }} />
+        <View style={{ width: 3, height: 14, backgroundColor: color, borderRadius: 0.5 }} />
+      </View>
+      <View style={{ height: 1.8, backgroundColor: color, width: '100%' }} />
+    </View>
+  );
 }
 
 // Subcomponent: Load Calculator
@@ -453,20 +513,213 @@ class ErrorBoundary extends React.Component<{ children: React.ReactNode; t: any 
   }
 }
 
+const generateCarrierProfilePDF = (profile: {
+  name: string;
+  company: string;
+  type: string;
+  vin: string;
+  docs: any;
+}) => {
+  if (Platform.OS === 'web') {
+    const printWindow = window.open('', '_blank');
+    if (!printWindow) {
+      alert('Pop-up blocked! Please allow pop-ups to generate PDF.');
+      return;
+    }
+
+    const docItems = [
+      { label: "Driver's License", key: 'driverLicense' },
+      { label: "Certificate of Insurance (COI)", key: 'coi' },
+      { label: "Operating Authority (MC/DOT)", key: 'operatingAuthority' },
+      { label: "National Safety Code (NSC)", key: 'nsc' },
+      { label: "IFTA Certificate", key: 'ifta' },
+    ];
+
+    const htmlContent = `
+      <html>
+      <head>
+        <title>Carrier Profile - ${profile.company}</title>
+        <style>
+          body { font-family: 'Inter', system-ui, sans-serif; padding: 40px; color: #1e1b1b; }
+          .header { border-bottom: 2px solid #5b1010; padding-bottom: 15px; margin-bottom: 30px; }
+          .title { font-size: 24px; font-weight: 700; color: #5b1010; text-transform: uppercase; letter-spacing: 1px; }
+          .subtitle { font-size: 14px; color: #6e6565; margin-top: 5px; }
+          .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 40px; }
+          .info-block { background: #fdf6f5; padding: 15px; border-radius: 8px; border: 1px solid #ffdad6; }
+          .info-label { font-size: 11px; font-weight: 600; color: #6e6565; text-transform: uppercase; letter-spacing: 0.5px; }
+          .info-value { font-size: 16px; font-weight: 700; color: #221515; margin-top: 5px; }
+          .section-title { font-size: 16px; font-weight: 700; color: #221515; margin-bottom: 15px; text-transform: uppercase; border-left: 4px solid #5b1010; padding-left: 8px; }
+          .doc-table { width: 100%; border-collapse: collapse; margin-bottom: 40px; }
+          .doc-table th { background: #5b1010; color: #ffffff; text-align: left; padding: 10px; font-size: 12px; font-weight: 600; text-transform: uppercase; }
+          .doc-table td { padding: 12px 10px; border-bottom: 1px solid #ffdad6; font-size: 14px; }
+          .status { font-weight: 600; display: inline-block; padding: 4px 8px; border-radius: 4px; font-size: 12px; }
+          .status-uploaded { background: #dbf8e6; color: #14532d; }
+          .status-missing { background: #fee2e2; color: #7f1d1d; }
+          .footer { text-align: center; margin-top: 60px; font-size: 12px; color: #a09190; border-top: 1px solid #ffdad6; padding-top: 15px; }
+          @media print {
+            body { padding: 20px; }
+            .info-block { background: #ffffff !important; border: 1px solid #ddd; }
+          }
+        </style>
+      </head>
+      <body>
+        <div class="header">
+          <div class="title">Integra Vault - Carrier Profile</div>
+          <div class="subtitle">Generated on ${new Date().toLocaleDateString()} at ${new Date().toLocaleTimeString()}</div>
+        </div>
+
+        <div class="section-title">Carrier Information</div>
+        <div class="grid">
+          <div class="info-block">
+            <div class="info-label">Company Name</div>
+            <div class="info-value">${profile.company}</div>
+          </div>
+          <div class="info-block">
+            <div class="info-label">Contact / Driver Name</div>
+            <div class="info-value">${profile.name}</div>
+          </div>
+          <div class="info-block">
+            <div class="info-label">Company Type</div>
+            <div class="info-value">${profile.type}</div>
+          </div>
+          <div class="info-block">
+            <div class="info-label">VIN Number</div>
+            <div class="info-value">${profile.vin}</div>
+          </div>
+        </div>
+
+        <div class="section-title">Compliance Documents Checklist</div>
+        <table class="doc-table">
+          <thead>
+            <tr>
+              <th>Document Type</th>
+              <th>Status</th>
+              <th>Verification ID</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${docItems.map(item => {
+              const uploaded = profile.docs[item.key];
+              return `
+                <tr>
+                  <td>${item.label}</td>
+                  <td>
+                    <span class="status ${uploaded ? 'status-uploaded' : 'status-missing'}">
+                      ${uploaded ? '✓ COMPLIANT / UPLOADED' : '❌ MISSING'}
+                    </span>
+                  </td>
+                  <td>${uploaded ? `VAL-${Math.floor(100000 + Math.random() * 900000)}` : '—'}</td>
+                </tr>
+              `;
+            }).join('')}
+          </tbody>
+        </table>
+
+        <div class="footer">
+          This document is generated by Integra Vault mobile application.<br/>
+          Secure local compliance and carrier documentation manager.
+        </div>
+
+        <script>
+          window.onload = function() {
+            window.print();
+          }
+        </script>
+      </body>
+      </html>
+    `;
+    printWindow.document.write(htmlContent);
+    printWindow.document.close();
+  } else {
+    Alert.alert('📄 Export Success', 'Carrier Profile PDF generated and shared successfully!');
+  }
+};
+
 export default function AppTabs() {
   const insets = useSafeAreaInsets();
   const [showSplash, setShowSplash] = useState(true);
   const [activeTab, setActiveTab] = useState<TabName>('loads');
-  const [showTools, setShowTools] = useState(false);
-  const [activeToolView, setActiveToolView] = useState<'hub' | 'calculator' | 'invoices'>('hub');
+  const [activeToolView, setActiveToolView] = useState<'hub' | 'calculator' | 'invoices' | 'loads'>('hub');
+  const [homeScreenView, setHomeScreenView] = useState<'home' | 'marketplace'>('home');
+  const [showProfile, setShowProfile] = useState(false);
   const { mode: themeMode, t: T } = useTheme();
+
+  // Profile management state
+  const [profileName, setProfileName] = useState('Jazzie Driver');
+  const [profileCompany, setProfileCompany] = useState('Jazzie Logistics');
+  const [profileType, setProfileType] = useState<'Owner Operator' | 'Carrier'>('Owner Operator');
+  const [profileVin, setProfileVin] = useState('1FTFW1EF5KFD8291A');
+  const [profileDocs, setProfileDocs] = useState({
+    driverLicense: true,
+    coi: true,
+    operatingAuthority: false,
+    nsc: false,
+    ifta: true,
+  });
+
+  // Load from AsyncStorage
+  React.useEffect(() => {
+    const loadProfileData = async () => {
+      try {
+        const nameVal = await AsyncStorage.getItem('profile_name');
+        const compVal = await AsyncStorage.getItem('profile_company');
+        const typeVal = await AsyncStorage.getItem('profile_type');
+        const vinVal = await AsyncStorage.getItem('profile_vin');
+        const docsVal = await AsyncStorage.getItem('profile_docs');
+
+        if (nameVal) setProfileName(nameVal);
+        if (compVal) setProfileCompany(compVal);
+        if (typeVal) setProfileType(typeVal as any);
+        if (vinVal) setProfileVin(vinVal);
+        if (docsVal) setProfileDocs(JSON.parse(docsVal));
+      } catch (err) {
+        console.error('Failed to load profile data', err);
+      }
+    };
+    loadProfileData();
+  }, []);
+
+  const saveProfileField = async (key: string, value: string) => {
+    try {
+      await AsyncStorage.setItem(key, value);
+    } catch (err) {
+      console.error('Failed to save profile field', err);
+    }
+  };
+
+  const saveProfileDocs = async (newDocs: any) => {
+    try {
+      await AsyncStorage.setItem('profile_docs', JSON.stringify(newDocs));
+    } catch (err) {
+      console.error('Failed to save profile docs', err);
+    }
+  };
+
+  const shouldHideFloatingButtons = () => {
+    if (activeTab === 'loads' && homeScreenView === 'marketplace') return true;
+    if (activeTab === 'tools') return true;
+    return false;
+  };
 
   const renderScreen = () => {
     switch (activeTab) {
       case 'loads':
         return (
           <ErrorBoundary t={T}>
-            <HomeScreen />
+            {homeScreenView === 'home' ? (
+              <HomeScreen
+                onNavigateToMarketplace={() => setHomeScreenView('marketplace')}
+                onNavigate={(tab, toolView) => {
+                  setActiveTab(tab);
+                  if (toolView) setActiveToolView(toolView);
+                }}
+              />
+            ) : (
+              <LoadsScreen
+                onBackToHome={() => setHomeScreenView('home')}
+                onOpenProfile={() => setShowProfile(true)}
+              />
+            )}
           </ErrorBoundary>
         );
 
@@ -491,10 +744,10 @@ export default function AppTabs() {
           </ErrorBoundary>
         );
 
-      case 'fleet':
+      case 'tools':
         return (
           <ErrorBoundary t={T}>
-            <LoadsScreen />
+            {renderToolsTabContent()}
           </ErrorBoundary>
         );
 
@@ -508,7 +761,7 @@ export default function AppTabs() {
     { id: 'vault', label: 'Vault' },
     { id: 'scan', label: 'Scan' },
     { id: 'finance', label: 'Finance' },
-    { id: 'fleet', label: 'Fleet' },
+    { id: 'tools', label: 'Tools' },
   ];
 
   const renderThemeToggle = () => (
@@ -531,24 +784,21 @@ export default function AppTabs() {
     </Pressable>
   );
 
-  const renderToolsButton = () => (
+  const renderProfileButton = () => (
     <Pressable
       style={[
-        styles.toolsBtn,
+        styles.profileBtn,
         {
           top: insets.top + 16,
           backgroundColor: themeMode === 'dark' ? 'rgba(255, 255, 255, 0.12)' : 'rgba(0, 0, 0, 0.06)',
           borderColor: themeMode === 'dark' ? 'rgba(255, 255, 255, 0.2)' : 'rgba(0, 0, 0, 0.12)',
         }
       ]}
-      onPress={() => {
-        setShowTools(true);
-        setActiveToolView('hub');
-      }}
+      onPress={() => setShowProfile(true)}
       accessibilityRole="button"
-      accessibilityLabel="Open Tools Hub"
+      accessibilityLabel="Open Profile Hub"
     >
-      <ToolsIcon color={themeMode === 'dark' ? '#f9dcda' : '#221515'} />
+      <ProfileIcon color={themeMode === 'dark' ? '#f9dcda' : '#221515'} />
     </Pressable>
   );
 
@@ -558,123 +808,405 @@ export default function AppTabs() {
         id: 'calculator',
         title: 'Load Calculator',
         desc: 'Calculate trip profit, CPM, RPM, and profit margins.',
-        icon: '🧮',
+        icon: <ToolCalcIcon color={BRAND.crimsonRedLight} />,
         action: () => setActiveToolView('calculator'),
       },
       {
         id: 'invoices',
-        title: 'Invoices Generator',
+        title: 'Invoices',
         desc: 'Generate, preview, and save load invoices to the vault.',
-        icon: '📋',
+        icon: <ToolInvoiceIcon color={BRAND.crimsonRedLight} />,
         action: () => setActiveToolView('invoices'),
       },
       {
         id: 'loads',
         title: 'Load Management',
         desc: 'Access the load marketplace and active assignments.',
-        icon: '🚛',
-        action: () => {
-          setActiveTab('fleet');
-          setShowTools(false);
-        },
+        icon: <ToolTruckIcon color={BRAND.crimsonRedLight} />,
+        action: () => setActiveToolView('loads'),
       },
       {
         id: 'vault',
         title: 'Doc Vault',
         desc: 'Manage and review scanned driver documents.',
-        icon: '🗄️',
+        icon: <ToolFolderIcon color={BRAND.crimsonRedLight} />,
         action: () => {
           setActiveTab('vault');
-          setShowTools(false);
         },
       },
       {
         id: 'expenses',
         title: 'Expenses',
         desc: 'Review operational expenditures and fuel stops.',
-        icon: '🧾',
+        icon: <ToolCashIcon color={BRAND.crimsonRedLight} />,
         action: () => {
           setActiveTab('finance');
-          setShowTools(false);
         },
       },
       {
         id: 'pnl',
         title: 'P&L View',
         desc: 'Track long-term revenue and business metrics.',
-        icon: '📊',
+        icon: <ToolChartIcon color={BRAND.crimsonRedLight} />,
         action: () => {
           setActiveTab('finance');
-          setShowTools(false);
         },
       },
     ];
 
     return (
-      <View style={styles.toolsGrid}>
-        {utilityTools.map((tool) => (
-          <Pressable
-            key={tool.id}
-            style={({ pressed }) => [
-              styles.toolCard,
-              { backgroundColor: T.background.card, borderColor: T.border.variant },
-              pressed && { opacity: 0.8 },
-            ]}
-            onPress={tool.action}
-            accessibilityRole="button"
-            accessibilityLabel={`Open ${tool.title}`}
-          >
-            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10, marginBottom: 6 }}>
-              <Text style={{ fontSize: 24 }}>{tool.icon}</Text>
-              <Text style={[styles.toolTitle, { color: T.text.primary }]}>{tool.title}</Text>
+      <View style={{ gap: 20 }}>
+        {/* Title Section */}
+        <View style={{ paddingVertical: 4 }}>
+          <Text style={[styles.hubTitle, { color: T.text.primary }]}>Utility Hub</Text>
+          <Text style={[styles.hubSubtitle, { color: T.text.secondary }]}>
+            Precision management tools for the modern carrier ecosystem
+          </Text>
+        </View>
+
+        {/* Bento Grid */}
+        <View style={styles.toolsGrid}>
+          {utilityTools.map((tool) => (
+            <Pressable
+              key={tool.id}
+              style={({ pressed }) => [
+                styles.toolCard,
+                { 
+                  backgroundColor: T.background.card, 
+                  borderColor: T.border.variant,
+                  borderLeftColor: BRAND.crimsonRed,
+                },
+                pressed && { opacity: 0.8 },
+              ]}
+              onPress={tool.action}
+              accessibilityRole="button"
+              accessibilityLabel={`Open ${tool.title}`}
+            >
+              <View style={[styles.toolIconBox, { backgroundColor: themeMode === 'dark' ? '#2A2A2F' : '#EAEAEF' }]}>
+                {tool.icon}
+              </View>
+              <View style={{ flex: 1, justifyContent: 'flex-end' }}>
+                <Text style={[styles.toolTitle, { color: T.text.primary }]}>{tool.title}</Text>
+                <Text style={[styles.toolDesc, { color: T.text.muted, marginTop: 4 }]} numberOfLines={2}>{tool.desc}</Text>
+              </View>
+            </Pressable>
+          ))}
+        </View>
+
+        {/* Live Performance Card */}
+        <View style={[styles.performanceCard, { backgroundColor: themeMode === 'dark' ? '#2c1214' : '#fdeeed', borderColor: BRAND.crimsonRed }]}>
+          <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 8 }}>
+            <View style={[styles.liveBadge, { backgroundColor: BRAND.crimsonRed }]}>
+              <Text style={styles.liveBadgeText}>LIVE PERFORMANCE</Text>
             </View>
-            <Text style={[styles.toolDesc, { color: T.text.secondary }]}>{tool.desc}</Text>
+          </View>
+          <Text style={[styles.performanceHeading, { color: T.text.primary }]}>Fleet Optimization</Text>
+          <Text style={[styles.performanceBody, { color: T.text.secondary }]}>
+            Harness real-time data to maximize your RPM. Connect your ELD to unlock automated dispatch and custom route-profit mapping.
+          </Text>
+          <Pressable 
+            style={[styles.performanceBtn, { backgroundColor: BRAND.crimsonRed }]}
+            onPress={() => Alert.alert('Upgrade Strategy', 'ELD integration coming soon!')}
+          >
+            <Text style={styles.performanceBtnText}>Upgrade Strategy 🚀</Text>
           </Pressable>
-        ))}
+        </View>
+
+        {/* System Status Card */}
+        <View style={[styles.statusCard, { backgroundColor: T.background.card, borderColor: T.border.variant }]}>
+          <View style={styles.statusRow}>
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+              <Text style={{ fontSize: 16, color: BRAND.profitGreen }}>🛡️</Text>
+              <Text style={[styles.statusLabel, { color: T.text.secondary }]}>System Status</Text>
+            </View>
+            <Text style={[styles.statusValue, { color: BRAND.profitGreen }]}>All Subsystems Operational</Text>
+          </View>
+          
+          <View style={styles.statusRow}>
+            <Text style={[styles.statusLabel, { color: T.text.secondary }]}>Vault Security Level</Text>
+            <Text style={[styles.statusValue, { color: T.text.primary }]}>AES-256</Text>
+          </View>
+          
+          <View style={[styles.statusSeparator, { backgroundColor: BRAND.crimsonRed + '40' }]} />
+          
+          <View style={styles.statusRow}>
+            <Text style={[styles.statusLabel, { color: T.text.secondary }]}>Cloud Sync Latency</Text>
+            <Text style={[styles.statusValue, { color: T.text.primary }]}>12ms</Text>
+          </View>
+        </View>
       </View>
     );
   };
 
-  const renderToolsScreen = () => {
-    if (!showTools) return null;
+  const renderToolsTabContent = () => {
+    return (
+      <View style={{ flex: 1, backgroundColor: T.background.base }}>
+        {/* Tools Header */}
+        {activeToolView === 'hub' ? (
+          <View style={[styles.topHeader, { backgroundColor: T.background.dark, borderBottomColor: T.border.variant }]}>
+            <View style={styles.headerLeft}>
+              <Pressable style={({ pressed }) => [styles.headerBtn, pressed && { opacity: 0.7 }]}>
+                <Text style={[styles.headerIconText, { color: T.text.primary }]}>☰</Text>
+              </Pressable>
+              <View style={[styles.logoBadge, { backgroundColor: T.background.containerHighest, borderColor: T.border.variant }]}>
+                <Text style={{ fontSize: 16 }}>🛡️</Text>
+              </View>
+              <Text style={[styles.logoTextTitle, { color: themeMode === 'dark' ? BRAND.crimsonRedLight : BRAND.crimsonRed }]}>
+                INTEGRA VAULT
+              </Text>
+            </View>
+            <View style={styles.headerRight}>
+              <Pressable style={({ pressed }) => [styles.headerBtn, pressed && { opacity: 0.7 }]}>
+                <Text style={[styles.headerIconText, { color: T.text.primary }]}>🔍</Text>
+              </Pressable>
+              <Pressable 
+                style={styles.avatarBtn}
+                onPress={() => setShowProfile(true)}
+                accessibilityRole="button"
+                accessibilityLabel="Open Profile"
+              >
+                <View style={[styles.avatarCircle, { backgroundColor: T.background.containerHighest, borderColor: T.primary }]}>
+                  <Text style={[styles.avatarText, { color: T.text.primary }]}>👤</Text>
+                </View>
+              </Pressable>
+            </View>
+          </View>
+        ) : (
+          <View style={[styles.toolsTabHeader, { borderBottomColor: T.border.variant, borderBottomWidth: 1.5 }]}>
+            <Text style={[styles.toolsTabTitle, { color: T.text.primary }]}>
+              {activeToolView === 'calculator' && '🧮  Load Profit Calculator'}
+              {activeToolView === 'invoices' && '📋  Invoice Generator'}
+              {activeToolView === 'loads' && '🚛  Loads Marketplace'}
+            </Text>
+            <Pressable
+              style={[styles.toolsTabBackBtn, { borderColor: T.primary }]}
+              onPress={() => setActiveToolView('hub')}
+              accessibilityRole="button"
+              accessibilityLabel="Back to Utility Hub"
+            >
+              <Text style={{ color: T.primary, fontWeight: '700', fontSize: 13 }}>← BACK TO HUB</Text>
+            </Pressable>
+          </View>
+        )}
+
+        {/* Content */}
+        <ScrollView style={{ flex: 1 }} contentContainerStyle={{ padding: 16, paddingBottom: 36 }} showsVerticalScrollIndicator={false}>
+          {activeToolView === 'hub' && renderToolsHub()}
+          {activeToolView === 'calculator' && <LoadCalculator T={T} styles={styles} />}
+          {activeToolView === 'invoices' && (
+            <InvoiceGenerator
+              T={T}
+              styles={styles}
+              onClose={() => setActiveToolView('hub')}
+              setActiveTab={(tab) => {
+                setActiveTab(tab);
+                setActiveToolView('hub');
+              }}
+            />
+          )}
+          {activeToolView === 'loads' && <LoadsScreen />}
+        </ScrollView>
+      </View>
+    );
+  };
+
+  const renderProfileScreen = () => {
+    if (!showProfile) return null;
+
+    const docItems = [
+      { id: 'driverLicense', label: "Driver's License" },
+      { id: 'coi', label: "Certificate of Insurance (COI)" },
+      { id: 'operatingAuthority', label: "Operating Authority (MC/DOT)" },
+      { id: 'nsc', label: "National Safety Code (NSC)" },
+      { id: 'ifta', label: "IFTA Certificate" },
+    ];
+
+    const toggleDoc = (key: string) => {
+      const updated = { ...profileDocs, [key]: !(profileDocs as any)[key] };
+      setProfileDocs(updated);
+      saveProfileDocs(updated);
+      Alert.alert('Status Updated', `${docItems.find(d => d.id === key)?.label} status toggled!`);
+    };
 
     return (
       <View style={[StyleSheet.absoluteFill, { backgroundColor: 'rgba(0,0,0,0.65)', zIndex: 2000, justifyContent: 'center', alignItems: 'center' }]}>
         <View style={[styles.modalContent, { backgroundColor: T.background.base, borderColor: T.border.variant }]}>
           {/* Header */}
           <View style={styles.modalHeader}>
-            <Text style={[styles.modalTitle, { color: T.text.primary }]}>
-              {activeToolView === 'hub' && 'Integra Utility Suite'}
-              {activeToolView === 'calculator' && 'Load Profit Calculator'}
-              {activeToolView === 'invoices' && 'Invoice Generator'}
-            </Text>
-            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
-              {activeToolView !== 'hub' && (
-                <Pressable
-                  style={styles.backBtn}
-                  onPress={() => setActiveToolView('hub')}
-                  accessibilityRole="button"
-                  accessibilityLabel="Back to tools list"
-                >
-                  <Text style={{ color: T.primary, fontWeight: '700', fontSize: 13 }}>← BACK</Text>
-                </Pressable>
-              )}
-              <Pressable
-                style={styles.closeBtn}
-                onPress={() => setShowTools(false)}
-                accessibilityRole="button"
-                accessibilityLabel="Close tools hub"
-              >
-                <Text style={{ color: T.text.secondary, fontWeight: '700', fontSize: 16 }}>✕</Text>
-              </Pressable>
-            </View>
+            <Text style={[styles.modalTitle, { color: T.text.primary }]}>Profile & Settings</Text>
+            <Pressable
+              style={styles.closeBtn}
+              onPress={() => setShowProfile(false)}
+              accessibilityRole="button"
+              accessibilityLabel="Close profile screen"
+            >
+              <Text style={{ color: T.text.secondary, fontWeight: '700', fontSize: 16 }}>✕</Text>
+            </Pressable>
           </View>
 
-          {/* Sub Views Content */}
+          {/* Form */}
           <ScrollView style={{ flex: 1 }} contentContainerStyle={{ paddingBottom: 24 }} showsVerticalScrollIndicator={false}>
-            {activeToolView === 'hub' && renderToolsHub()}
-            {activeToolView === 'calculator' && <LoadCalculator T={T} styles={styles} />}
-            {activeToolView === 'invoices' && <InvoiceGenerator T={T} styles={styles} onClose={() => setShowTools(false)} setActiveTab={setActiveTab} />}
+            <View style={styles.formContainer}>
+              {/* User Name */}
+              <View style={styles.inputGroup}>
+                <Text style={[styles.inputLabel, { color: T.text.secondary }]}>CONTACT NAME</Text>
+                <TextInput
+                  style={[styles.modalInput, { backgroundColor: T.background.container, borderColor: T.border.variant, color: T.text.primary }]}
+                  value={profileName}
+                  onChangeText={(val) => {
+                    setProfileName(val);
+                    saveProfileField('profile_name', val);
+                  }}
+                  placeholder="Your Name"
+                  placeholderTextColor={T.text.muted}
+                />
+              </View>
+
+              {/* Company Name */}
+              <View style={styles.inputGroup}>
+                <Text style={[styles.inputLabel, { color: T.text.secondary }]}>COMPANY NAME</Text>
+                <TextInput
+                  style={[styles.modalInput, { backgroundColor: T.background.container, borderColor: T.border.variant, color: T.text.primary }]}
+                  value={profileCompany}
+                  onChangeText={(val) => {
+                    setProfileCompany(val);
+                    saveProfileField('profile_company', val);
+                  }}
+                  placeholder="Your Company Name"
+                  placeholderTextColor={T.text.muted}
+                />
+              </View>
+
+              {/* Company Type Selection */}
+              <View style={styles.inputGroup}>
+                <Text style={[styles.inputLabel, { color: T.text.secondary }]}>COMPANY TYPE</Text>
+                <View style={{ flexDirection: 'row', gap: 10 }}>
+                  <Pressable
+                    style={({ pressed }) => [
+                      {
+                        flex: 1,
+                        paddingVertical: 10,
+                        alignItems: 'center',
+                        borderRadius: 8,
+                        borderWidth: 1.5,
+                        borderColor: profileType === 'Owner Operator' ? T.primary : T.border.variant,
+                        backgroundColor: profileType === 'Owner Operator' ? (themeMode === 'dark' ? 'rgba(91, 16, 16, 0.2)' : 'rgba(91, 16, 16, 0.05)') : T.background.container,
+                      },
+                      pressed && { opacity: 0.8 }
+                    ]}
+                    onPress={() => {
+                      setProfileType('Owner Operator');
+                      saveProfileField('profile_type', 'Owner Operator');
+                    }}
+                  >
+                    <Text style={{ fontSize: 13, fontWeight: '700', color: profileType === 'Owner Operator' ? T.primary : T.text.secondary }}>Owner Operator</Text>
+                  </Pressable>
+                  <Pressable
+                    style={({ pressed }) => [
+                      {
+                        flex: 1,
+                        paddingVertical: 10,
+                        alignItems: 'center',
+                        borderRadius: 8,
+                        borderWidth: 1.5,
+                        borderColor: profileType === 'Carrier' ? T.primary : T.border.variant,
+                        backgroundColor: profileType === 'Carrier' ? (themeMode === 'dark' ? 'rgba(91, 16, 16, 0.2)' : 'rgba(91, 16, 16, 0.05)') : T.background.container,
+                      },
+                      pressed && { opacity: 0.8 }
+                    ]}
+                    onPress={() => {
+                      setProfileType('Carrier');
+                      saveProfileField('profile_type', 'Carrier');
+                    }}
+                  >
+                    <Text style={{ fontSize: 13, fontWeight: '700', color: profileType === 'Carrier' ? T.primary : T.text.secondary }}>Carrier</Text>
+                  </Pressable>
+                </View>
+              </View>
+
+              {/* VIN# */}
+              <View style={styles.inputGroup}>
+                <Text style={[styles.inputLabel, { color: T.text.secondary }]}>VIN NUMBER</Text>
+                <TextInput
+                  style={[styles.modalInput, { backgroundColor: T.background.container, borderColor: T.border.variant, color: T.text.primary }]}
+                  value={profileVin}
+                  onChangeText={(val) => {
+                    setProfileVin(val);
+                    saveProfileField('profile_vin', val);
+                  }}
+                  placeholder="e.g. 1FTFW1EF5KFD8291A"
+                  placeholderTextColor={T.text.muted}
+                />
+              </View>
+
+              {/* Subscription Status Card */}
+              <View style={[styles.calcSummaryCard, { backgroundColor: T.background.container, borderColor: T.border.variant, marginVertical: 8 }]}>
+                <Text style={[styles.calcSummaryTitle, { color: T.text.primary }]}>Subscription Status</Text>
+                <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <View>
+                    <Text style={{ fontSize: 14, fontWeight: '700', color: BRAND.profitGreen }}>✓ PREMIUM MEMBER</Text>
+                    <Text style={{ fontSize: 12, color: T.text.secondary, marginTop: 2 }}>Renews: July 15, 2026</Text>
+                  </View>
+                  <View style={{ backgroundColor: themeMode === 'dark' ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.05)', paddingVertical: 6, paddingHorizontal: 12, borderRadius: 6 }}>
+                    <Text style={{ fontSize: 11, fontWeight: '700', color: T.text.primary }}>ACTIVE</Text>
+                  </View>
+                </View>
+              </View>
+
+              {/* Company Documents Checklist */}
+              <View style={{ gap: 8, marginTop: 8 }}>
+                <Text style={[styles.inputLabel, { color: T.text.secondary }]}>COMPANY COMPLIANCE DOCUMENTS</Text>
+                {docItems.map((doc) => {
+                  const isUploaded = (profileDocs as any)[doc.id];
+                  return (
+                    <Pressable
+                      key={doc.id}
+                      style={({ pressed }) => [
+                        {
+                          flexDirection: 'row',
+                          justifyContent: 'space-between',
+                          alignItems: 'center',
+                          padding: 12,
+                          borderRadius: 8,
+                          borderWidth: 1,
+                          borderColor: T.border.variant,
+                          backgroundColor: T.background.container,
+                        },
+                        pressed && { opacity: 0.8 }
+                      ]}
+                      onPress={() => toggleDoc(doc.id)}
+                    >
+                      <Text style={{ fontSize: 13, fontWeight: '600', color: T.text.primary }}>{doc.label}</Text>
+                      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+                        <Text style={{ fontSize: 12, fontWeight: '700', color: isUploaded ? BRAND.profitGreen : T.text.muted }}>
+                          {isUploaded ? '✓ UPLOADED' : '⏳ MISSING'}
+                        </Text>
+                      </View>
+                    </Pressable>
+                  );
+                })}
+              </View>
+
+              {/* Generate Carrier Profile PDF Button */}
+              <Pressable
+                style={({ pressed }) => [
+                  styles.saveToVaultBtn,
+                  { backgroundColor: BRAND.profitGreen, marginTop: 16 },
+                  pressed && { opacity: 0.8 }
+                ]}
+                onPress={() => generateCarrierProfilePDF({
+                  name: profileName,
+                  company: profileCompany,
+                  type: profileType,
+                  vin: profileVin,
+                  docs: profileDocs,
+                })}
+                accessibilityRole="button"
+                accessibilityLabel="Generate Carrier Profile PDF"
+              >
+                <Text style={styles.saveToVaultBtnText}>📄 GENERATE CARRIER PROFILE PDF</Text>
+              </Pressable>
+            </View>
           </ScrollView>
         </View>
       </View>
@@ -694,9 +1226,9 @@ export default function AppTabs() {
     <SafeAreaView style={[styles.container, { backgroundColor: T.background.base }]} edges={['bottom']}>
       <View style={[styles.content, { backgroundColor: T.background.base }]}>{renderScreen()}</View>
 
-      {renderThemeToggle()}
-      {renderToolsButton()}
-      {renderToolsScreen()}
+      {shouldHideFloatingButtons() ? null : renderThemeToggle()}
+      {shouldHideFloatingButtons() ? null : renderProfileButton()}
+      {renderProfileScreen()}
 
       <View style={[styles.tabBar, { backgroundColor: T.background.dark, borderTopColor: T.border.variant }]}>
         {tabs.map((tab) => {
@@ -743,7 +1275,12 @@ export default function AppTabs() {
                   paddingVertical: 6,
                 }
               ]}
-              onPress={() => setActiveTab(tab.id)}
+              onPress={() => {
+                if (tab.id === 'loads' && activeTab === 'loads') {
+                  setHomeScreenView('home');
+                }
+                setActiveTab(tab.id);
+              }}
               accessibilityRole="tab"
               accessibilityLabel={tab.label}
             >
@@ -831,7 +1368,7 @@ const styles = StyleSheet.create({
   themeToggleIcon: {
     fontSize: 18,
   },
-  toolsBtn: {
+  profileBtn: {
     position: 'absolute',
     right: 60,
     width: 36,
@@ -841,6 +1378,23 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     zIndex: 1000,
+  },
+  toolsTabHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+  },
+  toolsTabTitle: {
+    fontSize: 18,
+    fontWeight: '700',
+  },
+  toolsTabBackBtn: {
+    borderWidth: 1.5,
+    borderRadius: 6,
+    paddingVertical: 4,
+    paddingHorizontal: 8,
   },
   errorContainer: {
     flex: 1,
@@ -893,20 +1447,165 @@ const styles = StyleSheet.create({
     paddingHorizontal: 8,
   },
   toolsGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    justifyContent: 'space-between',
     gap: 12,
   },
   toolCard: {
+    width: '48%',
     padding: 14,
-    borderRadius: 12,
+    borderRadius: 8,
     borderWidth: 1,
+    borderLeftWidth: 4,
+    marginBottom: 4,
+    justifyContent: 'space-between',
+  },
+  toolIconBox: {
+    width: 40,
+    height: 40,
+    borderRadius: 6,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: 8,
   },
   toolTitle: {
-    fontSize: 16,
-    fontWeight: '600',
+    fontSize: 15,
+    fontWeight: '700',
   },
   toolDesc: {
+    fontSize: 11,
+    lineHeight: 15,
+  },
+  hubTitle: {
+    fontSize: 28,
+    fontWeight: '800',
+    letterSpacing: -0.5,
+    marginBottom: 4,
+  },
+  hubSubtitle: {
+    fontSize: 13,
+    lineHeight: 17,
+  },
+  performanceCard: {
+    padding: 16,
+    borderRadius: 12,
+    borderWidth: 1.5,
+    marginVertical: 4,
+    gap: 6,
+  },
+  liveBadge: {
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    borderRadius: 4,
+    alignSelf: 'flex-start',
+  },
+  liveBadgeText: {
+    fontSize: 9,
+    fontWeight: '800',
+    color: '#ffffff',
+    letterSpacing: 0.5,
+  },
+  performanceHeading: {
+    fontSize: 18,
+    fontWeight: '700',
+  },
+  performanceBody: {
+    fontSize: 13,
+    lineHeight: 18,
+    marginBottom: 8,
+  },
+  performanceBtn: {
+    height: 40,
+    borderRadius: 8,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  performanceBtnText: {
+    color: '#ffffff',
+    fontWeight: '700',
+    fontSize: 13,
+  },
+  statusCard: {
+    padding: 16,
+    borderRadius: 12,
+    borderWidth: 1,
+    gap: 10,
+  },
+  statusRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  statusLabel: {
     fontSize: 12,
-    lineHeight: 16,
+    fontWeight: '500',
+  },
+  statusValue: {
+    fontSize: 12,
+    fontWeight: '700',
+  },
+  statusSeparator: {
+    height: 1,
+    width: '100%',
+    marginVertical: 2,
+  },
+  topHeader: {
+    height: 56,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingHorizontal: 16,
+    borderBottomWidth: 1,
+  },
+  headerLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+  },
+  headerRight: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+  },
+  headerBtn: {
+    width: 36,
+    height: 36,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  headerIconText: {
+    fontSize: 20,
+  },
+  logoBadge: {
+    width: 32,
+    height: 32,
+    borderRadius: 6,
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderWidth: 1,
+  },
+  avatarBtn: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    overflow: 'hidden',
+  },
+  avatarCircle: {
+    width: '100%',
+    height: '100%',
+    borderRadius: 18,
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderWidth: 1.5,
+  },
+  avatarText: {
+    fontSize: 14,
+  },
+  logoTextTitle: {
+    fontSize: 15,
+    fontWeight: '800',
+    letterSpacing: 0.8,
   },
 
   // Interactive forms
