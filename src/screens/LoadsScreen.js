@@ -176,7 +176,7 @@ const DEMO_LOADS = [
   },
 ];
 
-export default function LoadsScreen({ onBackToHome, onOpenProfile }) {
+export default function LoadsScreen({ onBackToHome = () => {}, onOpenProfile = () => {} } = {}) {
   const [loads, setLoads] = useState(DEMO_LOADS);
   const [loading, setLoading] = useState(false);
   const [activeTab, setActiveTab] = useState('marketplace');

@@ -709,7 +709,7 @@ export default function AppTabs() {
             {homeScreenView === 'home' ? (
               <HomeScreen
                 onNavigateToMarketplace={() => setHomeScreenView('marketplace')}
-                onNavigate={(tab, toolView) => {
+                onNavigate={(tab: TabName, toolView?: 'hub' | 'calculator' | 'invoices' | 'loads') => {
                   setActiveTab(tab);
                   if (toolView) setActiveToolView(toolView);
                 }}
