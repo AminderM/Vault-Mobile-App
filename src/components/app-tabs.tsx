@@ -999,22 +999,13 @@ export default function AppTabs() {
       <View style={{ flex: 1, backgroundColor: T.background.base }}>
         {/* Tools Header */}
         {activeToolView === 'hub' ? (
-          <View style={[styles.topHeader, { backgroundColor: T.background.dark, borderBottomColor: T.border.variant }]}>
+          <View style={[styles.topHeader, { backgroundColor: T.background.dark }]}>
             <View style={styles.headerLeft}>
-              <Pressable style={({ pressed }) => [styles.headerBtn, pressed && { opacity: 0.7 }]}>
-                <Text style={[styles.headerIconText, { color: T.text.primary }]}>☰</Text>
-              </Pressable>
               <View style={[styles.logoBadge, { backgroundColor: T.background.containerHighest, borderColor: T.border.variant }]}>
                 <Text style={{ fontSize: 16 }}>🛡️</Text>
               </View>
-              <Text style={[styles.logoTextTitle, { color: themeMode === 'dark' ? BRAND.crimsonRedLight : BRAND.crimsonRed }]}>
-                INTEGRA VAULT
-              </Text>
             </View>
             <View style={styles.headerRight}>
-              <Pressable style={({ pressed }) => [styles.headerBtn, pressed && { opacity: 0.7 }]}>
-                <Text style={[styles.headerIconText, { color: T.text.primary }]}>🔍</Text>
-              </Pressable>
               <Pressable 
                 style={styles.avatarBtn}
                 onPress={() => setShowProfile(true)}
@@ -1329,6 +1320,21 @@ export default function AppTabs() {
           backgroundColor: themeMode === 'dark' ? 'rgba(62, 144, 255, 0.32)' : 'rgba(62, 144, 255, 0.24)',
           ...(Platform.OS === 'web' && { filter: 'blur(100px)' }),
         }} 
+      />
+
+      {/* Hexagonal Honeycomb Pattern Overlay */}
+      <View 
+        pointerEvents="none"
+        style={[
+          StyleSheet.absoluteFill,
+          Platform.OS === 'web' && {
+            backgroundImage: themeMode === 'dark'
+              ? `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='28' height='48.5' viewBox='0 0 28 48.5'%3E%3Cpath d='M0 0 L14 8.08 L28 0 M0 24.25 L14 16.17 L28 24.25 M0 48.5 L14 40.42 L28 48.5 M14 8.08 L14 16.17 M14 40.42 L14 48.5 M0 0 L0 48.5 M28 0 L28 48.5' fill='none' stroke='rgba(255,255,255,0.06)' stroke-width='1'/%3E%3C/svg%3E")`
+              : `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='28' height='48.5' viewBox='0 0 28 48.5'%3E%3Cpath d='M0 0 L14 8.08 L28 0 M0 24.25 L14 16.17 L28 24.25 M0 48.5 L14 40.42 L28 48.5 M14 8.08 L14 16.17 M14 40.42 L14 48.5 M0 0 L0 48.5 M28 0 L28 48.5' fill='none' stroke='rgba(0,0,0,0.05)' stroke-width='1'/%3E%3C/svg%3E")`,
+            backgroundRepeat: 'repeat',
+            opacity: themeMode === 'dark' ? 0.75 : 0.65,
+          }
+        ]}
       />
 
       <View style={[styles.content, { backgroundColor: 'transparent' }]}>{renderScreen()}</View>
@@ -1669,7 +1675,6 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     alignItems: 'center',
     paddingHorizontal: 16,
-    borderBottomWidth: 1,
   },
   headerLeft: {
     flexDirection: 'row',

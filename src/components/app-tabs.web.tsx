@@ -999,22 +999,13 @@ export default function AppTabs() {
       <View style={{ flex: 1, backgroundColor: T.background.base }}>
         {/* Tools Header */}
         {activeToolView === 'hub' ? (
-          <View style={[styles.topHeader, { backgroundColor: T.background.dark, borderBottomColor: T.border.variant }]}>
+          <View style={[styles.topHeader, { backgroundColor: T.background.dark }]}>
             <View style={styles.headerLeft}>
-              <Pressable style={({ pressed }) => [styles.headerBtn, pressed && { opacity: 0.7 }]}>
-                <Text style={[styles.headerIconText, { color: T.text.primary }]}>☰</Text>
-              </Pressable>
               <View style={[styles.logoBadge, { backgroundColor: T.background.containerHighest, borderColor: T.border.variant }]}>
                 <Text style={{ fontSize: 16 }}>🛡️</Text>
               </View>
-              <Text style={[styles.logoTextTitle, { color: themeMode === 'dark' ? BRAND.crimsonRedLight : BRAND.crimsonRed }]}>
-                INTEGRA VAULT
-              </Text>
             </View>
             <View style={styles.headerRight}>
-              <Pressable style={({ pressed }) => [styles.headerBtn, pressed && { opacity: 0.7 }]}>
-                <Text style={[styles.headerIconText, { color: T.text.primary }]}>🔍</Text>
-              </Pressable>
               <Pressable 
                 style={styles.avatarBtn}
                 onPress={() => setShowProfile(true)}
@@ -1669,7 +1660,6 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     alignItems: 'center',
     paddingHorizontal: 16,
-    borderBottomWidth: 1,
   },
   headerLeft: {
     flexDirection: 'row',
