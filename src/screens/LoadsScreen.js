@@ -348,7 +348,7 @@ const useStyles = createThemedStyleSheet((T) => StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    backgroundColor: T.background.dark,
+    backgroundColor: T.background.base === '#edeef3' ? 'rgba(200, 202, 215, 0.75)' : 'rgba(5, 2, 2, 0.70)',
     borderBottomWidth: 1,
     borderBottomColor: T.border.variant,
     paddingHorizontal: 16,
@@ -427,7 +427,7 @@ const useStyles = createThemedStyleSheet((T) => StyleSheet.create({
   // Tabs
   tabBar: {
     flexDirection: 'row',
-    backgroundColor: T.background.containerLow,
+    backgroundColor: T.background.base === '#edeef3' ? 'rgba(200, 202, 215, 0.65)' : 'rgba(23, 12, 12, 0.60)',
     borderRadius: 12,
     padding: 4,
     margin: SPACING.marginMobile,

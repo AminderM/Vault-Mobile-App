@@ -997,10 +997,10 @@ export default function AppTabs() {
 
   const renderToolsTabContent = () => {
     return (
-      <View style={{ flex: 1, backgroundColor: T.background.base }}>
+      <View style={{ flex: 1, backgroundColor: 'transparent' }}>
         {/* Tools Header */}
         {activeToolView === 'hub' ? (
-          <View style={[styles.topHeader, { backgroundColor: T.background.dark }]}>
+          <View style={[styles.topHeader, { backgroundColor: themeMode === 'dark' ? 'rgba(5, 2, 2, 0.70)' : 'rgba(200, 202, 215, 0.75)' }]}>
             <View style={styles.headerLeft}>
               <View style={[styles.logoBadge, { backgroundColor: T.background.containerHighest, borderColor: T.border.variant }]}>
                 <Text style={{ fontSize: 16 }}>🛡️</Text>
@@ -1282,65 +1282,31 @@ export default function AppTabs() {
 
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: T.background.base, overflow: 'hidden' }]} edges={['bottom']}>
-      {/* Static Glassmorphic background blobs */}
-      <View 
+      {/* Hexagonal Honeycomb Pattern Overlay – single image stretched to cover full screen */}
+      <View
         pointerEvents="none"
-        style={{
-          position: 'absolute',
-          top: '5%',
-          right: '-25%',
-          width: 360,
-          height: 360,
-          borderRadius: 180,
-          backgroundColor: themeMode === 'dark' ? 'rgba(158, 21, 32, 0.38)' : 'rgba(190, 26, 40, 0.28)',
-          ...(Platform.OS === 'web' && { filter: 'blur(90px)' }),
-        }} 
-      />
-      <View 
-        pointerEvents="none"
-        style={{
-          position: 'absolute',
-          top: '40%',
-          left: '-30%',
-          width: 350,
-          height: 350,
-          borderRadius: 175,
-          backgroundColor: themeMode === 'dark' ? 'rgba(48, 176, 192, 0.22)' : 'rgba(48, 176, 192, 0.22)',
-          ...(Platform.OS === 'web' && { filter: 'blur(90px)' }),
-        }} 
-      />
-      <View 
-        pointerEvents="none"
-        style={{
-          position: 'absolute',
-          bottom: '15%',
-          right: '-10%',
-          width: 400,
-          height: 400,
-          borderRadius: 200,
-          backgroundColor: themeMode === 'dark' ? 'rgba(62, 144, 255, 0.32)' : 'rgba(62, 144, 255, 0.24)',
-          ...(Platform.OS === 'web' && { filter: 'blur(100px)' }),
-        }} 
-      />
-
-      {/* Hexagonal Honeycomb Pattern Overlay */}
-      <View pointerEvents="none" style={StyleSheet.absoluteFill}>
-        <Image 
-          source={themeMode === 'dark' 
-            ? require('../../assets/images/honeycomb-dark.png') 
-            : require('../../assets/images/honeycomb-light.png')}
-          style={[
-            StyleSheet.absoluteFill,
-            {
-              opacity: themeMode === 'dark' ? 0.22 : 0.14,
-            },
-            (Platform.OS === 'web' ? {
-              backgroundSize: '140px',
-              backgroundRepeat: 'repeat',
-            } : {}) as any
-          ]}
-          resizeMode="repeat"
-        />
+        style={[
+          StyleSheet.absoluteFill,
+          { opacity: themeMode === 'dark' ? 0.50 : 0.30 },
+          (Platform.OS === 'web' ? {
+            backgroundImage: `url("${themeMode === 'dark'
+              ? (typeof require('../../assets/images/honeycomb-dark.png') === 'string' ? require('../../assets/images/honeycomb-dark.png') : (require('../../assets/images/honeycomb-dark.png') as any).uri || (require('../../assets/images/honeycomb-dark.png') as any).default || '')
+              : (typeof require('../../assets/images/honeycomb-light.png') === 'string' ? require('../../assets/images/honeycomb-light.png') : (require('../../assets/images/honeycomb-light.png') as any).uri || (require('../../assets/images/honeycomb-light.png') as any).default || '')}")`,
+            backgroundSize: 'cover',
+            backgroundRepeat: 'no-repeat',
+            backgroundPosition: 'center',
+          } : {}) as any,
+        ]}
+      >
+        {Platform.OS !== 'web' && (
+          <Image
+            source={themeMode === 'dark'
+              ? require('../../assets/images/honeycomb-dark.png')
+              : require('../../assets/images/honeycomb-light.png')}
+            style={StyleSheet.absoluteFill}
+            resizeMode="cover"
+          />
+        )}
       </View>
 
       <View style={[styles.content, { backgroundColor: 'transparent' }]}>{renderScreen()}</View>
@@ -1355,7 +1321,17 @@ export default function AppTabs() {
         renderThemeToggle()
       )}
 
-      <View style={[styles.tabBar, { backgroundColor: T.background.dark, borderTopColor: T.border.variant }]}>
+      <View style={[
+        styles.tabBar, 
+        { 
+          backgroundColor: themeMode === 'dark' ? 'rgba(5, 2, 2, 0.55)' : 'rgba(255, 255, 255, 0.55)', 
+          borderTopColor: T.border.variant 
+        },
+        (Platform.OS === 'web' && {
+          backdropFilter: 'blur(10px)',
+          WebkitBackdropFilter: 'blur(10px)',
+        }) as any
+      ]}>
         {tabs.map((tab) => {
           const isActive = activeTab === tab.id;
           const isScan = tab.id === 'scan';
@@ -1375,11 +1351,11 @@ export default function AppTabs() {
                 <View style={[
                   styles.scanSquare,
                   {
-                    backgroundColor: T.primary,
+                    backgroundColor: 'rgba(158, 21, 32, 0.8)',
                     borderColor: isActive ? '#ffb4ab' : '#5b1010',
                   }
                 ]}>
-                  <TabIcon id="scan" color="#ffffff" bg={T.primary} />
+                  <TabIcon id="scan" color="#ffffff" bg="rgba(158, 21, 32, 0.8)" />
                   <Text style={styles.scanLabelText}>
                     SCAN
                   </Text>
@@ -1394,7 +1370,7 @@ export default function AppTabs() {
               style={[
                 styles.tabButton,
                 isActive && {
-                  backgroundColor: T.primary,
+                  backgroundColor: 'rgba(158, 21, 32, 0.8)',
                   borderRadius: 12,
                   paddingHorizontal: 12,
                   paddingVertical: 6,
@@ -1409,7 +1385,7 @@ export default function AppTabs() {
               accessibilityRole="tab"
               accessibilityLabel={tab.label}
             >
-              <TabIcon id={tab.id} color={isActive ? '#ffffff' : T.text.muted} bg={isActive ? T.primary : T.background.dark} />
+              <TabIcon id={tab.id} color={isActive ? '#ffffff' : T.text.muted} bg={isActive ? 'rgba(158, 21, 32, 0.8)' : (themeMode === 'dark' ? 'rgba(5, 2, 2, 0.55)' : 'rgba(255, 255, 255, 0.55)')} />
               <Text style={[
                 styles.tabLabel,
                 isActive ? { color: '#ffffff', fontWeight: '700' } : { color: T.text.muted }

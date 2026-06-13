@@ -329,7 +329,7 @@ const useStyles = createThemedStyleSheet((T) => StyleSheet.create({
     marginHorizontal: SPACING.marginMobile,
     marginTop: SPACING.stackMd,
     height: 280,
-    backgroundColor: T.background.dark,
+    backgroundColor: T.background.base === '#edeef3' ? 'rgba(195, 198, 215, 0.80)' : 'rgba(5, 2, 2, 0.75)',
     borderRadius: 12,
     borderWidth: 1,
     borderColor: T.border.variant,

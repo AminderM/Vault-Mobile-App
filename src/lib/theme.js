@@ -42,7 +42,7 @@ export const DARK_THEME = {
     base: '#0d0404',        // deepest background (obsidian crimson)
     dark: '#050202',        // pure obsidian dark
     surface: '#0d0404',     // main content surface
-    card: 'rgba(255, 255, 255, 0.07)',        // premium glass cards
+    card: 'rgba(13, 4, 4, 0.55)',           // dark-tinted glass cards – lets honeycomb show through
     container: '#1c1010',   // container bg
     containerLow: '#170c0c',
     containerHigh: '#271616',
@@ -102,17 +102,17 @@ export const LIGHT_THEME = {
   tertiary: '#006a60',
   tertiaryContainer: '#6fd8cc',
 
-  // Backgrounds / Surfaces
+  // Backgrounds / Surfaces – cool grey palette (no milky white)
   background: {
-    base: '#fdf8f8',        // light grey-red tint
-    dark: '#ffffff',        // pure white
-    surface: '#fff8f7',     // main content surface
-    card: 'rgba(255, 255, 255, 0.35)',        // premium frosted glass cards
-    container: '#f4dddc',   // container bg
-    containerLow: '#fae3e2',
-    containerHigh: '#eed2d1',
-    containerHighest: '#e5c5c4',
-    variant: '#eed2d1',
+    base: '#edeef3',        // cool light grey base
+    dark: '#e4e5eb',        // slightly darker grey
+    surface: '#f0f1f6',     // main content surface
+    card: 'rgba(190, 195, 210, 0.55)',  // grey-blue glass card – lets honeycomb show through
+    container: '#d8dae6',   // medium grey container
+    containerLow: '#e0e1ea',
+    containerHigh: '#ccced8',
+    containerHighest: '#c2c4d0',
+    variant: '#ccced8',
   },
 
   // Text
@@ -140,9 +140,9 @@ export const LIGHT_THEME = {
 
   // Border / Outline
   border: {
-    default: '#857372',
-    variant: '#d8c2c1',
-    muted: 'rgba(133, 115, 114, 0.2)',
+    default: '#8a8fa8',     // cool grey outline
+    variant: '#b8bbd0',     // medium grey variant
+    muted: 'rgba(100, 105, 130, 0.2)',
   },
 
   // Interactive
@@ -282,14 +282,16 @@ if (Platform.OS === 'web' && typeof document !== 'undefined') {
 export const createGlassCard = () => {
   const isDark = currentTheme === 'dark';
   return {
-    backgroundColor: isDark ? 'rgba(255, 255, 255, 0.08)' : 'rgba(255, 255, 255, 0.65)',
+    // Dark mode: subtle dark-crimson tint so honeycomb pattern bleeds through
+    // Light mode: cool grey tint so honeycomb shows through without milky white wash
+    backgroundColor: isDark ? 'rgba(13, 4, 4, 0.55)' : 'rgba(190, 195, 210, 0.55)',
     borderWidth: 1,
-    borderColor: isDark ? 'rgba(255, 255, 255, 0.18)' : 'rgba(0, 0, 0, 0.08)',
+    borderColor: isDark ? 'rgba(255, 255, 255, 0.12)' : 'rgba(100, 105, 130, 0.15)',
     borderRadius: 12,
     ...(Platform.OS === 'web' && {
-      backdropFilter: 'blur(20px) saturate(180%)',
-      WebkitBackdropFilter: 'blur(20px) saturate(180%)',
-      boxShadow: isDark ? '0 8px 32px 0 rgba(0, 0, 0, 0.37)' : '0 8px 32px 0 rgba(31, 38, 135, 0.07)',
+      backdropFilter: 'blur(12px) saturate(150%)',
+      WebkitBackdropFilter: 'blur(12px) saturate(150%)',
+      boxShadow: isDark ? '0 8px 32px 0 rgba(0, 0, 0, 0.5)' : '0 8px 32px 0 rgba(31, 38, 135, 0.07)',
     }),
   };
 };

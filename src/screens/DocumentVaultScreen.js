@@ -229,7 +229,7 @@ const useStyles = createThemedStyleSheet((T) => StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: T.background.base,
+    backgroundColor: 'transparent',
   },
   emptyText: {
     fontSize: 18,

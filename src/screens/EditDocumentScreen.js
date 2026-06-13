@@ -119,7 +119,7 @@ export default function EditDocumentScreen({
 const useStyles = createThemedStyleSheet((T) => StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: T.background.base,
+    backgroundColor: 'transparent',
   },
   header: {
     backgroundColor: T.primary,
