@@ -9,6 +9,7 @@ import {
   ActivityIndicator,
   Alert,
   Platform,
+  Image,
 } from 'react-native';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -1323,19 +1324,24 @@ export default function AppTabs() {
       />
 
       {/* Hexagonal Honeycomb Pattern Overlay */}
-      <View 
-        pointerEvents="none"
-        style={[
-          StyleSheet.absoluteFill,
-          (Platform.OS === 'web' ? {
-            backgroundImage: themeMode === 'dark'
-              ? `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='28' height='48.5' viewBox='0 0 28 48.5'%3E%3Cdefs%3E%3CradialGradient id='g' cx='50%25' cy='40%25' r='50%25'%3E%3Cstop offset='0%25' stop-color='rgba(255,255,255,0.03)'/%3E%3Cstop offset='100%25' stop-color='rgba(0,0,0,0.4)'/%3E%3C/radialGradient%3E%3C/defs%3E%3Cpolygon points='14,8.08 28,16.17 28,32.33 14,40.42 0,32.33 0,16.17' fill='url(%23g)'/%3E%3Cpath d='M0,32.33 L0,16.17 L14,8.08 M28,32.33 L28,16.17 M14,40.42 L0,32.33' fill='none' stroke='rgba(255,255,255,0.12)' stroke-width='1'/%3E%3Cpath d='M14,8.08 L28,16.17 L28,32.33 L14,40.42' fill='none' stroke='rgba(0,0,0,0.5)' stroke-width='1.5'/%3E%3C/svg%3E")`
-              : `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='28' height='48.5' viewBox='0 0 28 48.5'%3E%3Cdefs%3E%3CradialGradient id='g' cx='50%25' cy='30%25' r='50%25'%3E%3Cstop offset='0%25' stop-color='rgba(255,255,255,0.6)'/%3E%3Cstop offset='100%25' stop-color='rgba(0,0,0,0.05)'/%3E%3C/radialGradient%3E%3C/defs%3E%3Cpolygon points='14,8.08 28,16.17 28,32.33 14,40.42 0,32.33 0,16.17' fill='url(%23g)'/%3E%3Cpath d='M0,32.33 L0,16.17 L14,8.08 M28,32.33 L28,16.17 M14,40.42 L0,32.33' fill='none' stroke='rgba(255,255,255,0.8)' stroke-width='1.2'/%3E%3Cpath d='M14,8.08 L28,16.17 L28,32.33 L14,40.42' fill='none' stroke='rgba(0,0,0,0.15)' stroke-width='1.5'/%3E%3C/svg%3E")`,
-            backgroundRepeat: 'repeat',
-            opacity: themeMode === 'dark' ? 0.75 : 0.65,
-          } : {}) as any
-        ]}
-      />
+      <View pointerEvents="none" style={StyleSheet.absoluteFill}>
+        <Image 
+          source={themeMode === 'dark' 
+            ? require('../../assets/images/honeycomb-dark.png') 
+            : require('../../assets/images/honeycomb-light.png')}
+          style={[
+            StyleSheet.absoluteFill,
+            {
+              opacity: themeMode === 'dark' ? 0.22 : 0.14,
+            },
+            (Platform.OS === 'web' ? {
+              backgroundSize: '140px',
+              backgroundRepeat: 'repeat',
+            } : {}) as any
+          ]}
+          resizeMode="repeat"
+        />
+      </View>
 
       <View style={[styles.content, { backgroundColor: 'transparent' }]}>{renderScreen()}</View>
 
