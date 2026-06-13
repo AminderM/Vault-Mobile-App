@@ -9,7 +9,7 @@ import {
   Platform,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { BRAND, TYPOGRAPHY, SPACING, createGlassCard, useTheme, createThemedStyleSheet } from '../lib/theme';
+import { BRAND, TYPOGRAPHY, SPACING, createGlassCard, createStatusBorderCard, useTheme, createThemedStyleSheet } from '../lib/theme';
 
 
 
@@ -44,7 +44,7 @@ export default function HomeScreen({ onNavigateToMarketplace, onNavigate }) {
         {/* ── Bento Stats Grid ── */}
         <View style={styles.bentoGrid}>
           {/* Greeting card – spans full width */}
-          <View style={[styles.greetingCard, createGlassCard()]}>
+          <View style={[styles.greetingCard, createStatusBorderCard(T.primary)]}>
             <View>
               <Text style={styles.greetingText}>{getGreeting()}, Jazzie</Text>
               <View style={styles.locationRow}>
@@ -58,13 +58,13 @@ export default function HomeScreen({ onNavigateToMarketplace, onNavigate }) {
           </View>
 
           {/* Active Loads */}
-          <View style={[styles.statCard, createGlassCard(), { borderLeftColor: T.secondary }]}>
+          <View style={[styles.statCard, createStatusBorderCard(T.secondary)]}>
             <Text style={styles.statLabel}>ACTIVE LOADS</Text>
             <Text style={[styles.statNumber, { color: T.secondary }]}>08</Text>
           </View>
 
           {/* RPM Average */}
-          <View style={[styles.statCard, createGlassCard(), { borderLeftColor: BRAND.hazardOrange }]}>
+          <View style={[styles.statCard, createStatusBorderCard(BRAND.hazardOrange)]}>
             <Text style={styles.statLabel}>RPM AVG</Text>
             <Text style={[styles.statNumber, { color: T.text.primary }]}>$3.22</Text>
           </View>
@@ -107,7 +107,7 @@ export default function HomeScreen({ onNavigateToMarketplace, onNavigate }) {
           </Pressable>
         </View>
 
-        <View style={[styles.loadCard, createGlassCard(), { borderLeftColor: T.primary }]}>
+        <View style={[styles.loadCard, createStatusBorderCard(T.primary)]}>
           <Pressable onPress={onNavigateToMarketplace} style={{ gap: 12 }}>
             {/* Status badge */}
             <View style={styles.inTransitBadge}>
@@ -208,9 +208,6 @@ const useStyles = createThemedStyleSheet((T) => StyleSheet.create({
   greetingCard: {
     width: '100%',
     padding: SPACING.stackMd,
-    borderRadius: 12,
-    borderLeftWidth: 4,
-    borderLeftColor: T.primary,
     gap: SPACING.stackMd,
   },
   greetingText: { ...TYPOGRAPHY.headlineLg, color: T.text.primary },
@@ -230,8 +227,6 @@ const useStyles = createThemedStyleSheet((T) => StyleSheet.create({
   statCard: {
     flex: 1,
     padding: SPACING.stackMd,
-    borderRadius: 12,
-    borderLeftWidth: 4,
     gap: 6,
   },
   statLabel: { ...TYPOGRAPHY.labelData, color: T.text.secondary },
@@ -279,7 +274,6 @@ const useStyles = createThemedStyleSheet((T) => StyleSheet.create({
   // Current load card
   loadCard: {
     marginHorizontal: SPACING.marginMobile,
-    borderLeftWidth: 4,
     padding: SPACING.stackMd,
     gap: SPACING.stackMd,
     position: 'relative',
