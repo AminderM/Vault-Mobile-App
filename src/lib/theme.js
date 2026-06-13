@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { StyleSheet } from 'react-native';
+import { Platform } from 'react-native';
 
 // Integra Vault - Design Token System
 // Derived from Stitch "Unified Trucking Management Suite"
@@ -41,7 +41,7 @@ export const DARK_THEME = {
     base: '#1e0f0f',        // deepest background
     dark: '#0A0A0A',        // pure obsidian
     surface: '#1e0f0f',     // main content surface
-    card: '#1C1C1E',        // glass cards
+    card: 'rgba(28, 28, 30, 0.45)',        // glass cards
     container: '#2c1b1b',   // container bg
     containerLow: '#271717',
     containerHigh: '#372625',
@@ -106,7 +106,7 @@ export const LIGHT_THEME = {
     base: '#fdf8f8',        // light grey-red tint
     dark: '#ffffff',        // pure white
     surface: '#fff8f7',     // main content surface
-    card: '#ffffff',        // clean white cards
+    card: 'rgba(255, 255, 255, 0.65)',        // clean white cards
     container: '#f4dddc',   // container bg
     containerLow: '#fae3e2',
     containerHigh: '#eed2d1',
@@ -266,6 +266,10 @@ export const createGlassCard = () => ({
   borderWidth: 1,
   borderColor: T.border.muted,
   borderRadius: 12,
+  ...(Platform.OS === 'web' && {
+    backdropFilter: 'blur(20px) saturate(180%)',
+    WebkitBackdropFilter: 'blur(20px) saturate(180%)',
+  }),
 });
 
 export const createStatusBorderCard = (borderColor) => ({
