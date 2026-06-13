@@ -340,8 +340,8 @@ export default function LoadsScreen({ onBackToHome = () => {}, onOpenProfile = (
 }
 
 const useStyles = createThemedStyleSheet((T) => StyleSheet.create({
-  safe: { flex: 1, backgroundColor: T.background.base },
-  container: { flex: 1, backgroundColor: T.background.base },
+  safe: { flex: 1, backgroundColor: 'transparent' },
+  container: { flex: 1, backgroundColor: 'transparent' },
 
   topHeader: {
     height: 56,

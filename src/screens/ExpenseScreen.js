@@ -220,8 +220,8 @@ export default function ExpenseScreen() {
 }
 
 const useStyles = createThemedStyleSheet((T) => StyleSheet.create({
-  safe: { flex: 1, backgroundColor: T.background.base },
-  container: { flex: 1, backgroundColor: T.background.base, paddingBottom: 100 },
+  safe: { flex: 1, backgroundColor: 'transparent' },
+  container: { flex: 1, backgroundColor: 'transparent', paddingBottom: 100 },
 
   pageHeader: {
     flexDirection: 'row',

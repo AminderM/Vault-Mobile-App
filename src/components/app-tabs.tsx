@@ -1223,8 +1223,36 @@ export default function AppTabs() {
   }
 
   return (
-    <SafeAreaView style={[styles.container, { backgroundColor: T.background.base }]} edges={['bottom']}>
-      <View style={[styles.content, { backgroundColor: T.background.base }]}>{renderScreen()}</View>
+    <SafeAreaView style={[styles.container, { backgroundColor: T.background.base, overflow: 'hidden' }]} edges={['bottom']}>
+      {/* Static Glassmorphic background blobs */}
+      <View 
+        pointerEvents="none"
+        style={{
+          position: 'absolute',
+          top: '10%',
+          right: '-20%',
+          width: 320,
+          height: 320,
+          borderRadius: 160,
+          backgroundColor: themeMode === 'dark' ? 'rgba(158, 21, 32, 0.15)' : 'rgba(158, 21, 32, 0.08)',
+          ...(Platform.OS === 'web' && { filter: 'blur(80px)' }),
+        }} 
+      />
+      <View 
+        pointerEvents="none"
+        style={{
+          position: 'absolute',
+          bottom: '20%',
+          left: '-20%',
+          width: 380,
+          height: 380,
+          borderRadius: 190,
+          backgroundColor: themeMode === 'dark' ? 'rgba(62, 144, 255, 0.12)' : 'rgba(62, 144, 255, 0.06)',
+          ...(Platform.OS === 'web' && { filter: 'blur(80px)' }),
+        }} 
+      />
+
+      <View style={[styles.content, { backgroundColor: 'transparent' }]}>{renderScreen()}</View>
 
       {shouldHideFloatingButtons() ? null : renderThemeToggle()}
       {shouldHideFloatingButtons() ? null : renderProfileButton()}

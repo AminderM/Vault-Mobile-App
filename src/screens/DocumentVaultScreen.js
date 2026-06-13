@@ -163,13 +163,13 @@ export default function DocumentVaultScreen() {
 const useStyles = createThemedStyleSheet((T) => StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: T.background.base,
+    backgroundColor: 'transparent',
   },
   centerContainer: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: T.background.base,
+    backgroundColor: 'transparent',
   },
   listContainer: {
     padding: 12,
