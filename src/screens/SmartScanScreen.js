@@ -13,7 +13,7 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import * as ImagePicker from 'expo-image-picker';
 import { scanIdentify, saveDocument } from '../lib/api';
-import { BRAND, TYPOGRAPHY, SPACING, useTheme, createThemedStyleSheet } from '../lib/theme';
+import { BRAND, TYPOGRAPHY, SPACING, createGlassCard, useTheme, createThemedStyleSheet } from '../lib/theme';
 
 const DOC_CATEGORIES = [
   { id: 'bol', label: 'Bill of Lading' },
@@ -366,10 +366,7 @@ const useStyles = createThemedStyleSheet((T) => StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     gap: 6,
-    backgroundColor: T.background.container,
-    borderWidth: 1,
-    borderColor: T.border.variant,
-    borderRadius: 12,
+    ...createGlassCard(),
     paddingVertical: SPACING.stackMd,
   },
   actionIcon: { fontSize: 28 },
@@ -379,12 +376,9 @@ const useStyles = createThemedStyleSheet((T) => StyleSheet.create({
   resultPanel: {
     marginHorizontal: SPACING.marginMobile,
     marginTop: SPACING.stackMd,
-    backgroundColor: T.background.card,
-    borderWidth: 1,
-    borderColor: T.border.variant,
+    ...createGlassCard(),
     borderLeftWidth: 4,
     borderLeftColor: BRAND.profitGreen,
-    borderRadius: 12,
     overflow: 'hidden',
   },
   resultHeader: {

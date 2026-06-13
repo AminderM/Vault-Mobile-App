@@ -10,7 +10,7 @@ import {
 } from 'react-native';
 import { listDocuments, deleteDocument } from '../lib/api';
 import { cancelExpiryReminders } from '../lib/expiryNotifications';
-import { BRAND, TYPOGRAPHY, SPACING, useTheme, createThemedStyleSheet } from '../lib/theme';
+import { BRAND, TYPOGRAPHY, SPACING, createGlassCard, useTheme, createThemedStyleSheet } from '../lib/theme';
 
 const getStatusStyles = (T) => ({
   overdue: {
@@ -175,12 +175,9 @@ const useStyles = createThemedStyleSheet((T) => StyleSheet.create({
     padding: 12,
   },
   documentCard: {
-    backgroundColor: T.background.card,
-    borderRadius: 8,
+    ...createGlassCard(),
     padding: 16,
     marginBottom: 12,
-    borderWidth: 1,
-    borderColor: T.border.variant,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,

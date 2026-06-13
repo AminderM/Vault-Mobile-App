@@ -10,7 +10,7 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { getExpenses } from '../lib/api';
-import { BRAND, TYPOGRAPHY, SPACING, useTheme, createThemedStyleSheet } from '../lib/theme';
+import { BRAND, TYPOGRAPHY, SPACING, createGlassCard, useTheme, createThemedStyleSheet } from '../lib/theme';
 
 const TIME_PERIODS = [
   { id: 'week', label: 'THIS WEEK' },
@@ -252,9 +252,7 @@ const useStyles = createThemedStyleSheet((T) => StyleSheet.create({
   },
   metricCard: {
     width: '47.5%',
-    backgroundColor: T.background.card,
-    borderWidth: 1,
-    borderColor: T.border.variant,
+    ...createGlassCard(),
     borderLeftWidth: 4,
     padding: SPACING.stackMd,
     gap: 4,
@@ -287,10 +285,7 @@ const useStyles = createThemedStyleSheet((T) => StyleSheet.create({
   chartCard: {
     marginHorizontal: SPACING.marginMobile,
     marginBottom: SPACING.stackMd,
-    backgroundColor: T.background.card,
-    borderWidth: 1,
-    borderColor: T.border.variant,
-    borderRadius: 8,
+    ...createGlassCard(),
     padding: SPACING.stackMd,
   },
   chartTitle: { ...TYPOGRAPHY.headlineSm, color: T.text.primary, marginBottom: 2 },
@@ -336,9 +331,7 @@ const useStyles = createThemedStyleSheet((T) => StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: SPACING.stackMd,
-    backgroundColor: T.background.card,
-    borderWidth: 1,
-    borderColor: T.border.variant,
+    ...createGlassCard(),
     paddingHorizontal: SPACING.stackMd,
     height: 72,
   },
