@@ -26,13 +26,18 @@ import { saveDocument, logout, isAuthenticated, getAuthUser } from '../lib/api';
 type TabName = 'loads' | 'vault' | 'scan' | 'finance' | 'tools';
 
 // High-fidelity custom vector drawings for the bottom tabs
-function TruckIcon({ color }: { color: string }) {
+function HomeIcon({ color }: { color: string }) {
   return (
-    <View style={{ width: 24, height: 16, flexDirection: 'row', alignItems: 'flex-end', justifyContent: 'center' }}>
-      <View style={{ position: 'absolute', bottom: -3, left: 2, width: 6, height: 6, borderRadius: 3, borderWidth: 1.5, borderColor: color }} />
-      <View style={{ position: 'absolute', bottom: -3, right: 3, width: 6, height: 6, borderRadius: 3, borderWidth: 1.5, borderColor: color }} />
-      <View style={{ width: 14, height: 11, borderWidth: 1.8, borderColor: color, borderRadius: 1.5, marginRight: 1 }} />
-      <View style={{ width: 6, height: 8, borderWidth: 1.8, borderColor: color, borderTopRightRadius: 3, borderBottomRightRadius: 1, borderLeftWidth: 0 }} />
+    <View style={{ width: 24, height: 22, justifyContent: 'flex-end', alignItems: 'center' }}>
+      {/* Roof */}
+      <View style={{ position: 'absolute', top: 1, width: 20, height: 10, alignItems: 'center', justifyContent: 'center' }}>
+        <View style={{ width: 13, height: 13, borderLeftWidth: 1.8, borderTopWidth: 1.8, borderColor: color, transform: [{ rotate: '45deg' }], top: 5, borderTopLeftRadius: 1.5 }} />
+      </View>
+      {/* Body */}
+      <View style={{ width: 16, height: 11, borderWidth: 1.8, borderColor: color, borderTopWidth: 0, borderBottomLeftRadius: 2, borderBottomRightRadius: 2, justifyContent: 'flex-end', alignItems: 'center', zIndex: -1 }}>
+        {/* Door */}
+        <View style={{ width: 6, height: 6, borderLeftWidth: 1.8, borderRightWidth: 1.8, borderTopWidth: 1.8, borderColor: color, borderTopLeftRadius: 1.5, borderTopRightRadius: 1.5 }} />
+      </View>
     </View>
   );
 }
@@ -101,7 +106,7 @@ function ProfileIcon({ color }: { color: string }) {
 function TabIcon({ id, color, bg }: { id: string; color: string; bg: string }) {
   switch (id) {
     case 'loads':
-      return <TruckIcon color={color} />;
+      return <HomeIcon color={color} />;
     case 'vault':
       return <FolderIcon color={color} bg={bg} />;
     case 'scan':
@@ -718,7 +723,7 @@ export default function AppTabs() {
 
   const shouldHideFloatingButtons = () => {
     if (activeTab === 'loads' && homeScreenView === 'marketplace') return true;
-    if (activeTab === 'tools') return true;
+    if (activeTab === 'tools' && activeToolView !== 'hub') return true;
     return false;
   };
 
@@ -783,7 +788,7 @@ export default function AppTabs() {
       case 'vault':
         return (
           <ErrorBoundary t={T}>
-            <DocumentVaultScreen />
+            <DocumentVaultScreen onBack={() => setActiveTab('loads')} />
           </ErrorBoundary>
         );
 
@@ -814,7 +819,7 @@ export default function AppTabs() {
   };
 
   const tabs: { id: TabName; label: string }[] = [
-    { id: 'loads', label: 'Loads' },
+    { id: 'loads', label: 'Home' },
     { id: 'vault', label: 'Vault' },
     { id: 'scan', label: 'Scan' },
     { id: 'finance', label: 'Finance' },
@@ -999,46 +1004,42 @@ export default function AppTabs() {
     return (
       <View style={{ flex: 1, backgroundColor: 'transparent' }}>
         {/* Tools Header */}
-        {activeToolView === 'hub' ? (
-          <View style={[styles.topHeader, { backgroundColor: themeMode === 'dark' ? 'rgba(5, 2, 2, 0.70)' : 'rgba(200, 202, 215, 0.75)' }]}>
-            <View style={styles.headerLeft}>
-              <View style={[styles.logoBadge, { backgroundColor: T.background.containerHighest, borderColor: T.border.variant }]}>
-                <Text style={{ fontSize: 16 }}>🛡️</Text>
-              </View>
-            </View>
-            <View style={styles.headerRight}>
-              <Pressable 
-                style={styles.avatarBtn}
-                onPress={() => setShowProfile(true)}
-                accessibilityRole="button"
-                accessibilityLabel="Open Profile"
-              >
-                <View style={[styles.avatarCircle, { backgroundColor: T.background.containerHighest, borderColor: T.primary }]}>
-                  <Text style={[styles.avatarText, { color: T.text.primary }]}>👤</Text>
-                </View>
-              </Pressable>
-            </View>
-          </View>
-        ) : (
-          <View style={[styles.toolsTabHeader, { borderBottomColor: T.border.variant, borderBottomWidth: 1.5 }]}>
-            <Text style={[styles.toolsTabTitle, { color: T.text.primary }]}>
-              {activeToolView === 'calculator' && '🧮  Load Profit Calculator'}
-              {activeToolView === 'invoices' && '📋  Invoice Generator'}
-              {activeToolView === 'loads' && '🚛  Loads Marketplace'}
-            </Text>
+        {activeToolView === 'hub' || activeToolView === 'loads' ? null : (
+          <View style={[
+            styles.toolsTabHeader, 
+            { 
+              borderBottomColor: T.border.variant, 
+              borderBottomWidth: 1.5,
+              paddingTop: insets.top + 12,
+              justifyContent: 'flex-start',
+              alignItems: 'center'
+            }
+          ]}>
             <Pressable
-              style={[styles.toolsTabBackBtn, { borderColor: T.primary }]}
+              style={({ pressed }) => [styles.headerBtn, pressed && { opacity: 0.7 }]}
               onPress={() => setActiveToolView('hub')}
               accessibilityRole="button"
               accessibilityLabel="Back to Utility Hub"
             >
-              <Text style={{ color: T.primary, fontWeight: '700', fontSize: 13 }}>← BACK TO HUB</Text>
+              <Text style={[styles.headerIconText, { color: T.primary }]}>←</Text>
             </Pressable>
+            <Text style={[styles.toolsTabTitle, { color: T.text.primary, marginLeft: 8 }]}>
+              {activeToolView === 'calculator' && '🧮  Load Profit Calculator'}
+              {activeToolView === 'invoices' && '📋  Invoice Generator'}
+            </Text>
           </View>
         )}
 
         {/* Content */}
-        <ScrollView style={{ flex: 1 }} contentContainerStyle={{ padding: 16, paddingBottom: 36 }} showsVerticalScrollIndicator={false}>
+        <ScrollView 
+          style={{ flex: 1 }} 
+          contentContainerStyle={{ 
+            padding: 16, 
+            paddingTop: activeToolView === 'hub' ? insets.top + 16 : 16,
+            paddingBottom: 36 
+          }} 
+          showsVerticalScrollIndicator={false}
+        >
           {activeToolView === 'hub' && renderToolsHub()}
           {activeToolView === 'calculator' && <LoadCalculator T={T} styles={styles} />}
           {activeToolView === 'invoices' && (
@@ -1052,7 +1053,12 @@ export default function AppTabs() {
               }}
             />
           )}
-          {activeToolView === 'loads' && <LoadsScreen />}
+          {activeToolView === 'loads' && (
+            <LoadsScreen 
+              onBackToHome={() => setActiveToolView('hub')}
+              onOpenProfile={() => setShowProfile(true)}
+            />
+          )}
         </ScrollView>
       </View>
     );

@@ -8,6 +8,7 @@ import {
   Alert,
   FlatList,
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { listDocuments, deleteDocument } from '../lib/api';
 import { cancelExpiryReminders } from '../lib/expiryNotifications';
 import { BRAND, TYPOGRAPHY, SPACING, GlassCard, createGlassCard, useTheme, createThemedStyleSheet } from '../lib/theme';
@@ -27,7 +28,11 @@ const getStatusStyles = (T) => ({
   },
 });
 
-export default function DocumentVaultScreen() {
+/**
+ * @param {object} props
+ * @param {(() => void) | undefined} [props.onBack]
+ */
+export default function DocumentVaultScreen({ onBack = undefined } = {}) {
   const [documents, setDocuments] = useState([]);
   const [loading, setLoading] = useState(true);
   const { t: T } = useTheme();
@@ -138,29 +143,78 @@ export default function DocumentVaultScreen() {
   }
 
   return (
-    <View style={styles.container}>
-      {documents.length === 0 ? (
-        <View style={styles.emptyContainer}>
-          <Text style={styles.emptyText}>No documents yet</Text>
-          <Text style={styles.emptySubtext}>
-            Start by scanning your first document
-          </Text>
+    <SafeAreaView style={styles.safe} edges={['top']}>
+      <View style={styles.topHeader}>
+        <View style={styles.headerLeft}>
+          {onBack && (
+            <TouchableOpacity
+              style={styles.headerBtn}
+              onPress={onBack}
+              accessibilityRole="button"
+              accessibilityLabel="Back to Home"
+            >
+              <Text style={styles.headerIconText}>←</Text>
+            </TouchableOpacity>
+          )}
+          <Text style={styles.headerTitle}>Document Vault</Text>
         </View>
-      ) : (
-        <FlatList
-          data={documents}
-          keyExtractor={(item) => item.id}
-          renderItem={renderDocument}
-          contentContainerStyle={styles.listContainer}
-          refreshing={loading}
-          onRefresh={loadDocuments}
-        />
-      )}
-    </View>
+      </View>
+      <View style={styles.container}>
+        {documents.length === 0 ? (
+          <View style={styles.emptyContainer}>
+            <Text style={styles.emptyText}>No documents yet</Text>
+            <Text style={styles.emptySubtext}>
+              Start by scanning your first document
+            </Text>
+          </View>
+        ) : (
+          <FlatList
+            data={documents}
+            keyExtractor={(item) => item.id}
+            renderItem={renderDocument}
+            contentContainerStyle={styles.listContainer}
+            refreshing={loading}
+            onRefresh={loadDocuments}
+          />
+        )}
+      </View>
+    </SafeAreaView>
   );
 }
 
 const useStyles = createThemedStyleSheet((T) => StyleSheet.create({
+  safe: {
+    flex: 1,
+    backgroundColor: 'transparent',
+  },
+  topHeader: {
+    height: 56,
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 16,
+    borderBottomWidth: 1.5,
+    borderBottomColor: T.border.variant,
+  },
+  headerLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+  },
+  headerBtn: {
+    width: 36,
+    height: 36,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  headerIconText: {
+    fontSize: 20,
+    color: T.primary,
+  },
+  headerTitle: {
+    fontSize: 18,
+    fontWeight: '700',
+    color: T.text.primary,
+  },
   container: {
     flex: 1,
     backgroundColor: 'transparent',

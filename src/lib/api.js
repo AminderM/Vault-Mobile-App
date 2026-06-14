@@ -2,7 +2,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 
 // ============== CONFIGURATION ==============
 
-const API_BASE = 'https://api.staging.integratedtech.ca';
+const API_BASE = 'https://api.integratedtech.ca';
 const AUTH_TOKEN_KEY = 'auth_token';
 const AUTH_USER_KEY = 'auth_user';
 const LOCAL_DOCS_KEY = 'vault_local_documents';

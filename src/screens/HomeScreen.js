@@ -195,94 +195,102 @@ export default function HomeScreen({ onNavigateToMarketplace, onNavigate }) {
   );
 }
 
-const useStyles = createThemedStyleSheet((T) => StyleSheet.create({
-  safe: { flex: 1, backgroundColor: 'transparent' },
-  container: { flex: 1, backgroundColor: 'transparent' },
+const useStyles = createThemedStyleSheet((T) => {
+  const isLight = T.background.base === '#edeef3';
+  const cardBg = isLight ? 'rgba(190, 195, 210, 0.85)' : 'rgba(13, 4, 4, 0.85)';
 
-  // Bento grid
-  bentoGrid: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    paddingHorizontal: SPACING.marginMobile,
-    paddingTop: SPACING.stackMd,
-    gap: SPACING.base,
-  },
-  greetingCard: {
-    width: '100%',
-    padding: SPACING.stackMd,
-    gap: SPACING.stackMd,
-  },
-  greetingText: { ...TYPOGRAPHY.headlineLg, color: T.text.primary },
-  locationRow: { flexDirection: 'row', alignItems: 'center', gap: 6, marginTop: 4 },
-  locationIcon: { fontSize: 14 },
-  locationText: { ...TYPOGRAPHY.labelData, color: T.text.secondary },
-  fuelBadge: {
-    alignSelf: 'flex-start',
-    backgroundColor: T.primary + '33',
-    borderWidth: 1,
-    borderColor: T.primary + '4D',
-    borderRadius: 20,
-    paddingHorizontal: 10,
-    paddingVertical: 4,
-  },
-  fuelBadgeText: { ...TYPOGRAPHY.labelData, color: T.primary, letterSpacing: 1 },
-  statCard: {
-    flex: 1,
-    padding: SPACING.stackMd,
-    gap: 6,
-  },
-  statLabel: { ...TYPOGRAPHY.labelData, color: T.text.secondary },
-  statNumber: { ...TYPOGRAPHY.displayMetricsMobile, fontSize: 28, fontWeight: '700' },
+  return StyleSheet.create({
+    safe: { flex: 1, backgroundColor: 'transparent' },
+    container: { flex: 1, backgroundColor: 'transparent' },
 
-  // Quick actions
-  quickActionsGrid: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    paddingHorizontal: SPACING.marginMobile,
-    paddingTop: SPACING.stackMd,
-    gap: SPACING.gutter,
-  },
-  quickActionTile: {
-    borderColor: BRAND.crimsonRed + '80',
-    borderWidth: 1.5,
-    padding: SPACING.stackMd,
-    alignItems: 'center',
-    gap: 8,
-  },
-  quickActionIcon: {
-    width: 44,
-    height: 44,
-    borderRadius: 8,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  quickActionEmoji: { fontSize: 22 },
-  quickActionLabel: { ...TYPOGRAPHY.labelData, color: T.text.primary, fontSize: 9, textAlign: 'center' },
+    // Bento grid
+    bentoGrid: {
+      flexDirection: 'row',
+      flexWrap: 'wrap',
+      paddingHorizontal: SPACING.marginMobile,
+      paddingTop: SPACING.stackMd,
+      gap: SPACING.base,
+    },
+    greetingCard: {
+      width: '100%',
+      padding: SPACING.stackMd,
+      gap: SPACING.stackMd,
+      backgroundColor: cardBg,
+    },
+    greetingText: { ...TYPOGRAPHY.headlineLg, color: T.text.primary },
+    locationRow: { flexDirection: 'row', alignItems: 'center', gap: 6, marginTop: 4 },
+    locationIcon: { fontSize: 14 },
+    locationText: { ...TYPOGRAPHY.labelData, color: T.text.secondary },
+    fuelBadge: {
+      alignSelf: 'flex-start',
+      backgroundColor: T.primary + '33',
+      borderWidth: 1,
+      borderColor: T.primary + '4D',
+      borderRadius: 20,
+      paddingHorizontal: 10,
+      paddingVertical: 4,
+    },
+    fuelBadgeText: { ...TYPOGRAPHY.labelData, color: T.primary, letterSpacing: 1 },
+    statCard: {
+      flex: 1,
+      padding: SPACING.stackMd,
+      gap: 6,
+      backgroundColor: cardBg,
+    },
+    statLabel: { ...TYPOGRAPHY.labelData, color: T.text.secondary },
+    statNumber: { ...TYPOGRAPHY.displayMetricsMobile, fontSize: 28, fontWeight: '700' },
 
-  // Section header
-  sectionHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingHorizontal: SPACING.marginMobile,
-    paddingTop: SPACING.stackLg,
-    paddingBottom: SPACING.stackSm,
-  },
-  sectionTitle: { ...TYPOGRAPHY.headlineSm, color: T.text.primary, letterSpacing: 1, fontSize: 14 },
-  viewAllText: { ...TYPOGRAPHY.labelData, color: T.primary, fontSize: 10 },
+    // Quick actions
+    quickActionsGrid: {
+      flexDirection: 'row',
+      flexWrap: 'wrap',
+      paddingHorizontal: SPACING.marginMobile,
+      paddingTop: SPACING.stackMd,
+      gap: SPACING.gutter,
+    },
+    quickActionTile: {
+      borderColor: BRAND.crimsonRed + '80',
+      borderWidth: 1.5,
+      padding: SPACING.stackMd,
+      alignItems: 'center',
+      gap: 8,
+      backgroundColor: cardBg,
+    },
+    quickActionIcon: {
+      width: 44,
+      height: 44,
+      borderRadius: 8,
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+    quickActionEmoji: { fontSize: 22 },
+    quickActionLabel: { ...TYPOGRAPHY.labelData, color: T.text.primary, fontSize: 9, textAlign: 'center' },
 
-  // Current load card
-  loadCard: {
-    marginHorizontal: SPACING.marginMobile,
-    padding: SPACING.stackMd,
-    gap: SPACING.stackMd,
-    position: 'relative',
-  },
-  inTransitBadge: {
-    position: 'absolute',
-    top: SPACING.stackMd,
-    right: SPACING.stackMd,
-    flexDirection: 'row',
+    // Section header
+    sectionHeader: {
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      alignItems: 'center',
+      paddingHorizontal: SPACING.marginMobile,
+      paddingTop: SPACING.stackLg,
+      paddingBottom: SPACING.stackSm,
+    },
+    sectionTitle: { ...TYPOGRAPHY.headlineSm, color: T.text.primary, letterSpacing: 1, fontSize: 14 },
+    viewAllText: { ...TYPOGRAPHY.labelData, color: T.primary, fontSize: 10 },
+
+    // Current load card
+    loadCard: {
+      marginHorizontal: SPACING.marginMobile,
+      padding: SPACING.stackMd,
+      gap: SPACING.stackMd,
+      position: 'relative',
+      backgroundColor: cardBg,
+    },
+    inTransitBadge: {
+      position: 'absolute',
+      top: SPACING.stackMd,
+      right: SPACING.stackMd,
+      flexDirection: 'row',
     alignItems: 'center',
     gap: 4,
     backgroundColor: T.primary + '33',
@@ -362,4 +370,5 @@ const useStyles = createThemedStyleSheet((T) => StyleSheet.create({
   },
 
   pressed: { opacity: 0.75 },
-}));
+  });
+});
