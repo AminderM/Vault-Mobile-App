@@ -13,6 +13,7 @@ import {
 } from 'react-native';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import * as ImagePicker from 'expo-image-picker';
 import ExpenseScreen from '@/screens/ExpenseScreen';
 import ExpensesScreen from '@/screens/ExpensesScreen';
 import DocumentVaultScreen from '@/screens/DocumentVaultScreen';
@@ -337,6 +338,7 @@ interface InvoiceGeneratorProps {
   profileCompany: string;
   profileMc: string;
   profileDot: string;
+  profileLogo: string;
 }
 
 // Subcomponent: Invoice Generator
@@ -349,26 +351,29 @@ function InvoiceGenerator({
   profileCompany,
   profileMc,
   profileDot,
+  profileLogo,
 }: InvoiceGeneratorProps) {
   const [loadId, setLoadId] = useState(prepopulatedLoad?.loadId || prepopulatedLoad?.id || '');
   const [broker, setBroker] = useState(prepopulatedLoad?.carrier || prepopulatedLoad?.broker || '');
-  const [rate, setRate] = useState(prepopulatedLoad?.rateAmount ? prepopulatedLoad.rateAmount.toString() : '');
-  const [surcharge, setSurcharge] = useState('');
-  const [accessorials, setAccessorials] = useState('');
+  const [lineItems, setLineItems] = useState<Array<{ id: string; description: string; amount: string }>>([
+    { id: 'base', description: 'Freight / Base Rate', amount: prepopulatedLoad?.rateAmount ? prepopulatedLoad.rateAmount.toString() : '' }
+  ]);
   const [isSaving, setIsSaving] = useState(false);
 
   React.useEffect(() => {
     if (prepopulatedLoad) {
       setLoadId(prepopulatedLoad.loadId || prepopulatedLoad.id || '');
       setBroker(prepopulatedLoad.carrier || prepopulatedLoad.broker || '');
-      setRate(prepopulatedLoad.rateAmount ? prepopulatedLoad.rateAmount.toString() : '');
+      setLineItems([
+        { id: 'base', description: 'Freight / Base Rate', amount: prepopulatedLoad.rateAmount ? prepopulatedLoad.rateAmount.toString() : '' }
+      ]);
     }
   }, [prepopulatedLoad]);
 
-  const rateVal = parseFloat(rate) || 0;
-  const surVal = parseFloat(surcharge) || 0;
-  const accVal = parseFloat(accessorials) || 0;
-  const totalAmount = rateVal + surVal + accVal;
+  const totalAmount = lineItems.reduce((sum, item) => {
+    const val = parseFloat(item.amount) || 0;
+    return sum + val;
+  }, 0);
 
   const generateInvoicePDF = () => {
     if (Platform.OS === 'web') {
@@ -387,7 +392,9 @@ function InvoiceGenerator({
           <title>Invoice - ${loadId || 'Draft'}</title>
           <style>
             body { font-family: 'Inter', system-ui, sans-serif; padding: 40px; color: #1e1b1b; line-height: 1.5; }
-            .letterhead { display: flex; justify-content: space-between; border-bottom: 2px solid #5b1010; padding-bottom: 20px; margin-bottom: 30px; }
+            .letterhead { display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #5b1010; padding-bottom: 20px; margin-bottom: 30px; }
+            .logo-company { display: flex; align-items: center; gap: 15px; }
+            .logo-img { max-height: 60px; max-width: 120px; border-radius: 4px; object-fit: contain; }
             .company-info { text-align: left; }
             .company-name { font-size: 22px; font-weight: 700; color: #5b1010; margin-bottom: 4px; }
             .company-details { font-size: 13px; color: #6e6565; }
@@ -424,10 +431,13 @@ function InvoiceGenerator({
         </head>
         <body>
           <div class="letterhead">
-            <div class="company-info">
-              <div class="company-name">${profileCompany || 'Carrier Company'}</div>
-              <div class="company-details">
-                ${profileMc ? `MC#: ${profileMc}` : ''} ${profileMc && profileDot ? '•' : ''} ${profileDot ? `DOT#: ${profileDot}` : ''}
+            <div class="logo-company">
+              ${profileLogo ? `<img src="${profileLogo}" class="logo-img" />` : ''}
+              <div class="company-info">
+                <div class="company-name">${profileCompany || 'Carrier Company'}</div>
+                <div class="company-details">
+                  ${profileMc ? `MC#: ${profileMc}` : ''} ${profileMc && profileDot ? '•' : ''} ${profileDot ? `DOT#: ${profileDot}` : ''}
+                </div>
               </div>
             </div>
             <div class="invoice-title-box">
@@ -466,22 +476,15 @@ function InvoiceGenerator({
               </tr>
             </thead>
             <tbody>
-              <tr>
-                <td>Freight Charges / Base Rate (Load Ref: ${loadId || '—'})</td>
-                <td class="amount-col">$${rateVal.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
-              </tr>
-              ${surVal > 0 ? `
-              <tr>
-                <td>Fuel Surcharge</td>
-                <td class="amount-col">$${surVal.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
-              </tr>
-              ` : ''}
-              ${accVal > 0 ? `
-              <tr>
-                <td>Accessorials / Detention / Layover</td>
-                <td class="amount-col">$${accVal.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
-              </tr>
-              ` : ''}
+              ${lineItems.map(item => {
+                const val = parseFloat(item.amount) || 0;
+                return `
+                  <tr>
+                    <td>${item.description || 'Unnamed Item'}</td>
+                    <td class="amount-col">$${val.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
+                  </tr>
+                `;
+              }).join('')}
             </tbody>
           </table>
 
@@ -519,21 +522,23 @@ function InvoiceGenerator({
   };
 
   const handleSaveToVault = async () => {
-    if (!loadId || !broker || !rate) {
+    if (!loadId || !broker || lineItems.some(i => !i.description || !i.amount)) {
+      const errMsg = 'Required Fields: Please enter Load ID, Customer/Broker Name, and fill in all Line Items.';
       if (Platform.OS === 'web') {
-        alert('Required Fields: Please fill in Load ID, Broker/Customer, and Base Rate.');
+        alert(errMsg);
       } else {
-        Alert.alert('Required Fields', 'Please fill in Load ID, Broker/Customer, and Base Rate.');
+        Alert.alert('Required Fields', errMsg);
       }
       return;
     }
 
     try {
       setIsSaving(true);
+      const itemsStr = lineItems.map(i => `${i.description}: $${(parseFloat(i.amount) || 0).toLocaleString()}`).join(' • ');
       await saveDocument({
         docType: 'Invoice',
         expiryDate: null,
-        description: `Invoice: ${loadId} • Broker: ${broker} • Amount: $${totalAmount.toLocaleString()}`,
+        description: `Invoice: ${loadId} • Broker: ${broker} • ${itemsStr} • Total: $${totalAmount.toLocaleString()}`,
         uploadedAt: new Date().toISOString(),
       });
       if (Platform.OS === 'web') {
@@ -586,62 +591,89 @@ function InvoiceGenerator({
         />
       </View>
 
-      <View style={styles.inputRow}>
-        <View style={styles.inputCell}>
-          <Text style={[styles.inputLabel, { color: T.text.secondary }]}>BASE RATE ($)</Text>
-          <TextInput
-            style={[styles.modalInput, { backgroundColor: T.background.container, borderColor: T.border.variant, color: T.text.primary }]}
-            value={rate}
-            onChangeText={setRate}
-            placeholder="e.g. 2800"
-            placeholderTextColor={T.text.muted}
-            keyboardType="numeric"
-          />
-        </View>
-        <View style={styles.inputCell}>
-          <Text style={[styles.inputLabel, { color: T.text.secondary }]}>FUEL SURCHARGE ($)</Text>
-          <TextInput
-            style={[styles.modalInput, { backgroundColor: T.background.container, borderColor: T.border.variant, color: T.text.primary }]}
-            value={surcharge}
-            onChangeText={setSurcharge}
-            placeholder="e.g. 450"
-            placeholderTextColor={T.text.muted}
-            keyboardType="numeric"
-          />
-        </View>
-      </View>
+      {/* Dynamic Line Items */}
+      <View style={[styles.inputGroup, { marginTop: 8 }]}>
+        <Text style={[styles.inputLabel, { color: T.text.secondary }]}>LINE ITEMS</Text>
+        {lineItems.map((item, index) => (
+          <View key={item.id} style={{ flexDirection: 'row', gap: 10, alignItems: 'center', marginBottom: 8 }}>
+            <TextInput
+              style={[styles.modalInput, { flex: 2, backgroundColor: T.background.container, borderColor: T.border.variant, color: T.text.primary }]}
+              value={item.description}
+              onChangeText={(val) => {
+                const updated = [...lineItems];
+                updated[index].description = val;
+                setLineItems(updated);
+              }}
+              placeholder="e.g. Fuel Surcharge"
+              placeholderTextColor={T.text.muted}
+            />
+            <TextInput
+              style={[styles.modalInput, { flex: 1, backgroundColor: T.background.container, borderColor: T.border.variant, color: T.text.primary }]}
+              value={item.amount}
+              onChangeText={(val) => {
+                const updated = [...lineItems];
+                updated[index].amount = val;
+                setLineItems(updated);
+              }}
+              placeholder="0.00"
+              placeholderTextColor={T.text.muted}
+              keyboardType="numeric"
+            />
+            {lineItems.length > 1 && (
+              <Pressable
+                onPress={() => {
+                  const updated = lineItems.filter((_, i) => i !== index);
+                  setLineItems(updated);
+                }}
+                style={{ padding: 6 }}
+              >
+                <Text style={{ fontSize: 16, color: BRAND.crimsonRed }}>🗑️</Text>
+              </Pressable>
+            )}
+          </View>
+        ))}
 
-      <View style={styles.inputGroup}>
-        <Text style={[styles.inputLabel, { color: T.text.secondary }]}>ACCESSORIALS / DETENTION ($)</Text>
-        <TextInput
-          style={[styles.modalInput, { backgroundColor: T.background.container, borderColor: T.border.variant, color: T.text.primary }]}
-          value={accessorials}
-          onChangeText={setAccessorials}
-          placeholder="e.g. 150"
-          placeholderTextColor={T.text.muted}
-          keyboardType="numeric"
-        />
+        <Pressable
+          style={({ pressed }) => [
+            {
+              flexDirection: 'row',
+              alignItems: 'center',
+              gap: 6,
+              paddingVertical: 8,
+              alignSelf: 'flex-start',
+            },
+            pressed && { opacity: 0.7 }
+          ]}
+          onPress={() => {
+            setLineItems([...lineItems, { id: Date.now().toString(), description: '', amount: '' }]);
+          }}
+        >
+          <Text style={{ fontSize: 16, color: T.primary }}>➕</Text>
+          <Text style={{ fontSize: 13, fontWeight: '700', color: T.primary }}>ADD LINE ITEM</Text>
+        </Pressable>
       </View>
 
       {/* Invoice Preview Card */}
       <View style={[styles.invoicePreviewCard, { backgroundColor: T.background.card, borderColor: T.border.default }]}>
-        <View style={{ borderBottomWidth: 1.5, borderBottomColor: T.border.default, paddingBottom: 8, marginBottom: 10 }}>
-          <Text style={[styles.invoiceTitle, { color: T.text.primary }]}>INVOICE PREVIEW</Text>
-          <Text style={[styles.invoiceText, { color: T.text.secondary }]}>Broker: {broker || '—'}</Text>
-          <Text style={[styles.invoiceText, { color: T.text.secondary }]}>Ref ID: {loadId || '—'}</Text>
+        <View style={{ borderBottomWidth: 1.5, borderBottomColor: T.border.default, paddingBottom: 8, marginBottom: 10, flexDirection: 'row', alignItems: 'center', gap: 10 }}>
+          {profileLogo ? (
+            <Image source={{ uri: profileLogo }} style={{ width: 44, height: 44, borderRadius: 4, resizeMode: 'contain' }} />
+          ) : null}
+          <View style={{ flex: 1 }}>
+            <Text style={[styles.invoiceTitle, { color: T.text.primary }]}>INVOICE PREVIEW</Text>
+            <Text style={[styles.invoiceText, { color: T.text.secondary }]} numberOfLines={1}>Broker: {broker || '—'}</Text>
+            <Text style={[styles.invoiceText, { color: T.text.secondary }]}>Ref ID: {loadId || '—'}</Text>
+          </View>
         </View>
-        <View style={styles.invoiceItem}>
-          <Text style={[styles.invoiceText, { color: T.text.secondary }]}>Freight Charges:</Text>
-          <Text style={[styles.invoiceValue, { color: T.text.primary }]}>${rateVal.toLocaleString()}</Text>
-        </View>
-        <View style={styles.invoiceItem}>
-          <Text style={[styles.invoiceText, { color: T.text.secondary }]}>Fuel Surcharge:</Text>
-          <Text style={[styles.invoiceValue, { color: T.text.primary }]}>${surVal.toLocaleString()}</Text>
-        </View>
-        <View style={styles.invoiceItem}>
-          <Text style={[styles.invoiceText, { color: T.text.secondary }]}>Accessorials:</Text>
-          <Text style={[styles.invoiceValue, { color: T.text.primary }]}>${accVal.toLocaleString()}</Text>
-        </View>
+        {lineItems.map((item) => {
+          const val = parseFloat(item.amount) || 0;
+          return (
+            <View key={item.id} style={styles.invoiceItem}>
+              <Text style={[styles.invoiceText, { color: T.text.secondary }]} numberOfLines={1}>{item.description || 'Item Description'}:</Text>
+              <Text style={[styles.invoiceValue, { color: T.text.primary }]}>${val.toLocaleString()}</Text>
+            </View>
+          );
+        })}
         <View style={{ height: 1.5, backgroundColor: T.border.default, marginVertical: 8 }} />
         <View style={styles.invoiceItem}>
           <Text style={[styles.invoiceTextBold, { color: T.text.primary }]}>TOTAL INVOICED:</Text>
@@ -858,6 +890,7 @@ export default function AppTabs() {
   const [profileVin, setProfileVin] = useState('1FTFW1EF5KFD8291A');
   const [profileMc, setProfileMc] = useState('MC-123456');
   const [profileDot, setProfileDot] = useState('USDOT-3749201');
+  const [profileLogo, setProfileLogo] = useState('');
   const [profileDocs, setProfileDocs] = useState({
     driverLicense: true,
     coi: true,
@@ -910,6 +943,7 @@ export default function AppTabs() {
         const vinVal = await AsyncStorage.getItem('profile_vin');
         const mcVal = await AsyncStorage.getItem('profile_mc');
         const dotVal = await AsyncStorage.getItem('profile_dot');
+        const logoVal = await AsyncStorage.getItem('profile_logo');
         const docsVal = await AsyncStorage.getItem('profile_docs');
 
         if (nameVal) setProfileName(nameVal);
@@ -918,6 +952,7 @@ export default function AppTabs() {
         if (vinVal) setProfileVin(vinVal);
         if (mcVal) setProfileMc(mcVal);
         if (dotVal) setProfileDot(dotVal);
+        if (logoVal) setProfileLogo(logoVal);
         if (docsVal) setProfileDocs(JSON.parse(docsVal));
       } catch (err) {
         console.error('Failed to load profile data', err);
@@ -1298,6 +1333,7 @@ export default function AppTabs() {
               profileCompany={profileCompany}
               profileMc={profileMc}
               profileDot={profileDot}
+              profileLogo={profileLogo}
             />
           )}
           {activeToolView === 'loads' && (
@@ -1352,6 +1388,71 @@ export default function AppTabs() {
           {/* Form */}
           <ScrollView style={{ flex: 1 }} contentContainerStyle={{ paddingBottom: 24 }} showsVerticalScrollIndicator={false}>
             <View style={styles.formContainer}>
+              {/* Company Logo Row */}
+              <View style={styles.inputGroup}>
+                <Text style={[styles.inputLabel, { color: T.text.secondary }]}>COMPANY LOGO</Text>
+                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 16, marginTop: 4 }}>
+                  {profileLogo ? (
+                    <Image
+                      source={{ uri: profileLogo }}
+                      style={{ width: 64, height: 64, borderRadius: 8, borderWidth: 1.5, borderColor: T.border.variant }}
+                    />
+                  ) : (
+                    <View style={{ width: 64, height: 64, borderRadius: 8, borderWidth: 1.5, borderStyle: 'dashed', borderColor: BRAND.crimsonRed, justifyContent: 'center', alignItems: 'center', backgroundColor: T.background.container }}>
+                      <Text style={{ fontSize: 20 }}>🏢</Text>
+                    </View>
+                  )}
+                  <View style={{ gap: 8 }}>
+                    <Pressable
+                      style={({ pressed }) => [
+                        {
+                          backgroundColor: BRAND.crimsonRed,
+                          paddingHorizontal: 12,
+                          paddingVertical: 8,
+                          borderRadius: 6,
+                        },
+                        pressed && { opacity: 0.8 }
+                      ]}
+                      onPress={async () => {
+                        try {
+                          const result = await ImagePicker.launchImageLibraryAsync({
+                            mediaTypes: ImagePicker.MediaTypeOptions.Images,
+                            quality: 0.7,
+                            base64: true,
+                          });
+                          if (!result.canceled && result.assets && result.assets[0]) {
+                            const asset = result.assets[0];
+                            let base64Str = '';
+                            if (asset.base64) {
+                              const ext = asset.uri.split('.').pop()?.toLowerCase() || 'png';
+                              base64Str = `data:image/${ext === 'jpg' ? 'jpeg' : ext};base64,${asset.base64}`;
+                            } else {
+                              base64Str = asset.uri;
+                            }
+                            setProfileLogo(base64Str);
+                            saveProfileField('profile_logo', base64Str);
+                          }
+                        } catch (err: any) {
+                          Alert.alert('Error', 'Failed to select logo: ' + err.message);
+                        }
+                      }}
+                    >
+                      <Text style={{ color: '#ffffff', fontSize: 12, fontWeight: '700' }}>SELECT LOGO</Text>
+                    </Pressable>
+                    {profileLogo ? (
+                      <Pressable
+                        onPress={() => {
+                          setProfileLogo('');
+                          saveProfileField('profile_logo', '');
+                        }}
+                      >
+                        <Text style={{ color: BRAND.crimsonRed, fontSize: 11, fontWeight: '600' }}>Remove Logo</Text>
+                      </Pressable>
+                    ) : null}
+                  </View>
+                </View>
+              </View>
+
               {/* User Name */}
               <View style={styles.inputGroup}>
                 <Text style={[styles.inputLabel, { color: T.text.secondary }]}>CONTACT NAME</Text>

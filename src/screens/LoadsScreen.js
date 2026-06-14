@@ -226,7 +226,15 @@ export default function LoadsScreen({ onBackToHome = () => {}, onOpenProfile = (
   const loadLoads = async () => {
     try {
       setLoading(true);
-      const filters = activeTab !== 'marketplace' && activeTab !== 'available' ? { status: activeTab } : {};
+      let apiStatus = null;
+      if (activeTab === 'active') {
+        apiStatus = 'in-progress';
+      } else if (activeTab === 'history') {
+        apiStatus = 'completed';
+      } else if (activeTab === 'available' || activeTab === 'marketplace') {
+        apiStatus = 'available';
+      }
+      const filters = apiStatus ? { status: apiStatus } : {};
       const data = await getLoads(filters);
       if (data.loads && data.loads.length > 0) {
         const mapped = data.loads.map((l, i) => ({
@@ -339,9 +347,27 @@ export default function LoadsScreen({ onBackToHome = () => {}, onOpenProfile = (
   };
 
   const handleAccept = (load) => {
-    Alert.alert('Accept Load', `Accepting load ${load.loadId}?`, [
+    Alert.alert('Accept Load', `Accepting load ${load.loadId || load.id}?`, [
       { text: 'Cancel', style: 'cancel' },
-      { text: 'Accept', style: 'default', onPress: () => Alert.alert('Success', 'Load accepted!') },
+      { 
+        text: 'Accept', 
+        style: 'default', 
+        onPress: async () => {
+          try {
+            await updateLoad(load.id, { status: 'in-progress' });
+            Alert.alert('Success', 'Load accepted successfully!', [
+              {
+                text: 'OK',
+                onPress: () => {
+                  setActiveTab('active');
+                }
+              }
+            ]);
+          } catch (err) {
+            Alert.alert('Error', 'Failed to accept load: ' + err.message);
+          }
+        } 
+      },
     ]);
   };
 
