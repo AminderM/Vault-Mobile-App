@@ -44,7 +44,7 @@ export default function HomeScreen({ onNavigateToMarketplace, onNavigate }) {
         {/* ── Bento Stats Grid ── */}
         <View style={styles.bentoGrid}>
           {/* Greeting card – spans full width */}
-          <StatusBorderCard borderColor={T.primary} style={styles.greetingCard}>
+          <StatusBorderCard borderColor={T.primary + '8C'} style={styles.greetingCard}>
             <View>
               <Text style={styles.greetingText}>{getGreeting()}, Jazzie</Text>
               <View style={styles.locationRow}>
@@ -58,13 +58,13 @@ export default function HomeScreen({ onNavigateToMarketplace, onNavigate }) {
           </StatusBorderCard>
 
           {/* Active Loads */}
-          <StatusBorderCard borderColor={T.secondary} style={styles.statCard}>
+          <StatusBorderCard borderColor={T.secondary + '8C'} style={styles.statCard}>
             <Text style={styles.statLabel}>ACTIVE LOADS</Text>
             <Text style={[styles.statNumber, { color: T.secondary }]}>08</Text>
           </StatusBorderCard>
 
           {/* RPM Average */}
-          <StatusBorderCard borderColor={BRAND.hazardOrange} style={styles.statCard}>
+          <StatusBorderCard borderColor={BRAND.hazardOrange + '8C'} style={styles.statCard}>
             <Text style={styles.statLabel}>RPM AVG</Text>
             <Text style={[styles.statNumber, { color: T.text.primary }]}>$3.22</Text>
           </StatusBorderCard>
@@ -88,7 +88,7 @@ export default function HomeScreen({ onNavigateToMarketplace, onNavigate }) {
               }}
             >
               <GlassCard style={styles.quickActionTile}>
-                <View style={[styles.quickActionIcon, { backgroundColor: action.color + '33' }]}>
+                <View style={[styles.quickActionIcon, { backgroundColor: action.color + '8C' }]}>
                   <Text style={styles.quickActionEmoji}>{action.icon}</Text>
                 </View>
                 <Text style={styles.quickActionLabel}>{action.label}</Text>
@@ -109,7 +109,7 @@ export default function HomeScreen({ onNavigateToMarketplace, onNavigate }) {
           </Pressable>
         </View>
 
-        <StatusBorderCard borderColor={T.primary} style={styles.loadCard}>
+        <StatusBorderCard borderColor={T.primary + '8C'} style={styles.loadCard}>
           <Pressable onPress={onNavigateToMarketplace} style={{ gap: 12 }}>
             {/* Status badge */}
             <View style={styles.inTransitBadge}>
@@ -197,7 +197,7 @@ export default function HomeScreen({ onNavigateToMarketplace, onNavigate }) {
 
 const useStyles = createThemedStyleSheet((T) => {
   const isLight = T.background.base === '#edeef3';
-  const cardBg = isLight ? 'rgba(190, 195, 210, 0.85)' : 'rgba(13, 4, 4, 0.85)';
+  const cardBg = isLight ? 'rgba(190, 195, 210, 0.55)' : 'rgba(13, 4, 4, 0.55)';
 
   return StyleSheet.create({
     safe: { flex: 1, backgroundColor: 'transparent' },
@@ -223,9 +223,9 @@ const useStyles = createThemedStyleSheet((T) => {
     locationText: { ...TYPOGRAPHY.labelData, color: T.text.secondary },
     fuelBadge: {
       alignSelf: 'flex-start',
-      backgroundColor: T.primary + '33',
+      backgroundColor: T.primary + '8C',
       borderWidth: 1,
-      borderColor: T.primary + '4D',
+      borderColor: T.primary + '8C',
       borderRadius: 20,
       paddingHorizontal: 10,
       paddingVertical: 4,
@@ -249,7 +249,7 @@ const useStyles = createThemedStyleSheet((T) => {
       gap: SPACING.gutter,
     },
     quickActionTile: {
-      borderColor: BRAND.crimsonRed + '80',
+      borderColor: BRAND.crimsonRed + '8C',
       borderWidth: 1.5,
       padding: SPACING.stackMd,
       alignItems: 'center',
@@ -291,84 +291,84 @@ const useStyles = createThemedStyleSheet((T) => {
       top: SPACING.stackMd,
       right: SPACING.stackMd,
       flexDirection: 'row',
-    alignItems: 'center',
-    gap: 4,
-    backgroundColor: T.primary + '33',
-    borderWidth: 1,
-    borderColor: T.primary + '4D',
-    borderRadius: 20,
-    paddingHorizontal: 8,
-    paddingVertical: 2,
-  },
-  pulseDot: { width: 6, height: 6, borderRadius: 3, backgroundColor: T.primary },
-  inTransitText: { ...TYPOGRAPHY.labelData, color: T.primary, fontSize: 10 },
-  loadIdRow: { flexDirection: 'row', alignItems: 'center', gap: 12, marginTop: 8 },
-  truckIconBox: {
-    width: 44,
-    height: 44,
-    borderRadius: 4,
-    backgroundColor: T.background.containerHighest,
-    borderWidth: 1,
-    borderColor: T.border.variant,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  loadIdText: { ...TYPOGRAPHY.headlineSm, color: T.text.primary },
-  loadSubtext: { ...TYPOGRAPHY.labelData, color: T.text.secondary, marginTop: 2 },
+      alignItems: 'center',
+      gap: 4,
+      backgroundColor: T.primary + '8C',
+      borderWidth: 1,
+      borderColor: T.primary + '8C',
+      borderRadius: 20,
+      paddingHorizontal: 8,
+      paddingVertical: 2,
+    },
+    pulseDot: { width: 6, height: 6, borderRadius: 3, backgroundColor: T.primary },
+    inTransitText: { ...TYPOGRAPHY.labelData, color: T.primary, fontSize: 10 },
+    loadIdRow: { flexDirection: 'row', alignItems: 'center', gap: 12, marginTop: 8 },
+    truckIconBox: {
+      width: 44,
+      height: 44,
+      borderRadius: 4,
+      backgroundColor: T.background.containerHighest + '8C',
+      borderWidth: 1,
+      borderColor: T.border.variant + '8C',
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+    loadIdText: { ...TYPOGRAPHY.headlineSm, color: T.text.primary },
+    loadSubtext: { ...TYPOGRAPHY.labelData, color: T.text.secondary, marginTop: 2 },
 
-  // Route visualization
-  routeVisualization: { flexDirection: 'row', gap: 10 },
-  routeStop: { alignItems: 'center', paddingTop: 2 },
-  routeStopDot: { fontSize: 18 },
-  routeDash: { width: 1, flex: 1, borderStyle: 'dashed', borderWidth: 0.5, borderColor: T.border.variant, marginVertical: 4 },
-  routeInfo: { flex: 1, gap: SPACING.stackLg },
-  routeStopLabel: { ...TYPOGRAPHY.labelData, color: T.text.secondary, fontSize: 10 },
-  routeCity: { ...TYPOGRAPHY.headlineSm, color: T.text.primary },
-  routeDate: { ...TYPOGRAPHY.bodyMd, color: T.text.secondary, fontSize: 12, marginTop: 2 },
+    // Route visualization
+    routeVisualization: { flexDirection: 'row', gap: 10 },
+    routeStop: { alignItems: 'center', paddingTop: 2 },
+    routeStopDot: { fontSize: 18 },
+    routeDash: { width: 1, flex: 1, borderStyle: 'dashed', borderWidth: 0.5, borderColor: T.border.variant + '8C', marginVertical: 4 },
+    routeInfo: { flex: 1, gap: SPACING.stackLg },
+    routeStopLabel: { ...TYPOGRAPHY.labelData, color: T.text.secondary, fontSize: 10 },
+    routeCity: { ...TYPOGRAPHY.headlineSm, color: T.text.primary },
+    routeDate: { ...TYPOGRAPHY.bodyMd, color: T.text.secondary, fontSize: 12, marginTop: 2 },
 
-  // Load metrics
-  loadMetrics: {
-    flexDirection: 'row',
-    backgroundColor: T.background.dark + '80',
-    borderRadius: 4,
-  },
-  metricCol: { flex: 1, padding: SPACING.stackMd, alignItems: 'center' },
-  metricBorderRight: { borderRightWidth: 1, borderRightColor: T.border.variant },
-  metricLabel: { ...TYPOGRAPHY.labelData, color: T.text.secondary, fontSize: 10 },
-  metricValue: { ...TYPOGRAPHY.headlineSm, color: T.text.primary, marginTop: 2 },
+    // Load metrics
+    loadMetrics: {
+      flexDirection: 'row',
+      backgroundColor: T.background.dark + '8C',
+      borderRadius: 4,
+    },
+    metricCol: { flex: 1, padding: SPACING.stackMd, alignItems: 'center' },
+    metricBorderRight: { borderRightWidth: 1, borderRightColor: T.border.variant + '8C' },
+    metricLabel: { ...TYPOGRAPHY.labelData, color: T.text.secondary, fontSize: 10 },
+    metricValue: { ...TYPOGRAPHY.headlineSm, color: T.text.primary, marginTop: 2 },
 
-  routeInfoSeparator: {
-    height: 1,
-    backgroundColor: T.border.muted,
-    marginVertical: 4,
-  },
+    routeInfoSeparator: {
+      height: 1,
+      backgroundColor: 'rgba(171, 137, 135, 0.55)',
+      marginVertical: 4,
+    },
 
-  viewRouteBtn: {
-    flex: 1,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 8,
-    paddingVertical: 12,
-    borderRadius: 24,
-    backgroundColor: BRAND.crimsonRed,
-    borderWidth: 1,
-    borderColor: BRAND.crimsonRedLight + '80',
-    shadowColor: BRAND.crimsonRed,
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
-    shadowRadius: 6,
-    elevation: 4,
-    marginTop: 4,
-  },
-  viewRouteBtnText: {
-    ...TYPOGRAPHY.headlineSm,
-    color: '#ffffff',
-    fontSize: 13,
-    fontWeight: '700',
-    letterSpacing: 0.5,
-  },
+    viewRouteBtn: {
+      flex: 1,
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'center',
+      gap: 8,
+      paddingVertical: 12,
+      borderRadius: 24,
+      backgroundColor: BRAND.crimsonRed + '8C',
+      borderWidth: 1,
+      borderColor: BRAND.crimsonRedLight + '8C',
+      shadowColor: BRAND.crimsonRed,
+      shadowOffset: { width: 0, height: 4 },
+      shadowOpacity: 0.3,
+      shadowRadius: 6,
+      elevation: 4,
+      marginTop: 4,
+    },
+    viewRouteBtnText: {
+      ...TYPOGRAPHY.headlineSm,
+      color: '#ffffff',
+      fontSize: 13,
+      fontWeight: '700',
+      letterSpacing: 0.5,
+    },
 
-  pressed: { opacity: 0.75 },
+    pressed: { opacity: 0.75 },
   });
 });

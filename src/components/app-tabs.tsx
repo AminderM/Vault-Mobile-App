@@ -1215,9 +1215,17 @@ export default function AppTabs() {
             >
               <StatusBorderCard
                 borderColor={BRAND.crimsonRed}
-                style={[styles.toolCard, { width: '100%', marginBottom: 0, borderRadius: 8 }]}
+                style={[
+                  styles.toolCard,
+                  {
+                    width: '100%',
+                    marginBottom: 0,
+                    borderRadius: 8,
+                    backgroundColor: themeMode === 'dark' ? 'rgba(13, 4, 4, 0.5)' : 'rgba(190, 195, 210, 0.5)'
+                  }
+                ]}
               >
-                <View style={[styles.toolIconBox, { backgroundColor: themeMode === 'dark' ? '#2A2A2F' : '#EAEAEF' }]}>
+                <View style={[styles.toolIconBox, { backgroundColor: themeMode === 'dark' ? 'rgba(42, 42, 47, 0.5)' : 'rgba(234, 234, 239, 0.5)' }]}>
                   {tool.icon}
                 </View>
                 <View style={{ flex: 1, justifyContent: 'flex-end' }}>
