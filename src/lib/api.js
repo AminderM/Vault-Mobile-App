@@ -90,10 +90,18 @@ export async function signup(token, phone, password, api = API_BASE) {
 }
 
 export async function signupOpen(payload, api = API_BASE) {
+  const formBody = [];
+  for (const property in payload) {
+    const encodedKey = encodeURIComponent(property);
+    const encodedValue = encodeURIComponent(payload[property]);
+    formBody.push(encodedKey + "=" + encodedValue);
+  }
+  const body = formBody.join("&");
+
   const res = await fetch(`${api}/api/driver-mobile/signup/open`, {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(payload),
+    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+    body: body,
   });
 
   if (!res.ok) {
@@ -456,7 +464,9 @@ export async function getLoads(filters = {}, api = API_BASE) {
   });
 
   if (!res.ok) throw new Error('Failed to fetch loads');
-  return res.json();
+  const data = await res.json();
+  const loadsArray = Array.isArray(data) ? data : (data.loads || []);
+  return { loads: loadsArray };
 }
 
 export async function getLoad(loadId, api = API_BASE) {
@@ -473,8 +483,9 @@ export async function getLoad(loadId, api = API_BASE) {
   }
 
   // Fallback: fetch from my-loads list and find by ID
-  const loads = await getLoads({}, api);
-  const found = Array.isArray(loads) ? loads.find(l => l.id === loadId) : null;
+  const response = await getLoads({}, api);
+  const loadsList = Array.isArray(response) ? response : (response.loads || []);
+  const found = loadsList.find(l => l.id === loadId);
   if (!found) throw new Error('Load not found');
   return found;
 }

@@ -21,7 +21,7 @@ import SmartScanScreen from '@/screens/SmartScanScreen';
 import SplashScreen from '@/screens/SplashScreen';
 import LoginScreen from '@/screens/LoginScreen';
 import { BRAND, useTheme, toggleTheme, StatusBorderCard } from '@/lib/theme';
-import { saveDocument, logout, isAuthenticated, getAuthUser } from '../lib/api';
+import { saveDocument, logout, isAuthenticated, getAuthUser, getMe } from '../lib/api';
 
 type TabName = 'loads' | 'vault' | 'scan' | 'finance' | 'tools';
 
@@ -666,7 +666,6 @@ export default function AppTabs() {
     ifta: true,
   });
 
-  // Check for existing auth token on mount
   React.useEffect(() => {
     const checkAuth = async () => {
       try {
@@ -675,6 +674,24 @@ export default function AppTabs() {
           const user = await getAuthUser();
           setAuthUser(user);
           setAppState('app');
+
+          // Fetch fresh user profile on startup (Implementation #1)
+          try {
+            const freshUser = await getMe();
+            if (freshUser) {
+              setAuthUser(freshUser);
+              if (freshUser.full_name) {
+                setProfileName(freshUser.full_name);
+                AsyncStorage.setItem('profile_name', freshUser.full_name).catch(() => {});
+              }
+              if (freshUser.company_name) {
+                setProfileCompany(freshUser.company_name);
+                AsyncStorage.setItem('profile_company', freshUser.company_name).catch(() => {});
+              }
+            }
+          } catch (profileErr) {
+            console.warn('Failed to fetch user profile on startup', profileErr);
+          }
         }
       } catch {
         // No stored token — stay on splash
