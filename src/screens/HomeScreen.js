@@ -82,7 +82,7 @@ export default function HomeScreen({ onNavigateToMarketplace, onNavigate }) {
                 if (onNavigate) {
                   if (action.id === 'calc') onNavigate('tools', 'calculator');
                   else if (action.id === 'invoices') onNavigate('tools', 'invoices');
-                  else if (action.id === 'expenses') onNavigate('finance');
+                  else if (action.id === 'expenses') onNavigate('finance', 'expenses');
                   else if (action.id === 'vault') onNavigate('vault');
                 }
               }}

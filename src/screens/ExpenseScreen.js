@@ -100,7 +100,11 @@ function ExpenseRow({ expense }) {
   );
 }
 
-export default function ExpenseScreen() {
+/**
+ * @param {object} props
+ * @param {() => void} [props.onViewAllExpenses]
+ */
+export default function ExpenseScreen({ onViewAllExpenses = () => {} } = {}) {
   const [selectedPeriod, setSelectedPeriod] = useState('month');
   const [expenses, setExpenses] = useState(RECENT_EXPENSES);
   const [loading, setLoading] = useState(false);
@@ -192,7 +196,7 @@ export default function ExpenseScreen() {
         {/* Recent Expenses */}
         <View style={styles.sectionHeader}>
           <Text style={styles.sectionTitle}>Recent Expenses</Text>
-          <Pressable accessibilityRole="button" accessibilityLabel="View all expenses">
+          <Pressable accessibilityRole="button" accessibilityLabel="View all expenses" onPress={onViewAllExpenses}>
             <Text style={styles.viewAllText}>View All</Text>
           </Pressable>
         </View>

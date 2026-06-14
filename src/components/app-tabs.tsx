@@ -14,6 +14,7 @@ import {
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import ExpenseScreen from '@/screens/ExpenseScreen';
+import ExpensesScreen from '@/screens/ExpensesScreen';
 import DocumentVaultScreen from '@/screens/DocumentVaultScreen';
 import HomeScreen from '@/screens/HomeScreen';
 import LoadsScreen from '@/screens/LoadsScreen';
@@ -327,19 +328,195 @@ function LoadCalculator({ T, styles }: { T: any; styles: any }) {
   );
 }
 
+interface InvoiceGeneratorProps {
+  T: any;
+  styles: any;
+  onClose: () => void;
+  setActiveTab: (tab: any) => void;
+  prepopulatedLoad: any;
+  profileCompany: string;
+  profileMc: string;
+  profileDot: string;
+}
+
 // Subcomponent: Invoice Generator
-function InvoiceGenerator({ T, styles, onClose, setActiveTab }: { T: any; styles: any; onClose: () => void; setActiveTab: (tab: any) => void }) {
-  const [loadId, setLoadId] = useState('');
-  const [broker, setBroker] = useState('');
-  const [rate, setRate] = useState('');
+function InvoiceGenerator({
+  T,
+  styles,
+  onClose,
+  setActiveTab,
+  prepopulatedLoad,
+  profileCompany,
+  profileMc,
+  profileDot,
+}: InvoiceGeneratorProps) {
+  const [loadId, setLoadId] = useState(prepopulatedLoad?.loadId || prepopulatedLoad?.id || '');
+  const [broker, setBroker] = useState(prepopulatedLoad?.carrier || prepopulatedLoad?.broker || '');
+  const [rate, setRate] = useState(prepopulatedLoad?.rateAmount ? prepopulatedLoad.rateAmount.toString() : '');
   const [surcharge, setSurcharge] = useState('');
   const [accessorials, setAccessorials] = useState('');
   const [isSaving, setIsSaving] = useState(false);
+
+  React.useEffect(() => {
+    if (prepopulatedLoad) {
+      setLoadId(prepopulatedLoad.loadId || prepopulatedLoad.id || '');
+      setBroker(prepopulatedLoad.carrier || prepopulatedLoad.broker || '');
+      setRate(prepopulatedLoad.rateAmount ? prepopulatedLoad.rateAmount.toString() : '');
+    }
+  }, [prepopulatedLoad]);
 
   const rateVal = parseFloat(rate) || 0;
   const surVal = parseFloat(surcharge) || 0;
   const accVal = parseFloat(accessorials) || 0;
   const totalAmount = rateVal + surVal + accVal;
+
+  const generateInvoicePDF = () => {
+    if (Platform.OS === 'web') {
+      const printWindow = window.open('', '_blank');
+      if (!printWindow) {
+        alert('Pop-up blocked! Please allow pop-ups to generate PDF.');
+        return;
+      }
+
+      const invoiceNum = `INV-${loadId || 'TEMP'}-${Math.floor(1000 + Math.random() * 9000)}`;
+      const dateStr = new Date().toLocaleDateString();
+
+      const htmlContent = `
+        <html>
+        <head>
+          <title>Invoice - ${loadId || 'Draft'}</title>
+          <style>
+            body { font-family: 'Inter', system-ui, sans-serif; padding: 40px; color: #1e1b1b; line-height: 1.5; }
+            .letterhead { display: flex; justify-content: space-between; border-bottom: 2px solid #5b1010; padding-bottom: 20px; margin-bottom: 30px; }
+            .company-info { text-align: left; }
+            .company-name { font-size: 22px; font-weight: 700; color: #5b1010; margin-bottom: 4px; }
+            .company-details { font-size: 13px; color: #6e6565; }
+            .invoice-title-box { text-align: right; }
+            .invoice-title { font-size: 26px; font-weight: 800; color: #221515; letter-spacing: 0.5px; }
+            .invoice-meta { font-size: 13px; color: #6e6565; margin-top: 5px; }
+            
+            .billing-section { display: grid; grid-template-columns: 1fr 1fr; gap: 40px; margin-bottom: 40px; }
+            .billing-box { background: #fdf6f5; padding: 15px; border-radius: 8px; border: 1px solid #ffdad6; }
+            .box-title { font-size: 11px; font-weight: 600; color: #5b1010; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 8px; border-bottom: 1px solid #ffdad6; padding-bottom: 4px; }
+            .box-content { font-size: 14px; font-weight: 700; color: #221515; }
+            .box-content-detail { font-size: 13px; color: #6e6565; font-weight: normal; margin-top: 2px; }
+
+            .invoice-table { width: 100%; border-collapse: collapse; margin-bottom: 30px; }
+            .invoice-table th { background: #5b1010; color: #ffffff; text-align: left; padding: 12px 10px; font-size: 12px; font-weight: 600; text-transform: uppercase; }
+            .invoice-table td { padding: 14px 10px; border-bottom: 1px solid #ffdad6; font-size: 14px; color: #221515; }
+            .invoice-table td.amount-col { text-align: right; font-weight: 700; }
+            .invoice-table th.amount-col { text-align: right; }
+
+            .totals-container { display: flex; justify-content: flex-end; margin-bottom: 40px; }
+            .totals-table { width: 300px; border-collapse: collapse; }
+            .totals-table td { padding: 8px 10px; font-size: 14px; color: #6e6565; }
+            .totals-table td.val-col { text-align: right; font-weight: 700; color: #221515; }
+            .totals-table tr.grand-total { border-top: 1.5px solid #5b1010; font-size: 16px; font-weight: 700; }
+            .totals-table tr.grand-total td { color: #5b1010; padding-top: 12px; }
+            .totals-table tr.grand-total td.val-col { color: #14532d; font-size: 18px; }
+
+            .footer { text-align: center; margin-top: 60px; font-size: 12px; color: #a09190; border-top: 1px solid #ffdad6; padding-top: 15px; }
+            @media print {
+              body { padding: 20px; }
+              .billing-box { background: #ffffff !important; border: 1px solid #ddd; }
+            }
+          </style>
+        </head>
+        <body>
+          <div class="letterhead">
+            <div class="company-info">
+              <div class="company-name">${profileCompany || 'Carrier Company'}</div>
+              <div class="company-details">
+                ${profileMc ? `MC#: ${profileMc}` : ''} ${profileMc && profileDot ? '•' : ''} ${profileDot ? `DOT#: ${profileDot}` : ''}
+              </div>
+            </div>
+            <div class="invoice-title-box">
+              <div class="invoice-title">INVOICE</div>
+              <div class="invoice-meta">
+                <strong>Invoice Number:</strong> ${invoiceNum}<br/>
+                <strong>Date:</strong> ${dateStr}
+              </div>
+            </div>
+          </div>
+
+          <div class="billing-section">
+            <div class="billing-box">
+              <div class="box-title">Bill From</div>
+              <div class="box-content">${profileCompany || 'Carrier Company'}</div>
+              <div class="box-content-detail">
+                ${profileMc ? `MC: ${profileMc}<br/>` : ''}
+                ${profileDot ? `USDOT: ${profileDot}<br/>` : ''}
+                Professional Carrier Services
+              </div>
+            </div>
+            <div class="billing-box">
+              <div class="box-title">Bill To</div>
+              <div class="box-content">${broker || 'Customer / Broker'}</div>
+              <div class="box-content-detail">
+                Reference ID: ${loadId || '—'}
+              </div>
+            </div>
+          </div>
+
+          <table class="invoice-table">
+            <thead>
+              <tr>
+                <th>Item / Description</th>
+                <th class="amount-col">Amount</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>Freight Charges / Base Rate (Load Ref: ${loadId || '—'})</td>
+                <td class="amount-col">$${rateVal.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
+              </tr>
+              ${surVal > 0 ? `
+              <tr>
+                <td>Fuel Surcharge</td>
+                <td class="amount-col">$${surVal.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
+              </tr>
+              ` : ''}
+              ${accVal > 0 ? `
+              <tr>
+                <td>Accessorials / Detention / Layover</td>
+                <td class="amount-col">$${accVal.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
+              </tr>
+              ` : ''}
+            </tbody>
+          </table>
+
+          <div class="totals-container">
+            <table class="totals-table">
+              <tr>
+                <td>Subtotal</td>
+                <td class="val-col">$${totalAmount.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
+              </tr>
+              <tr class="grand-total">
+                <td>Total Due</td>
+                <td class="val-col">$${totalAmount.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
+              </tr>
+            </table>
+          </div>
+
+          <div class="footer">
+            Thank you for your business!<br/>
+            This document is generated by Integra Vault mobile application.
+          </div>
+
+          <script>
+            window.onload = function() {
+              window.print();
+            }
+          </script>
+        </body>
+        </html>
+      `;
+      printWindow.document.write(htmlContent);
+      printWindow.document.close();
+    } else {
+      Alert.alert('📄 Export Success', `Invoice PDF generated and shared successfully!`);
+    }
+  };
 
   const handleSaveToVault = async () => {
     if (!loadId || !broker || !rate) {
@@ -472,19 +649,38 @@ function InvoiceGenerator({ T, styles, onClose, setActiveTab }: { T: any; styles
         </View>
       </View>
 
-      <Pressable
-        style={({ pressed }) => [styles.saveToVaultBtn, { backgroundColor: T.primary }, pressed && { opacity: 0.8 }, isSaving && { opacity: 0.6 }]}
-        onPress={handleSaveToVault}
-        disabled={isSaving}
-        accessibilityRole="button"
-        accessibilityLabel="Generate and save invoice"
-      >
-        {isSaving ? (
-          <ActivityIndicator size="small" color="#ffffff" />
-        ) : (
-          <Text style={styles.saveToVaultBtnText}>✓ GENERATE & SAVE TO VAULT</Text>
-        )}
-      </Pressable>
+      <View style={{ gap: 10, marginTop: 8 }}>
+        <Pressable
+          style={({ pressed }) => [styles.saveToVaultBtn, { backgroundColor: T.primary }, pressed && { opacity: 0.8 }, isSaving && { opacity: 0.6 }]}
+          onPress={handleSaveToVault}
+          disabled={isSaving}
+          accessibilityRole="button"
+          accessibilityLabel="Generate and save invoice"
+        >
+          {isSaving ? (
+            <ActivityIndicator size="small" color="#ffffff" />
+          ) : (
+            <Text style={styles.saveToVaultBtnText}>✓ GENERATE & SAVE TO VAULT</Text>
+          )}
+        </Pressable>
+
+        <Pressable
+          style={({ pressed }) => [
+            styles.saveToVaultBtn,
+            {
+              backgroundColor: 'transparent',
+              borderWidth: 1.5,
+              borderColor: BRAND.crimsonRed
+            },
+            pressed && { backgroundColor: BRAND.crimsonRed + '15' }
+          ]}
+          onPress={generateInvoicePDF}
+          accessibilityRole="button"
+          accessibilityLabel="Generate PDF Invoice"
+        >
+          <Text style={[styles.saveToVaultBtnText, { color: T.text.primary }]}>📄 GENERATE PDF INVOICE</Text>
+        </Pressable>
+      </View>
     </View>
   );
 }
@@ -650,6 +846,8 @@ export default function AppTabs() {
   const [activeTab, setActiveTab] = useState<TabName>('loads');
   const [activeToolView, setActiveToolView] = useState<'hub' | 'calculator' | 'invoices' | 'loads'>('hub');
   const [homeScreenView, setHomeScreenView] = useState<'home' | 'marketplace'>('home');
+  const [prepopulatedLoad, setPrepopulatedLoad] = useState<any>(null);
+  const [financeSubView, setFinanceSubView] = useState<'pnl' | 'expenses'>('pnl');
   const [showProfile, setShowProfile] = useState(false);
   const { mode: themeMode, t: T } = useTheme();
 
@@ -658,6 +856,8 @@ export default function AppTabs() {
   const [profileCompany, setProfileCompany] = useState('Jazzie Logistics');
   const [profileType, setProfileType] = useState<'Owner Operator' | 'Carrier'>('Owner Operator');
   const [profileVin, setProfileVin] = useState('1FTFW1EF5KFD8291A');
+  const [profileMc, setProfileMc] = useState('MC-123456');
+  const [profileDot, setProfileDot] = useState('USDOT-3749201');
   const [profileDocs, setProfileDocs] = useState({
     driverLicense: true,
     coi: true,
@@ -708,12 +908,16 @@ export default function AppTabs() {
         const compVal = await AsyncStorage.getItem('profile_company');
         const typeVal = await AsyncStorage.getItem('profile_type');
         const vinVal = await AsyncStorage.getItem('profile_vin');
+        const mcVal = await AsyncStorage.getItem('profile_mc');
+        const dotVal = await AsyncStorage.getItem('profile_dot');
         const docsVal = await AsyncStorage.getItem('profile_docs');
 
         if (nameVal) setProfileName(nameVal);
         if (compVal) setProfileCompany(compVal);
         if (typeVal) setProfileType(typeVal as any);
         if (vinVal) setProfileVin(vinVal);
+        if (mcVal) setProfileMc(mcVal);
+        if (dotVal) setProfileDot(dotVal);
         if (docsVal) setProfileDocs(JSON.parse(docsVal));
       } catch (err) {
         console.error('Failed to load profile data', err);
@@ -739,7 +943,6 @@ export default function AppTabs() {
   };
 
   const shouldHideFloatingButtons = () => {
-    if (activeTab === 'loads' && homeScreenView === 'marketplace') return true;
     if (activeTab === 'tools' && activeToolView !== 'hub') return true;
     return false;
   };
@@ -788,15 +991,24 @@ export default function AppTabs() {
             {homeScreenView === 'home' ? (
               <HomeScreen
                 onNavigateToMarketplace={() => setHomeScreenView('marketplace')}
-                onNavigate={(tab: TabName, toolView?: 'hub' | 'calculator' | 'invoices' | 'loads') => {
+                onNavigate={(tab: TabName, toolView?: 'hub' | 'calculator' | 'invoices' | 'loads' | 'expenses') => {
                   setActiveTab(tab);
-                  if (toolView) setActiveToolView(toolView);
+                  if (tab === 'finance') {
+                    setFinanceSubView(toolView === 'expenses' ? 'expenses' : 'pnl');
+                  } else if (toolView) {
+                    setActiveToolView(toolView as any);
+                  }
                 }}
               />
             ) : (
               <LoadsScreen
                 onBackToHome={() => setHomeScreenView('home')}
                 onOpenProfile={() => setShowProfile(true)}
+                onCreateInvoice={(load: any) => {
+                  setPrepopulatedLoad(load);
+                  setActiveTab('tools');
+                  setActiveToolView('invoices');
+                }}
               />
             )}
           </ErrorBoundary>
@@ -819,7 +1031,17 @@ export default function AppTabs() {
       case 'finance':
         return (
           <ErrorBoundary t={T}>
-            <ExpenseScreen />
+            {financeSubView === 'pnl' ? (
+              <ExpenseScreen onViewAllExpenses={() => setFinanceSubView('expenses')} />
+            ) : (
+              <ExpensesScreen
+                onBack={() => setFinanceSubView('pnl')}
+                onNavigateToScan={() => {
+                  setFinanceSubView('pnl');
+                  setActiveTab('scan');
+                }}
+              />
+            )}
           </ErrorBoundary>
         );
 
@@ -1063,17 +1285,29 @@ export default function AppTabs() {
             <InvoiceGenerator
               T={T}
               styles={styles}
-              onClose={() => setActiveToolView('hub')}
+              onClose={() => {
+                setActiveToolView('hub');
+                setPrepopulatedLoad(null);
+              }}
               setActiveTab={(tab) => {
                 setActiveTab(tab);
                 setActiveToolView('hub');
+                setPrepopulatedLoad(null);
               }}
+              prepopulatedLoad={prepopulatedLoad}
+              profileCompany={profileCompany}
+              profileMc={profileMc}
+              profileDot={profileDot}
             />
           )}
           {activeToolView === 'loads' && (
             <LoadsScreen 
               onBackToHome={() => setActiveToolView('hub')}
               onOpenProfile={() => setShowProfile(true)}
+              onCreateInvoice={(load: any) => {
+                setPrepopulatedLoad(load);
+                setActiveToolView('invoices');
+              }}
             />
           )}
         </ScrollView>
@@ -1208,6 +1442,36 @@ export default function AppTabs() {
                   placeholder="e.g. 1FTFW1EF5KFD8291A"
                   placeholderTextColor={T.text.muted}
                 />
+              </View>
+
+              {/* MC# & DOT# Row */}
+              <View style={{ flexDirection: 'row', gap: 12 }}>
+                <View style={{ flex: 1 }}>
+                  <Text style={[styles.inputLabel, { color: T.text.secondary }]}>MC NUMBER</Text>
+                  <TextInput
+                    style={[styles.modalInput, { backgroundColor: T.background.container, borderColor: T.border.variant, color: T.text.primary }]}
+                    value={profileMc}
+                    onChangeText={(val) => {
+                      setProfileMc(val);
+                      saveProfileField('profile_mc', val);
+                    }}
+                    placeholder="e.g. MC-123456"
+                    placeholderTextColor={T.text.muted}
+                  />
+                </View>
+                <View style={{ flex: 1 }}>
+                  <Text style={[styles.inputLabel, { color: T.text.secondary }]}>USDOT NUMBER</Text>
+                  <TextInput
+                    style={[styles.modalInput, { backgroundColor: T.background.container, borderColor: T.border.variant, color: T.text.primary }]}
+                    value={profileDot}
+                    onChangeText={(val) => {
+                      setProfileDot(val);
+                      saveProfileField('profile_dot', val);
+                    }}
+                    placeholder="e.g. DOT-3749201"
+                    placeholderTextColor={T.text.muted}
+                  />
+                </View>
               </View>
 
               {/* Subscription Status Card */}
