@@ -26,7 +26,7 @@ Drivers can now manage and change statuses of loads from both the **Active** tab
 2. **API Endpoint (`PUT /api/driver-mobile/loads/:id`):**
    - Ensure the server validates that incoming `status` requests match one of the 9 values listed above.
    - Legacy statuses (`pending`, `in-progress`, `completed`, `cancelled`) should map gracefully inside the DB layer or return compatibility wrappers.
-   - Accept gate time logs and append them to load `notes` or store them in a sub-table (e.g. `gate_times` database table with fields `gateInPickup`, `gateOutPickup`, `gateInDelivery`, `gateOutDelivery`).
+   - **Gate Times Logging:** When a driver changes the load status, the app automatically stamps the device's current date and time into the respective gate log fields (e.g. `En Route to Pick-up` check-in, `Loaded` check-out, `At Delivery` check-in, `Delivered` check-out). The backend should accept these timestamps alongside status updates and store them (e.g., in a `gate_times` table or appended to notes).
 
 ---
 

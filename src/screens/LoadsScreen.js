@@ -8,6 +8,7 @@ import {
   ActivityIndicator,
   Alert,
   Modal,
+  Platform,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -136,52 +137,47 @@ function LoadCard({ load, pulseType = 'avg', onViewRoute, onAccept, onManage, on
             style={({ pressed }) => [styles.acceptBtn, { backgroundColor: BRAND.hazardOrange }, pressed && styles.pressed]}
             onPress={onManage}
             accessibilityRole="button"
-            accessibilityLabel="Manage active load"
+            accessibilityLabel="Manage active load status"
           >
-            <Text style={styles.acceptBtnText}>⚙  MANAGE LOAD</Text>
+            <Text style={styles.acceptBtnText}>⚙  STATUS</Text>
           </Pressable>
         ) : activeTab === 'history' || ['Delivered', 'Invoiced', 'Payment Overdue', 'Paid', 'completed'].includes(load.status) ? (
-          <View style={{ flex: 1, position: 'relative' }}>
+          <View style={{ flex: 1, flexDirection: 'row', gap: 8, position: 'relative' }}>
             <Pressable
-              style={({ pressed }) => [styles.acceptBtn, { backgroundColor: BRAND.profitGreen }, pressed && styles.pressed]}
-              onPress={() => setActionsOpen(!actionsOpen)}
+              style={({ pressed }) => [styles.acceptBtn, { backgroundColor: BRAND.hazardOrange, flex: 1 }, pressed && styles.pressed]}
+              onPress={onManage}
               accessibilityRole="button"
-              accessibilityLabel="Show actions menu"
+              accessibilityLabel="Manage load status"
             >
-              <Text style={styles.acceptBtnText}>⚙  ACTIONS {actionsOpen ? '▲' : '▼'}</Text>
+              <Text style={styles.acceptBtnText}>⚙  STATUS</Text>
             </Pressable>
 
-            {actionsOpen && (
-              <View style={styles.actionsDropdown}>
-                <Pressable
-                  style={({ pressed }) => [styles.actionsDropdownItem, pressed && styles.pressed]}
-                  onPress={() => {
-                    setActionsOpen(false);
-                    if (onCreateInvoice) onCreateInvoice();
-                  }}
-                  accessibilityRole="button"
-                  accessibilityLabel="Generate invoice"
-                >
-                  <Text style={styles.actionsDropdownItemText}>📋  Generate Invoice</Text>
-                </Pressable>
+            <View style={{ flex: 1, position: 'relative' }}>
+              <Pressable
+                style={({ pressed }) => [styles.acceptBtn, { backgroundColor: BRAND.profitGreen }, pressed && styles.pressed]}
+                onPress={() => setActionsOpen(!actionsOpen)}
+                accessibilityRole="button"
+                accessibilityLabel="Show actions menu"
+              >
+                <Text style={styles.acceptBtnText}>⚙  ACTIONS {actionsOpen ? '▲' : '▼'}</Text>
+              </Pressable>
 
-                <Pressable
-                  style={({ pressed }) => [
-                    styles.actionsDropdownItem,
-                    pressed && styles.pressed,
-                    { borderTopWidth: 1, borderTopColor: T.border.variant }
-                  ]}
-                  onPress={() => {
-                    setActionsOpen(false);
-                    if (onManage) onManage();
-                  }}
-                  accessibilityRole="button"
-                  accessibilityLabel="Update status"
-                >
-                  <Text style={styles.actionsDropdownItemText}>⚙  Update Status</Text>
-                </Pressable>
-              </View>
-            )}
+              {actionsOpen && (
+                <View style={styles.actionsDropdown}>
+                  <Pressable
+                    style={({ pressed }) => [styles.actionsDropdownItem, pressed && styles.pressed]}
+                    onPress={() => {
+                      setActionsOpen(false);
+                      if (onCreateInvoice) onCreateInvoice();
+                    }}
+                    accessibilityRole="button"
+                    accessibilityLabel="Generate invoice"
+                  >
+                    <Text style={styles.actionsDropdownItemText}>📋  Generate Invoice</Text>
+                  </Pressable>
+                </View>
+              )}
+            </View>
           </View>
         ) : (
           <Pressable
@@ -293,7 +289,15 @@ export default function LoadsScreen({ onBackToHome = () => {}, onOpenProfile = (
           status: l.status || 'available',
         }));
       } else {
-        allLoads = DEMO_LOADS;
+        allLoads = [...DEMO_LOADS];
+      }
+
+      // Apply local status overrides
+      for (let i = 0; i < allLoads.length; i++) {
+        const localOverride = await AsyncStorage.getItem(`load_status_override_${allLoads[i].id}`);
+        if (localOverride) {
+          allLoads[i].status = localOverride;
+        }
       }
 
       // Filter locally based on activeTab
@@ -319,18 +323,26 @@ export default function LoadsScreen({ onBackToHome = () => {}, onOpenProfile = (
       setLoads(filtered);
     } catch {
       // Fallback local filtering on DEMO_LOADS
+      const allDemoLoads = [...DEMO_LOADS];
+      for (let i = 0; i < allDemoLoads.length; i++) {
+        const localOverride = await AsyncStorage.getItem(`load_status_override_${allDemoLoads[i].id}`);
+        if (localOverride) {
+          allDemoLoads[i].status = localOverride;
+        }
+      }
+
       let filtered = [];
       if (activeTab === 'marketplace') {
-        filtered = DEMO_LOADS.filter(l => 
+        filtered = allDemoLoads.filter(l => 
           l.status === 'available' && 
           (l.pulseType === 'high' || l.pulseType === 'hazmat')
         );
       } else if (activeTab === 'available') {
-        filtered = DEMO_LOADS.filter(l => l.status === 'available');
+        filtered = allDemoLoads.filter(l => l.status === 'available');
       } else if (activeTab === 'active') {
-        filtered = DEMO_LOADS.filter(l => l.status === 'Accepted');
+        filtered = allDemoLoads.filter(l => ['Accepted', 'En Route to Pick-up', 'Loaded', 'En Route to Delivery', 'At Delivery', 'in-progress'].includes(l.status));
       } else if (activeTab === 'history') {
-        filtered = DEMO_LOADS.filter(l => l.status === 'Delivered');
+        filtered = allDemoLoads.filter(l => ['Delivered', 'Invoiced', 'Payment Overdue', 'Paid', 'completed'].includes(l.status));
       }
       setLoads(filtered);
     } finally {
@@ -376,6 +388,29 @@ export default function LoadsScreen({ onBackToHome = () => {}, onOpenProfile = (
     setGateTimes(prev => ({ ...prev, [field]: nowStr }));
   };
 
+  const autoLogGateTimesForStatus = (status, currentTimes) => {
+    const nowStr = new Date().toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' }) + ' (' + new Date().toLocaleDateString(undefined, { month: 'short', day: 'numeric' }) + ')';
+    const updated = { ...currentTimes };
+
+    if (status === 'En Route to Pick-up') {
+      if (!updated.gateInPickup) updated.gateInPickup = nowStr;
+    } else if (status === 'Loaded') {
+      if (!updated.gateInPickup) updated.gateInPickup = nowStr;
+      if (!updated.gateOutPickup) updated.gateOutPickup = nowStr;
+    } else if (status === 'At Delivery') {
+      if (!updated.gateInDelivery) updated.gateInDelivery = nowStr;
+    } else if (status === 'Delivered') {
+      if (!updated.gateInDelivery) updated.gateInDelivery = nowStr;
+      if (!updated.gateOutDelivery) updated.gateOutDelivery = nowStr;
+    } else if (['Invoiced', 'Payment Overdue', 'Paid'].includes(status)) {
+      if (!updated.gateInPickup) updated.gateInPickup = nowStr;
+      if (!updated.gateOutPickup) updated.gateOutPickup = nowStr;
+      if (!updated.gateInDelivery) updated.gateInDelivery = nowStr;
+      if (!updated.gateOutDelivery) updated.gateOutDelivery = nowStr;
+    }
+    return updated;
+  };
+
   const handleSaveManageChanges = async () => {
     try {
       // Save gate times locally
@@ -384,23 +419,31 @@ export default function LoadsScreen({ onBackToHome = () => {}, onOpenProfile = (
       // Construct a log string to append to notes or send to server
       const timesLog = `[Gate Log] Pickup In: ${gateTimes.gateInPickup || '—'} | Pickup Out: ${gateTimes.gateOutPickup || '—'} | Delivery In: ${gateTimes.gateInDelivery || '—'} | Delivery Out: ${gateTimes.gateOutDelivery || '—'}`;
       
-      // Call PATCH updateLoad endpoint
-      await updateLoad(selectedLoadForManage.id, {
-        status: manageStatus,
-        notes: (selectedLoadForManage.notes ? selectedLoadForManage.notes + '\n' : '') + timesLog,
-      });
+      try {
+        // Call PATCH updateLoad endpoint
+        await updateLoad(selectedLoadForManage.id, {
+          status: manageStatus,
+          notes: (selectedLoadForManage.notes ? selectedLoadForManage.notes + '\n' : '') + timesLog,
+        });
+      } catch (apiErr) {
+        console.warn("API load status update failed, saving status locally as fallback:", apiErr);
+        await AsyncStorage.setItem(`load_status_override_${selectedLoadForManage.id}`, manageStatus);
+      }
 
-      Alert.alert('✅ Saved', 'Load updates successfully saved!', [
-        {
-          text: 'OK',
-          onPress: () => {
-            setManageModalVisible(false);
-            // Reload loads list
-            loadLoads();
-            
-            // If load was marked completed/delivered, prompt for invoice creation
-            const isDeliveredOrCompleted = ['Delivered', 'Invoiced', 'Payment Overdue', 'Paid', 'completed'].includes(manageStatus);
-            if (isDeliveredOrCompleted && onCreateInvoice) {
+      const successMsg = 'Load updates successfully saved!';
+      const proceedWithCompletion = () => {
+        setManageModalVisible(false);
+        loadLoads();
+        
+        // If load was marked completed/delivered, prompt for invoice creation
+        const isDeliveredOrCompleted = ['Delivered', 'Invoiced', 'Payment Overdue', 'Paid', 'completed'].includes(manageStatus);
+        if (isDeliveredOrCompleted && onCreateInvoice) {
+          const askInvoice = () => {
+            if (Platform.OS === 'web') {
+              if (confirm('Would you like to generate an invoice for this completed load now?')) {
+                onCreateInvoice(selectedLoadForManage);
+              }
+            } else {
               Alert.alert(
                 'Create Invoice',
                 'Would you like to generate an invoice for this completed load now?',
@@ -410,11 +453,26 @@ export default function LoadsScreen({ onBackToHome = () => {}, onOpenProfile = (
                 ]
               );
             }
-          }
+          };
+          setTimeout(askInvoice, 400);
         }
-      ]);
+      };
+
+      if (Platform.OS === 'web') {
+        alert(successMsg);
+        proceedWithCompletion();
+      } else {
+        Alert.alert('✅ Saved', successMsg, [
+          { text: 'OK', onPress: proceedWithCompletion }
+        ]);
+      }
     } catch (err) {
-      Alert.alert('Error', 'Failed to save load updates: ' + err.message);
+      const errMsg = 'Failed to save load updates: ' + err.message;
+      if (Platform.OS === 'web') {
+        alert(errMsg);
+      } else {
+        Alert.alert('Error', errMsg);
+      }
     }
   };
 
@@ -573,6 +631,7 @@ export default function LoadsScreen({ onBackToHome = () => {}, onOpenProfile = (
                             onPress={() => {
                               setManageStatus(status);
                               setDropdownOpen(false);
+                              setGateTimes(prev => autoLogGateTimesForStatus(status, prev));
                             }}
                           >
                             <Text
