@@ -514,10 +514,16 @@ DELETE /api/driver-mobile/expenses/exp_123456
 ```
 
 **Valid Status Values:**
-- `pending` - Not yet started
-- `in-progress` - Currently running
-- `completed` - Load delivered
-- `cancelled` - Cancelled
+- `Accepted` - Load accepted by driver
+- `En Route to Pick-up` - Driver driving to pickup terminal
+- `Loaded` - Cargo loaded onto the truck
+- `En Route to Delivery` - Driver driving to delivery location
+- `At Delivery` - Driver waiting or check-in at receiver
+- `Delivered` - Cargo successfully dropped off
+- `Invoiced` - Invoice generated for this load
+- `Payment Overdue` - Payment has exceeded standard term days
+- `Paid` - Revenue successfully collected from broker
+- *Legacy fallback support:* `pending` (mapped as Available/Accepted), `in-progress` (mapped as Loaded), `completed` (mapped as Delivered), `cancelled` (mapped as Cancelled)
 
 **Test Cases:**
 - ✅ Create with all fields

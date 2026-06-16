@@ -74,6 +74,8 @@ function LoadCard({ load, pulseType = 'avg', onViewRoute, onAccept, onManage, on
   const styles = useStyles();
   const STATUS_STYLES = getStatusStyles(T);
   const pulse = STATUS_STYLES[pulseType] || STATUS_STYLES.avg;
+  const [actionsOpen, setActionsOpen] = useState(false);
+
   return (
     <StatusBorderCard borderColor={pulse.leftBorder} style={styles.loadCard}>
       {/* Load Header */}
@@ -129,7 +131,7 @@ function LoadCard({ load, pulseType = 'avg', onViewRoute, onAccept, onManage, on
           <Text style={styles.routeBtnText}>🗺  VIEW ROUTE</Text>
         </Pressable>
 
-        {activeTab === 'active' || load.status === 'in-progress' ? (
+        {activeTab === 'active' || ['Accepted', 'En Route to Pick-up', 'Loaded', 'En Route to Delivery', 'At Delivery', 'in-progress'].includes(load.status) ? (
           <Pressable
             style={({ pressed }) => [styles.acceptBtn, { backgroundColor: BRAND.hazardOrange }, pressed && styles.pressed]}
             onPress={onManage}
@@ -138,15 +140,49 @@ function LoadCard({ load, pulseType = 'avg', onViewRoute, onAccept, onManage, on
           >
             <Text style={styles.acceptBtnText}>⚙  MANAGE LOAD</Text>
           </Pressable>
-        ) : activeTab === 'history' || load.status === 'completed' ? (
-          <Pressable
-            style={({ pressed }) => [styles.acceptBtn, { backgroundColor: BRAND.profitGreen }, pressed && styles.pressed]}
-            onPress={onCreateInvoice}
-            accessibilityRole="button"
-            accessibilityLabel="Create invoice"
-          >
-            <Text style={styles.acceptBtnText}>📋  CREATE INVOICE</Text>
-          </Pressable>
+        ) : activeTab === 'history' || ['Delivered', 'Invoiced', 'Payment Overdue', 'Paid', 'completed'].includes(load.status) ? (
+          <View style={{ flex: 1, position: 'relative' }}>
+            <Pressable
+              style={({ pressed }) => [styles.acceptBtn, { backgroundColor: BRAND.profitGreen }, pressed && styles.pressed]}
+              onPress={() => setActionsOpen(!actionsOpen)}
+              accessibilityRole="button"
+              accessibilityLabel="Show actions menu"
+            >
+              <Text style={styles.acceptBtnText}>⚙  ACTIONS {actionsOpen ? '▲' : '▼'}</Text>
+            </Pressable>
+
+            {actionsOpen && (
+              <View style={styles.actionsDropdown}>
+                <Pressable
+                  style={({ pressed }) => [styles.actionsDropdownItem, pressed && styles.pressed]}
+                  onPress={() => {
+                    setActionsOpen(false);
+                    if (onCreateInvoice) onCreateInvoice();
+                  }}
+                  accessibilityRole="button"
+                  accessibilityLabel="Generate invoice"
+                >
+                  <Text style={styles.actionsDropdownItemText}>📋  Generate Invoice</Text>
+                </Pressable>
+
+                <Pressable
+                  style={({ pressed }) => [
+                    styles.actionsDropdownItem,
+                    pressed && styles.pressed,
+                    { borderTopWidth: 1, borderTopColor: T.border.variant }
+                  ]}
+                  onPress={() => {
+                    setActionsOpen(false);
+                    if (onManage) onManage();
+                  }}
+                  accessibilityRole="button"
+                  accessibilityLabel="Update status"
+                >
+                  <Text style={styles.actionsDropdownItemText}>⚙  Update Status</Text>
+                </Pressable>
+              </View>
+            )}
+          </View>
         ) : (
           <Pressable
             style={({ pressed }) => [styles.acceptBtn, pressed && styles.pressed]}
@@ -174,6 +210,7 @@ const DEMO_LOADS = [
     rateAmount: 3700,
     rpm: '$3.42',
     pulseType: 'high',
+    status: 'Accepted',
   },
   {
     id: '#IV-8102-LA',
@@ -185,6 +222,7 @@ const DEMO_LOADS = [
     rateAmount: 2542,
     rpm: '$4.10',
     pulseType: 'hazmat',
+    status: 'available',
   },
   {
     id: '#IV-3312-KS',
@@ -196,7 +234,20 @@ const DEMO_LOADS = [
     rateAmount: 1118,
     rpm: '$2.15',
     pulseType: 'avg',
+    status: 'Delivered',
   },
+];
+
+const STATUS_OPTIONS = [
+  'Accepted',
+  'En Route to Pick-up',
+  'Loaded',
+  'En Route to Delivery',
+  'At Delivery',
+  'Delivered',
+  'Invoiced',
+  'Payment Overdue',
+  'Paid',
 ];
 
 /**
@@ -215,7 +266,8 @@ export default function LoadsScreen({ onBackToHome = () => {}, onOpenProfile = (
   // Active Load Manager Modal State
   const [selectedLoadForManage, setSelectedLoadForManage] = useState(null);
   const [manageModalVisible, setManageModalVisible] = useState(false);
-  const [manageStatus, setManageStatus] = useState('in-progress');
+  const [manageStatus, setManageStatus] = useState('Accepted');
+  const [dropdownOpen, setDropdownOpen] = useState(false);
   const [gateTimes, setGateTimes] = useState({
     gateInPickup: '',
     gateOutPickup: '',
@@ -226,43 +278,61 @@ export default function LoadsScreen({ onBackToHome = () => {}, onOpenProfile = (
   const loadLoads = async () => {
     try {
       setLoading(true);
-      let apiStatus = null;
-      if (activeTab === 'active') {
-        apiStatus = 'in-progress';
-      } else if (activeTab === 'history') {
-        apiStatus = 'completed';
-      } else if (activeTab === 'available' || activeTab === 'marketplace') {
-        apiStatus = 'available';
-      }
-      const filters = apiStatus ? { status: apiStatus } : {};
-      const data = await getLoads(filters);
+      // Fetch all loads to perform local status-based filtering for granular statuses
+      const data = await getLoads({});
+      
+      let allLoads = [];
       if (data.loads && data.loads.length > 0) {
-        const mapped = data.loads.map((l, i) => ({
+        allLoads = data.loads.map((l, i) => ({
           ...l,
           loadId: l.id,
           rpm: l.rateAmount && l.distance
             ? `$${(l.rateAmount / parseFloat(l.distance)).toFixed(2)}`
             : '$3.22',
-          pulseType: i % 3 === 0 ? 'high' : i % 3 === 1 ? 'hazmat' : 'avg',
+          pulseType: l.pulseType || (i % 3 === 0 ? 'high' : i % 3 === 1 ? 'hazmat' : 'avg'),
+          status: l.status || 'available',
         }));
-        if (activeTab === 'marketplace') {
-          setLoads(mapped.filter(l => l.pulseType === 'high' || l.pulseType === 'hazmat'));
-        } else {
-          setLoads(mapped);
-        }
       } else {
-        if (activeTab === 'marketplace') {
-          setLoads(DEMO_LOADS.filter(l => l.pulseType === 'high' || l.pulseType === 'hazmat'));
-        } else {
-          setLoads(DEMO_LOADS);
-        }
+        allLoads = DEMO_LOADS;
       }
-    } catch {
+
+      // Filter locally based on activeTab
+      let filtered = [];
       if (activeTab === 'marketplace') {
-        setLoads(DEMO_LOADS.filter(l => l.pulseType === 'high' || l.pulseType === 'hazmat'));
-      } else {
-        setLoads(DEMO_LOADS);
+        filtered = allLoads.filter(l => 
+          (l.status === 'available' || !l.status || l.status === '') && 
+          (l.pulseType === 'high' || l.pulseType === 'hazmat')
+        );
+      } else if (activeTab === 'available') {
+        filtered = allLoads.filter(l => 
+          l.status === 'available' || !l.status || l.status === ''
+        );
+      } else if (activeTab === 'active') {
+        filtered = allLoads.filter(l => 
+          ['Accepted', 'En Route to Pick-up', 'Loaded', 'En Route to Delivery', 'At Delivery', 'in-progress'].includes(l.status)
+        );
+      } else if (activeTab === 'history') {
+        filtered = allLoads.filter(l => 
+          ['Delivered', 'Invoiced', 'Payment Overdue', 'Paid', 'completed'].includes(l.status)
+        );
       }
+      setLoads(filtered);
+    } catch {
+      // Fallback local filtering on DEMO_LOADS
+      let filtered = [];
+      if (activeTab === 'marketplace') {
+        filtered = DEMO_LOADS.filter(l => 
+          l.status === 'available' && 
+          (l.pulseType === 'high' || l.pulseType === 'hazmat')
+        );
+      } else if (activeTab === 'available') {
+        filtered = DEMO_LOADS.filter(l => l.status === 'available');
+      } else if (activeTab === 'active') {
+        filtered = DEMO_LOADS.filter(l => l.status === 'Accepted');
+      } else if (activeTab === 'history') {
+        filtered = DEMO_LOADS.filter(l => l.status === 'Delivered');
+      }
+      setLoads(filtered);
     } finally {
       setLoading(false);
     }
@@ -274,7 +344,8 @@ export default function LoadsScreen({ onBackToHome = () => {}, onOpenProfile = (
 
   const openManageModal = async (load) => {
     setSelectedLoadForManage(load);
-    setManageStatus(load.status || 'in-progress');
+    setManageStatus(load.status || 'Accepted');
+    setDropdownOpen(false);
     
     // Load gate times from AsyncStorage
     try {
@@ -327,8 +398,9 @@ export default function LoadsScreen({ onBackToHome = () => {}, onOpenProfile = (
             // Reload loads list
             loadLoads();
             
-            // If load was marked completed, prompt for invoice creation
-            if (manageStatus === 'completed' && onCreateInvoice) {
+            // If load was marked completed/delivered, prompt for invoice creation
+            const isDeliveredOrCompleted = ['Delivered', 'Invoiced', 'Payment Overdue', 'Paid', 'completed'].includes(manageStatus);
+            if (isDeliveredOrCompleted && onCreateInvoice) {
               Alert.alert(
                 'Create Invoice',
                 'Would you like to generate an invoice for this completed load now?',
@@ -354,7 +426,7 @@ export default function LoadsScreen({ onBackToHome = () => {}, onOpenProfile = (
         style: 'default', 
         onPress: async () => {
           try {
-            await updateLoad(load.id, { status: 'in-progress' });
+            await updateLoad(load.id, { status: 'Accepted' });
             Alert.alert('Success', 'Load accepted successfully!', [
               {
                 text: 'OK',
@@ -475,23 +547,47 @@ export default function LoadsScreen({ onBackToHome = () => {}, onOpenProfile = (
                   <Text style={styles.loadSummaryRoute}>{selectedLoadForManage.startLocation} → {selectedLoadForManage.endLocation}</Text>
                 </View>
 
-                {/* Status Toggle */}
+                {/* Status Dropdown */}
                 <View style={styles.inputGroup}>
                   <Text style={styles.inputLabel}>LOAD STATUS</Text>
-                  <View style={{ flexDirection: 'row', gap: 10 }}>
-                    <Pressable
-                      style={[styles.statusToggleBtn, manageStatus === 'in-progress' && styles.statusToggleBtnActive]}
-                      onPress={() => setManageStatus('in-progress')}
-                    >
-                      <Text style={[styles.statusToggleText, manageStatus === 'in-progress' && styles.statusToggleTextActive]}>IN TRANSIT</Text>
-                    </Pressable>
-                    <Pressable
-                      style={[styles.statusToggleBtn, manageStatus === 'completed' && styles.statusToggleBtnActive]}
-                      onPress={() => setManageStatus('completed')}
-                    >
-                      <Text style={[styles.statusToggleText, manageStatus === 'completed' && styles.statusToggleTextActive]}>COMPLETED</Text>
-                    </Pressable>
-                  </View>
+                  <Pressable
+                    style={styles.dropdownSelector}
+                    onPress={() => setDropdownOpen(!dropdownOpen)}
+                    accessibilityRole="button"
+                    accessibilityLabel="Select load status"
+                  >
+                    <Text style={styles.dropdownSelectorText}>{manageStatus}</Text>
+                    <Text style={styles.dropdownSelectorArrow}>{dropdownOpen ? '▲' : '▼'}</Text>
+                  </Pressable>
+                  
+                  {dropdownOpen && (
+                    <View style={styles.dropdownOptionsContainer}>
+                      <ScrollView style={{ maxHeight: 220 }} nestedScrollEnabled>
+                        {STATUS_OPTIONS.map((status) => (
+                          <Pressable
+                            key={status}
+                            style={[
+                              styles.dropdownOption,
+                              manageStatus === status && styles.dropdownOptionActive
+                            ]}
+                            onPress={() => {
+                              setManageStatus(status);
+                              setDropdownOpen(false);
+                            }}
+                          >
+                            <Text
+                              style={[
+                                styles.dropdownOptionText,
+                                manageStatus === status && styles.dropdownOptionTextActive
+                              ]}
+                            >
+                              {status}
+                            </Text>
+                          </Pressable>
+                        ))}
+                      </ScrollView>
+                    </View>
+                  )}
                 </View>
 
                 {/* Gate Times Logging */}
@@ -650,27 +746,78 @@ const useStyles = createThemedStyleSheet((T) => StyleSheet.create({
     color: T.text.secondary,
     marginTop: 2,
   },
-  statusToggleBtn: {
-    flex: 1,
-    height: 44,
+  dropdownSelector: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    height: 48,
     borderRadius: 6,
     borderWidth: 1.5,
     borderColor: T.border.variant,
     backgroundColor: T.background.container,
-    justifyContent: 'center',
-    alignItems: 'center',
+    paddingHorizontal: 16,
+    marginBottom: 8,
   },
-  statusToggleBtnActive: {
-    backgroundColor: BRAND.crimsonRed,
-    borderColor: BRAND.crimsonRed,
-  },
-  statusToggleText: {
-    fontSize: 12,
+  dropdownSelectorText: {
+    ...TYPOGRAPHY.bodyMd,
+    color: T.text.primary,
     fontWeight: '700',
+  },
+  dropdownSelectorArrow: {
+    fontSize: 12,
     color: T.text.secondary,
   },
-  statusToggleTextActive: {
-    color: '#ffffff',
+  dropdownOptionsContainer: {
+    borderRadius: 6,
+    borderWidth: 1.5,
+    borderColor: T.border.variant,
+    backgroundColor: T.background.containerHighest === '#edeef3' ? '#f5f6f9' : '#272323',
+    overflow: 'hidden',
+    marginBottom: 8,
+  },
+  dropdownOption: {
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    borderBottomWidth: 1,
+    borderBottomColor: T.border.variant,
+  },
+  dropdownOptionActive: {
+    backgroundColor: BRAND.crimsonRed + '20',
+  },
+  dropdownOptionText: {
+    ...TYPOGRAPHY.bodyMd,
+    color: T.text.secondary,
+  },
+  dropdownOptionTextActive: {
+    color: T.primary,
+    fontWeight: '700',
+  },
+  actionsDropdown: {
+    position: 'absolute',
+    bottom: 48,
+    right: 0,
+    width: '150%',
+    backgroundColor: T.background.containerHighest === '#edeef3' ? '#ffffff' : '#221e1e',
+    borderRadius: 8,
+    borderWidth: 1.5,
+    borderColor: BRAND.profitGreen,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 4,
+    elevation: 5,
+    zIndex: 1000,
+  },
+  actionsDropdownItem: {
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    justifyContent: 'center',
+  },
+  actionsDropdownItemText: {
+    ...TYPOGRAPHY.headlineSm,
+    color: T.text.primary,
+    fontSize: 13,
+    fontWeight: '600',
   },
   gateTimesBox: {
     backgroundColor: T.background.container,

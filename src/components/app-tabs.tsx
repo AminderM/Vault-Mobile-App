@@ -600,9 +600,7 @@ function InvoiceGenerator({
               style={[styles.modalInput, { flex: 2, backgroundColor: T.background.container, borderColor: T.border.variant, color: T.text.primary }]}
               value={item.description}
               onChangeText={(val) => {
-                const updated = [...lineItems];
-                updated[index].description = val;
-                setLineItems(updated);
+                setLineItems(prev => prev.map((itm, i) => i === index ? { ...itm, description: val } : itm));
               }}
               placeholder="e.g. Fuel Surcharge"
               placeholderTextColor={T.text.muted}
@@ -611,9 +609,7 @@ function InvoiceGenerator({
               style={[styles.modalInput, { flex: 1, backgroundColor: T.background.container, borderColor: T.border.variant, color: T.text.primary }]}
               value={item.amount}
               onChangeText={(val) => {
-                const updated = [...lineItems];
-                updated[index].amount = val;
-                setLineItems(updated);
+                setLineItems(prev => prev.map((itm, i) => i === index ? { ...itm, amount: val } : itm));
               }}
               placeholder="0.00"
               placeholderTextColor={T.text.muted}
