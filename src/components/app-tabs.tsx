@@ -33,12 +33,12 @@ function HomeIcon({ color }: { color: string }) {
     <View style={{ width: 24, height: 22, justifyContent: 'flex-end', alignItems: 'center' }}>
       {/* Roof */}
       <View style={{ position: 'absolute', top: 1, width: 20, height: 10, alignItems: 'center', justifyContent: 'center' }}>
-        <View style={{ width: 13, height: 13, borderLeftWidth: 1.8, borderTopWidth: 1.8, borderColor: color, transform: [{ rotate: '45deg' }], top: 5, borderTopLeftRadius: 1.5 }} />
+        <View style={{ width: 13, height: 13, borderLeftWidth: 2.6, borderTopWidth: 2.6, borderColor: color, transform: [{ rotate: '45deg' }], top: 5, borderTopLeftRadius: 1.5 }} />
       </View>
       {/* Body */}
-      <View style={{ width: 16, height: 11, borderWidth: 1.8, borderColor: color, borderTopWidth: 0, borderBottomLeftRadius: 2, borderBottomRightRadius: 2, justifyContent: 'flex-end', alignItems: 'center', zIndex: -1 }}>
+      <View style={{ width: 16, height: 11, borderWidth: 2.6, borderColor: color, borderTopWidth: 0, borderBottomLeftRadius: 2, borderBottomRightRadius: 2, justifyContent: 'flex-end', alignItems: 'center', zIndex: -1 }}>
         {/* Door */}
-        <View style={{ width: 6, height: 6, borderLeftWidth: 1.8, borderRightWidth: 1.8, borderTopWidth: 1.8, borderColor: color, borderTopLeftRadius: 1.5, borderTopRightRadius: 1.5 }} />
+        <View style={{ width: 6, height: 6, borderLeftWidth: 2.6, borderRightWidth: 2.6, borderTopWidth: 2.6, borderColor: color, borderTopLeftRadius: 1.5, borderTopRightRadius: 1.5 }} />
       </View>
     </View>
   );
@@ -48,8 +48,8 @@ function HomeIcon({ color }: { color: string }) {
 function FolderIcon({ color, bg }: { color: string, bg: string }) {
   return (
     <View style={{ width: 24, height: 18, justifyContent: 'center', alignItems: 'center' }}>
-      <View style={{ position: 'absolute', top: 0, left: 2, width: 8, height: 3, borderTopLeftRadius: 2, borderTopRightRadius: 2, borderWidth: 1.8, borderColor: color, borderBottomWidth: 0 }} />
-      <View style={{ width: 20, height: 13, borderWidth: 1.8, borderColor: color, borderRadius: 2, marginTop: 2, justifyContent: 'center', alignItems: 'center', backgroundColor: bg }}>
+      <View style={{ position: 'absolute', top: 0, left: 2, width: 8, height: 3, borderTopLeftRadius: 2, borderTopRightRadius: 2, borderWidth: 2.6, borderColor: color, borderBottomWidth: 0 }} />
+      <View style={{ width: 20, height: 13, borderWidth: 2.6, borderColor: color, borderRadius: 2, marginTop: 2, justifyContent: 'center', alignItems: 'center', backgroundColor: bg }}>
         <View style={{ width: 4, height: 4, borderRadius: 2, backgroundColor: color, marginBottom: 1 }} />
         <View style={{ width: 8, height: 3, borderTopLeftRadius: 2, borderTopRightRadius: 2, backgroundColor: color }} />
       </View>
@@ -60,13 +60,13 @@ function FolderIcon({ color, bg }: { color: string, bg: string }) {
 function ScanIcon({ color }: { color: string }) {
   return (
     <View style={{ width: 26, height: 26, justifyContent: 'center', alignItems: 'center' }}>
-      <View style={{ position: 'absolute', top: 1, left: 1, width: 6, height: 6, borderLeftWidth: 1.8, borderTopWidth: 1.8, borderColor: color }} />
-      <View style={{ position: 'absolute', top: 1, right: 1, width: 6, height: 6, borderRightWidth: 1.8, borderTopWidth: 1.8, borderColor: color }} />
-      <View style={{ position: 'absolute', bottom: 1, left: 1, width: 6, height: 6, borderLeftWidth: 1.8, borderBottomWidth: 1.8, borderColor: color }} />
-      <View style={{ position: 'absolute', bottom: 1, right: 1, width: 6, height: 6, borderRightWidth: 1.8, borderBottomWidth: 1.8, borderColor: color }} />
-      <View style={{ width: 10, height: 13, borderWidth: 1.8, borderColor: color, borderRadius: 1.5, justifyContent: 'center', alignItems: 'center', gap: 1.5 }}>
-        <View style={{ width: 5, height: 1.5, backgroundColor: color }} />
-        <View style={{ width: 5, height: 1.5, backgroundColor: color }} />
+      <View style={{ position: 'absolute', top: 1, left: 1, width: 6, height: 6, borderLeftWidth: 2.6, borderTopWidth: 2.6, borderColor: color }} />
+      <View style={{ position: 'absolute', top: 1, right: 1, width: 6, height: 6, borderRightWidth: 2.6, borderTopWidth: 2.6, borderColor: color }} />
+      <View style={{ position: 'absolute', bottom: 1, left: 1, width: 6, height: 6, borderLeftWidth: 2.6, borderBottomWidth: 2.6, borderColor: color }} />
+      <View style={{ position: 'absolute', bottom: 1, right: 1, width: 6, height: 6, borderRightWidth: 2.6, borderBottomWidth: 2.6, borderColor: color }} />
+      <View style={{ width: 10, height: 13, borderWidth: 2.6, borderColor: color, borderRadius: 1.5, justifyContent: 'center', alignItems: 'center', gap: 1.5 }}>
+        <View style={{ width: 5, height: 1.8, backgroundColor: color }} />
+        <View style={{ width: 5, height: 1.8, backgroundColor: color }} />
       </View>
     </View>
   );
@@ -75,9 +75,9 @@ function ScanIcon({ color }: { color: string }) {
 function FinanceIcon({ color, bg }: { color: string, bg: string }) {
   return (
     <View style={{ width: 24, height: 18, justifyContent: 'center', alignItems: 'center' }}>
-      <View style={{ position: 'absolute', top: 0, left: 5, width: 16, height: 11, borderWidth: 1.5, borderColor: color, borderRadius: 1.5, transform: [{ rotate: '4deg' }], opacity: 0.6 }} />
-      <View style={{ width: 18, height: 12, borderWidth: 1.8, borderColor: color, borderRadius: 2, backgroundColor: bg, justifyContent: 'center', alignItems: 'center', marginTop: 2 }}>
-        <View style={{ width: 5, height: 5, borderRadius: 2.5, borderWidth: 1.2, borderColor: color }} />
+      <View style={{ position: 'absolute', top: 0, left: 5, width: 16, height: 11, borderWidth: 2.5, borderColor: color, borderRadius: 1.5, transform: [{ rotate: '4deg' }], opacity: 0.6 }} />
+      <View style={{ width: 18, height: 12, borderWidth: 2.6, borderColor: color, borderRadius: 2, backgroundColor: bg, justifyContent: 'center', alignItems: 'center', marginTop: 2 }}>
+        <View style={{ width: 5, height: 5, borderRadius: 2.5, borderWidth: 2.0, borderColor: color }} />
       </View>
     </View>
   );
@@ -86,8 +86,8 @@ function FinanceIcon({ color, bg }: { color: string, bg: string }) {
 function ToolsIcon({ color }: { color: string }) {
   return (
     <View style={{ width: 24, height: 24, justifyContent: 'center', alignItems: 'center' }}>
-      <View style={{ width: 8, height: 4, borderTopLeftRadius: 2, borderTopRightRadius: 2, borderWidth: 1.5, borderColor: color, borderBottomWidth: 0, marginBottom: -1 }} />
-      <View style={{ width: 18, height: 11, borderWidth: 1.8, borderColor: color, borderRadius: 2, justifyContent: 'center', alignItems: 'center' }}>
+      <View style={{ width: 8, height: 4, borderTopLeftRadius: 2, borderTopRightRadius: 2, borderWidth: 2.5, borderColor: color, borderBottomWidth: 0, marginBottom: -1 }} />
+      <View style={{ width: 18, height: 11, borderWidth: 2.6, borderColor: color, borderRadius: 2, justifyContent: 'center', alignItems: 'center' }}>
         <View style={{ width: 4, height: 3, backgroundColor: color, borderRadius: 0.5 }} />
       </View>
     </View>
@@ -98,28 +98,35 @@ function ProfileIcon({ color }: { color: string }) {
   return (
     <View style={{ width: 24, height: 24, justifyContent: 'center', alignItems: 'center' }}>
       {/* Head */}
-      <View style={{ width: 8, height: 8, borderRadius: 4, borderWidth: 1.8, borderColor: color, marginBottom: 2 }} />
+      <View style={{ width: 8, height: 8, borderRadius: 4, borderWidth: 2.6, borderColor: color, marginBottom: 2 }} />
       {/* Shoulders */}
-      <View style={{ width: 16, height: 7, borderTopLeftRadius: 5, borderTopRightRadius: 5, borderWidth: 1.8, borderColor: color, borderBottomWidth: 0 }} />
+      <View style={{ width: 16, height: 7, borderTopLeftRadius: 5, borderTopRightRadius: 5, borderWidth: 2.6, borderColor: color, borderBottomWidth: 0 }} />
     </View>
   );
 }
 
 function TabIcon({ id, color, bg }: { id: string; color: string; bg: string }) {
-  switch (id) {
-    case 'loads':
-      return <HomeIcon color={color} />;
-    case 'vault':
-      return <FolderIcon color={color} bg={bg} />;
-    case 'scan':
-      return <ScanIcon color={color} />;
-    case 'finance':
-      return <FinanceIcon color={color} bg={bg} />;
-    case 'tools':
-      return <ToolsIcon color={color} />;
-    default:
-      return null;
-  }
+  const iconScale = id === 'scan' ? 1.25 : 1.15;
+  return (
+    <View style={{ transform: [{ scale: iconScale }] }}>
+      {(() => {
+        switch (id) {
+          case 'loads':
+            return <HomeIcon color={color} />;
+          case 'vault':
+            return <FolderIcon color={color} bg={bg} />;
+          case 'scan':
+            return <ScanIcon color={color} />;
+          case 'finance':
+            return <FinanceIcon color={color} bg={bg} />;
+          case 'tools':
+            return <ToolsIcon color={color} />;
+          default:
+            return null;
+        }
+      })()}
+    </View>
+  );
 }
 
 
@@ -1704,63 +1711,119 @@ export default function AppTabs() {
           const isActive = activeTab === tab.id;
           const isScan = tab.id === 'scan';
 
-          if (isScan) {
+          // Base colors for puffy 3D buttons
+          const btnBg = isScan 
+            ? (themeMode === 'dark' ? '#8A121B' : '#A81A24')
+            : (isActive 
+                ? (themeMode === 'dark' ? '#8A121B' : '#A81A24')
+                : (themeMode === 'dark' ? '#1C0E10' : '#E5E5EA'));
+
+          const borderTopLeft = isScan
+            ? (themeMode === 'dark' ? '#D92A36' : '#E05A65')
+            : (isActive
+                ? (themeMode === 'dark' ? '#D92A36' : '#E05A65')
+                : (themeMode === 'dark' ? '#321D20' : '#FFFFFF'));
+
+          const borderBottomRight = isScan
+            ? (themeMode === 'dark' ? '#54080D' : '#6E0E16')
+            : (isActive
+                ? (themeMode === 'dark' ? '#54080D' : '#6E0E16')
+                : (themeMode === 'dark' ? '#0F0607' : '#B5B5BA'));
+
+          const textColor = isScan 
+            ? '#ffffff'
+            : (isActive ? '#ffffff' : (themeMode === 'dark' ? '#8E8E93' : '#6B6B70'));
+
+          const renderPuffyButton = (content: React.ReactNode, onPress: () => void, isFloating: boolean) => {
+            const btnHeight = isFloating ? 64 : 58;
+            const btnWidth = isFloating ? 64 : 76;
+            const borderRadius = isFloating ? 20 : 16;
+            const highlightOpacity = isScan || isActive ? 0.22 : 0.08;
+
             return (
               <Pressable
                 key={tab.id}
-                style={[
-                  styles.scanTabContainer,
-                  { marginTop: -18 }
-                ]}
-                onPress={() => setActiveTab('scan')}
-                accessibilityRole="button"
-                accessibilityLabel="Open Scan"
-              >
-                <View style={[
-                  styles.scanSquare,
+                onPress={onPress}
+                style={({ pressed }) => [
                   {
-                    backgroundColor: 'rgba(158, 21, 32, 0.8)',
-                    borderColor: isActive ? '#ffb4ab' : '#5b1010',
+                    width: btnWidth,
+                    height: btnHeight,
+                    borderRadius: borderRadius,
+                    backgroundColor: btnBg,
+                    borderWidth: 2.2,
+                    borderTopColor: borderTopLeft,
+                    borderLeftColor: borderTopLeft,
+                    borderBottomColor: borderBottomRight,
+                    borderRightColor: borderBottomRight,
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    shadowColor: '#000000',
+                    shadowOffset: { width: 0, height: isFloating ? 5 : 3 },
+                    shadowOpacity: themeMode === 'dark' ? 0.6 : 0.22,
+                    shadowRadius: isFloating ? 5 : 3,
+                    elevation: isFloating ? 8 : 4,
+                    position: 'relative',
+                    overflow: 'hidden',
+                  },
+                  pressed && {
+                    transform: [{ translateY: 1.5 }],
+                    shadowOffset: { width: 0, height: 1 },
+                    shadowOpacity: 0.3,
                   }
-                ]}>
-                  <TabIcon id="scan" color="#ffffff" bg="rgba(158, 21, 32, 0.8)" />
-                  <Text style={styles.scanLabelText}>
-                    SCAN
-                  </Text>
-                </View>
+                ]}
+                accessibilityRole="button"
+                accessibilityLabel={tab.label}
+              >
+                {/* 3D Curved/Convex Puffy Highlight bar at the top */}
+                <View style={{
+                  position: 'absolute',
+                  top: 2,
+                  left: 4,
+                  right: 4,
+                  height: '22%',
+                  borderTopLeftRadius: borderRadius - 4,
+                  borderTopRightRadius: borderRadius - 4,
+                  backgroundColor: `rgba(255, 255, 255, ${highlightOpacity})`,
+                }} />
+                {content}
               </Pressable>
+            );
+          };
+
+          if (isScan) {
+            return (
+              <View key={tab.id} style={{ alignItems: 'center', justifyContent: 'center', marginTop: -20 }}>
+                {renderPuffyButton(
+                  <>
+                    <TabIcon id="scan" color="#ffffff" bg={btnBg} />
+                    <Text style={[styles.scanLabelText, { color: '#ffffff', fontWeight: '900', marginTop: 1, fontSize: 8 }]}>
+                      SCAN
+                    </Text>
+                  </>,
+                  () => setActiveTab('scan'),
+                  true
+                )}
+              </View>
             );
           }
 
-          return (
-            <Pressable
-              key={tab.id}
-              style={[
-                styles.tabButton,
-                isActive && {
-                  backgroundColor: 'rgba(158, 21, 32, 0.8)',
-                  borderRadius: 12,
-                  paddingHorizontal: 12,
-                  paddingVertical: 6,
-                }
-              ]}
-              onPress={() => {
-                if (tab.id === 'loads' && activeTab === 'loads') {
-                  setHomeScreenView('home');
-                }
-                setActiveTab(tab.id);
-              }}
-              accessibilityRole="tab"
-              accessibilityLabel={tab.label}
-            >
-              <TabIcon id={tab.id} color={isActive ? '#ffffff' : T.text.muted} bg={isActive ? 'rgba(158, 21, 32, 0.8)' : (themeMode === 'dark' ? 'rgba(5, 2, 2, 0.55)' : 'rgba(255, 255, 255, 0.55)')} />
+          return renderPuffyButton(
+            <>
+              <TabIcon id={tab.id} color={textColor} bg={btnBg} />
               <Text style={[
                 styles.tabLabel,
-                isActive ? { color: '#ffffff', fontWeight: '700' } : { color: T.text.muted }
+                { color: textColor, fontWeight: isActive ? '900' : '700', marginTop: 2 }
               ]}>
                 {tab.label}
               </Text>
-            </Pressable>
+            </>,
+            () => {
+              if (tab.id === 'loads' && activeTab === 'loads') {
+                setHomeScreenView('home');
+              }
+              setActiveTab(tab.id);
+            },
+            false
           );
         })}
       </View>
@@ -1780,22 +1843,22 @@ const styles = StyleSheet.create({
   },
   tabBar: {
     flexDirection: 'row',
-    height: 70,
+    height: 80,
     borderTopWidth: 1.5,
     alignItems: 'center',
     justifyContent: 'space-around',
     paddingBottom: 4,
   },
   tabButton: {
-    height: 50,
-    minWidth: 80,
+    height: 58,
+    minWidth: 76,
     alignItems: 'center',
     justifyContent: 'center',
     gap: 2,
   },
   tabLabel: {
     fontSize: 9,
-    fontWeight: '600',
+    fontWeight: '800',
     letterSpacing: 0.8,
   },
   scanTabContainer: {
