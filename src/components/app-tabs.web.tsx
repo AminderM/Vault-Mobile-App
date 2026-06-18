@@ -1197,40 +1197,26 @@ export default function AppTabs() {
         </View>
 
         {/* Bento Grid */}
-        <View style={styles.toolsGrid}>
-          {utilityTools.map((tool) => (
-            <Pressable
-              key={tool.id}
-              style={({ pressed }) => [
-                { width: '48%', marginBottom: 4 },
-                pressed && { opacity: 0.8 }
-              ]}
-              onPress={tool.action}
-              accessibilityRole="button"
-              accessibilityLabel={`Open ${tool.title}`}
-            >
-              <StatusBorderCard
-                borderColor={BRAND.crimsonRed}
-                style={[
-                  styles.toolCard,
-                  {
-                    width: '100%',
-                    marginBottom: 0,
-                    borderRadius: 8,
-                    backgroundColor: themeMode === 'dark' ? 'rgba(13, 4, 4, 0.5)' : 'rgba(190, 195, 210, 0.5)'
-                  }
-                ]}
-              >
-                <View style={[styles.toolIconBox, { backgroundColor: themeMode === 'dark' ? 'rgba(42, 42, 47, 0.5)' : 'rgba(234, 234, 239, 0.5)' }]}>
-                  {tool.icon}
-                </View>
-                <View style={{ flex: 1, justifyContent: 'flex-end' }}>
-                  <Text style={[styles.toolTitle, { color: T.text.primary }]}>{tool.title}</Text>
-                  <Text style={[styles.toolDesc, { color: T.text.muted, marginTop: 4 }]} numberOfLines={2}>{tool.desc}</Text>
-                </View>
-              </StatusBorderCard>
-            </Pressable>
-          ))}
+        <View style={[styles.toolsGrid, { justifyContent: 'space-between', gap: 12, paddingBottom: 8 }]}>
+          {utilityTools.map((tool) => {
+            const shortLabel = 
+              tool.id === 'calculator' ? 'LOAD CALC' :
+              tool.id === 'invoices' ? 'INVOICES' :
+              tool.id === 'loads' ? 'LOADS' :
+              tool.id === 'vault' ? 'DOC VAULT' :
+              tool.id === 'expenses' ? 'EXPENSES' :
+              tool.id === 'pnl' ? 'P&L VIEW' : tool.title;
+            return (
+              <View key={tool.id} style={{ width: '31%', marginBottom: 12 }}>
+                <SkeuomorphicToolButton
+                  id={tool.id}
+                  label={shortLabel}
+                  isDark={themeMode === 'dark'}
+                  onPress={tool.action}
+                />
+              </View>
+            );
+          })}
         </View>
 
         {/* Live Performance Card */}
@@ -2198,3 +2184,194 @@ const styles = StyleSheet.create({
     letterSpacing: 0.5,
   },
 });
+
+// Skeuomorphic 3D Mechanical Tool Button
+function SkeuomorphicToolButton({ id, label, isDark, onPress }: { id: string; label: string; isDark: boolean; onPress: () => void }) {
+  const baseColor = isDark ? '#8A121B' : '#E0E0E0';
+  const highlightColor = isDark ? '#D92A36' : '#FFFFFF';
+  const shadowColor = isDark ? '#54080D' : '#A0A0A0';
+  const innerCircleBg = isDark ? '#0A0303' : '#F5F5F7';
+  const innerCircleBorder = isDark ? '#4A0C10' : '#D0D0D5';
+  const textColor = isDark ? '#FFFFFF' : '#333333';
+
+  const renderIcon = () => {
+    switch (id) {
+      case 'calculator': // Abacus
+        return (
+          <View style={{ width: 44, height: 34, borderWidth: 2.5, borderColor: '#C87D2D', borderRadius: 4, backgroundColor: '#1A0E0B', paddingVertical: 2, paddingHorizontal: 1, position: 'relative', shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.4, shadowRadius: 2, elevation: 3 }}>
+            {[0, 1, 2, 3].map((rowIdx) => {
+              const leftBeadsCount = rowIdx === 0 ? 2 : rowIdx === 1 ? 4 : rowIdx === 2 ? 1 : 3;
+              const rightBeadsCount = 5 - leftBeadsCount;
+              const rowColors = ['#D32F2F', '#1976D2', '#FBC02D', '#388E3C'];
+              const beadColor = rowColors[rowIdx];
+              return (
+                <View key={rowIdx} style={{ height: 6, flexDirection: 'row', alignItems: 'center', marginVertical: 0.5, position: 'relative' }}>
+                  <View style={{ position: 'absolute', left: 0, right: 0, height: 1, backgroundColor: '#B0BEC5' }} />
+                  <View style={{ flexDirection: 'row', gap: 0.5 }}>
+                    {Array.from({ length: leftBeadsCount }).map((_, i) => (
+                      <View key={`l-${i}`} style={{ width: 4, height: 6, borderRadius: 1.5, backgroundColor: beadColor, borderWidth: 0.5, borderColor: 'rgba(0,0,0,0.3)' }} />
+                    ))}
+                  </View>
+                  <View style={{ flex: 1 }} />
+                  <View style={{ flexDirection: 'row', gap: 0.5 }}>
+                    {Array.from({ length: rightBeadsCount }).map((_, i) => (
+                      <View key={`r-${i}`} style={{ width: 4, height: 6, borderRadius: 1.5, backgroundColor: beadColor, borderWidth: 0.5, borderColor: 'rgba(0,0,0,0.3)' }} />
+                    ))}
+                  </View>
+                </View>
+              );
+            })}
+          </View>
+        );
+      case 'invoices': // Clipboard
+        return (
+          <View style={{ width: 34, height: 44, borderRadius: 4, backgroundColor: '#D7A15C', borderWidth: 1.5, borderColor: '#A36F35', padding: 2, position: 'relative', shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.3, shadowRadius: 2, elevation: 3 }}>
+            <View style={{ width: 16, height: 5, backgroundColor: '#CFD8DC', borderWidth: 1, borderColor: '#78909C', borderTopLeftRadius: 2, borderTopRightRadius: 2, alignSelf: 'center', zIndex: 1, marginBottom: 1 }} />
+            <View style={{ flex: 1, backgroundColor: '#FFFFFF', borderRadius: 1.5, padding: 3, gap: 2.5 }}>
+              <View style={{ height: 1.5, backgroundColor: '#CFD8DC', width: '50%' }} />
+              <View style={{ height: 1.5, backgroundColor: '#CFD8DC', width: '85%' }} />
+              <View style={{ height: 1.5, backgroundColor: '#90A4AE', width: '70%' }} />
+              <View style={{ height: 1.5, backgroundColor: '#90A4AE', width: '80%' }} />
+              <View style={{ height: 1.5, backgroundColor: '#CFD8DC', width: '60%' }} />
+            </View>
+          </View>
+        );
+      case 'expenses': // Receipt
+        return (
+          <View style={{ width: 32, height: 44, backgroundColor: '#FFFFFF', padding: 3, gap: 2, position: 'relative', borderLeftWidth: 0.5, borderRightWidth: 0.5, borderColor: '#B0BEC5', shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.3, shadowRadius: 2, elevation: 3 }}>
+            <View style={{ position: 'absolute', top: -1, left: 0, right: 0, height: 2, flexDirection: 'row', overflow: 'hidden' }}>
+              {Array.from({ length: 8 }).map((_, i) => (
+                <View key={`top-${i}`} style={{ width: 4, height: 4, backgroundColor: innerCircleBg, transform: [{ rotate: '45deg' }], marginTop: -2 }} />
+              ))}
+            </View>
+            <Text style={{ fontSize: 4.5, fontWeight: '800', textAlign: 'center', color: '#37474F', letterSpacing: 0.5, marginTop: 1 }}>RECEIPT</Text>
+            <View style={{ borderBottomWidth: 0.5, borderStyle: 'dashed', borderColor: '#78909C', marginVertical: 1 }} />
+            <View style={{ gap: 2 }}>
+              <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
+                <View style={{ height: 1.5, backgroundColor: '#78909C', width: '40%' }} />
+                <View style={{ height: 1.5, backgroundColor: '#78909C', width: '20%' }} />
+              </View>
+              <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
+                <View style={{ height: 1.5, backgroundColor: '#78909C', width: '50%' }} />
+                <View style={{ height: 1.5, backgroundColor: '#78909C', width: '25%' }} />
+              </View>
+              <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginTop: 2 }}>
+                <View style={{ height: 1.5, backgroundColor: '#37474F', width: '30%' }} />
+                <View style={{ height: 1.5, backgroundColor: '#37474F', width: '35%' }} />
+              </View>
+            </View>
+            <View style={{ position: 'absolute', bottom: -1, left: 0, right: 0, height: 2, flexDirection: 'row', overflow: 'hidden' }}>
+              {Array.from({ length: 8 }).map((_, i) => (
+                <View key={`bot-${i}`} style={{ width: 4, height: 4, backgroundColor: innerCircleBg, transform: [{ rotate: '45deg' }], marginTop: 0 }} />
+              ))}
+            </View>
+          </View>
+        );
+      case 'vault': // Safe
+        return (
+          <View style={{ width: 38, height: 38, borderRadius: 4, backgroundColor: isDark ? '#7f131a' : '#90A4AE', borderWidth: 2, borderColor: isDark ? '#b8212a' : '#CFD8DC', position: 'relative', shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.4, shadowRadius: 2, elevation: 3, justifyContent: 'center', alignItems: 'center' }}>
+            <View style={{ position: 'absolute', left: 4, top: 4, right: 4, bottom: 4, borderLeftWidth: 1, borderTopWidth: 1, borderColor: 'rgba(255,255,255,0.15)', borderRadius: 2 }} />
+            <View style={{ width: 16, height: 16, borderRadius: 8, backgroundColor: '#455A64', borderWidth: 1.5, borderColor: '#CFD8DC', justifyContent: 'center', alignItems: 'center', shadowColor: '#000', shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.5, shadowRadius: 1 }}>
+              <View style={{ width: 4, height: 4, borderRadius: 2, backgroundColor: '#B0BEC5' }} />
+              {[0, 45, 90, 135, 180, 225, 270, 315].map((angle) => (
+                <View key={angle} style={{ position: 'absolute', width: 1.5, height: 1.5, backgroundColor: '#CFD8DC', top: 6, transform: [{ rotate: `${angle}deg` }, { translateY: -5 }] }} />
+              ))}
+            </View>
+            <View style={{ position: 'absolute', bottom: 6, width: 8, height: 2.5, backgroundColor: '#CFD8DC', borderRadius: 1 }} />
+          </View>
+        );
+      case 'loads': // Semi-truck
+        return (
+          <View style={{ width: 42, height: 32, position: 'relative', justifyContent: 'center', alignItems: 'center' }}>
+            {/* Cabin */}
+            <View style={{ position: 'absolute', left: 4, bottom: 6, width: 12, height: 16, backgroundColor: '#D32F2F', borderWidth: 1.5, borderColor: '#B71C1C', borderTopRightRadius: 4, borderBottomRightRadius: 1 }} />
+            {/* Windshield */}
+            <View style={{ position: 'absolute', left: 9, top: 12, width: 5, height: 5, backgroundColor: '#E0F7FA', borderTopRightRadius: 1.5 }} />
+            {/* Trailer */}
+            <View style={{ position: 'absolute', right: 4, bottom: 8, width: 22, height: 18, backgroundColor: '#ECEFF1', borderWidth: 1.5, borderColor: '#B0BEC5', borderRadius: 2 }} />
+            {/* Connector */}
+            <View style={{ position: 'absolute', left: 14, bottom: 7, width: 4, height: 2, backgroundColor: '#37474F' }} />
+            {/* Wheels */}
+            <View style={{ position: 'absolute', left: 6, bottom: 3, width: 6, height: 6, borderRadius: 3, backgroundColor: '#263238', borderWidth: 1, borderColor: '#CFD8DC' }} />
+            <View style={{ position: 'absolute', right: 6, bottom: 5, width: 6, height: 6, borderRadius: 3, backgroundColor: '#263238', borderWidth: 1, borderColor: '#CFD8DC' }} />
+            <View style={{ position: 'absolute', right: 13, bottom: 5, width: 6, height: 6, borderRadius: 3, backgroundColor: '#263238', borderWidth: 1, borderColor: '#CFD8DC' }} />
+          </View>
+        );
+      case 'pnl': // Growth Chart
+        return (
+          <View style={{ width: 36, height: 36, position: 'relative', paddingLeft: 4, justifyContent: 'flex-end', gap: 2 }}>
+            <View style={{ flexDirection: 'row', alignItems: 'flex-end', gap: 3.5, flex: 1, paddingBottom: 2 }}>
+              {/* Bars */}
+              <View style={{ width: 6, height: 12, backgroundColor: '#EF5350', borderRadius: 1 }} />
+              <View style={{ width: 6, height: 20, backgroundColor: '#FFCA28', borderRadius: 1 }} />
+              <View style={{ width: 6, height: 28, backgroundColor: '#66BB6A', borderRadius: 1 }} />
+            </View>
+            {/* Green Upward Arrow */}
+            <Text style={{ position: 'absolute', right: 1, top: 0, fontSize: 13, color: '#66BB6A', fontWeight: '900' }}>↗</Text>
+            {/* Base Axis line */}
+            <View style={{ height: 2, backgroundColor: '#B0BEC5', alignSelf: 'stretch' }} />
+          </View>
+        );
+      default:
+        return null;
+    }
+  };
+
+  return (
+    <Pressable
+      style={({ pressed }) => [
+        {
+          width: '100%',
+          aspectRatio: 0.95,
+          borderRadius: 18,
+          backgroundColor: baseColor,
+          borderWidth: 2.2,
+          borderColor: shadowColor,
+          borderTopColor: highlightColor,
+          borderLeftColor: highlightColor,
+          paddingHorizontal: 4,
+          paddingVertical: 8,
+          alignItems: 'center',
+          justifyContent: 'center',
+          shadowColor: '#000000',
+          shadowOffset: { width: 0, height: 4 },
+          shadowOpacity: isDark ? 0.55 : 0.22,
+          shadowRadius: 5,
+          elevation: 6,
+        },
+        pressed && {
+          transform: [{ translateY: 2 }],
+          shadowOffset: { width: 0, height: 1.5 },
+          shadowOpacity: 0.35,
+          shadowRadius: 2.5,
+        }
+      ]}
+      onPress={onPress}
+      accessibilityRole="button"
+      accessibilityLabel={label}
+    >
+      <View style={{
+        width: '80%',
+        aspectRatio: 1.0,
+        borderRadius: 99,
+        backgroundColor: innerCircleBg,
+        borderWidth: 1.5,
+        borderColor: innerCircleBorder,
+        justifyContent: 'center',
+        alignItems: 'center',
+        shadowColor: '#000000',
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: isDark ? 0.7 : 0.15,
+        shadowRadius: 3,
+        marginBottom: 8,
+      }}>
+        <View style={{ transform: [{ scale: 1.45 }] }}>
+          {renderIcon()}
+        </View>
+      </View>
+      <Text style={{ fontSize: 10, fontWeight: '900', color: textColor, letterSpacing: 0.4, textTransform: 'uppercase', textAlign: 'center', width: '100%' }}>
+        {label}
+      </Text>
+    </Pressable>
+  );
+}

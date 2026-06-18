@@ -105,3 +105,29 @@ The home screen bento stats dashboard has been expanded to display 7 core KPIs f
    }
    ```
 
+---
+
+## Log #5: Document Upload Endpoint Update
+**Date:** 2026-06-18  
+**Feature:** Document Vault File Uploads & Invoicing Integration  
+
+### Frontend Implementation
+The document upload mechanism has transitioned from a JSON form payload to direct file upload handling. The frontend now converts document uploads (including PDF invoices generated using the Invoice Generator tool or captured images) into Base64 data strings for upload.
+
+### Required Backend Changes
+1. **API Endpoint Base URL Change:**
+   - **Old Endpoint:** `POST /api/driver-mobile/documents`
+   - **New Endpoint:** `POST /api/documents`
+
+2. **Payload Schema Update:**
+   The backend must accept the new specification payload format (Base64 file data injection):
+   - **`docType`**: string (e.g., `"Invoice"`, `"BOL"`, `"License"`, etc.)
+   - **`fileName`**: string (e.g., `"Invoice_IV-2948-TX.pdf"`)
+   - **`description`**: string (e.g., `"Invoice: #IV-2948-TX • Broker: CH Robinson • Total: $4,200"`)
+   - **`fileData`**: string (Data URI scheme with MIME type prefix and base64 string, e.g. `"data:application/pdf;base64,JVBERi..."` or `"data:image/jpeg;base64,...`")
+
+3. **Base64 Processing:**
+   - The backend must parse the incoming `fileData` Base64 stream, decode it, and persist it to the secure document vault storage (S3/Cloud Storage).
+   - Ensure the server validates and rejects files exceeding size limit constraints or containing unsupported MIME types.
+
+
