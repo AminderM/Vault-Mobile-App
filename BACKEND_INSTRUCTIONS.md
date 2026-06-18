@@ -78,3 +78,30 @@ All load responses must use exact matching properties and mapped status types to
    - `delivered` → `completed`
    - `invoiced` → `completed`
    - `cancelled` → `cancelled`
+
+---
+
+## Log #4: Home Screen Performance Metrics Summary
+**Date:** 2026-06-16  
+**Feature:** Fleet Optimization & Driver Dashboard Stats  
+
+### Frontend Implementation
+The home screen bento stats dashboard has been expanded to display 7 core KPIs for the fleet driver: Active Loads, Completed Loads, RPM Average, Fuel Consumption, Total Miles, Loaded Miles, and Empty Miles.
+
+### Required Backend Changes
+1. **API Endpoint (`GET /api/driver-mobile/analytics/summary`):**
+   - Provide a new analytics summary endpoint returning aggregate metrics for the logged-in driver.
+   
+2. **Response Payload Format (JSON):**
+   ```json
+   {
+     "activeLoadsCount": 8,
+     "completedLoadsCount": 12,
+     "rpmAverage": 3.22,
+     "fuelConsumptionMpg": 6.2,
+     "totalMiles": 14820,
+     "loadedMiles": 12400,
+     "emptyMiles": 2420
+   }
+   ```
+

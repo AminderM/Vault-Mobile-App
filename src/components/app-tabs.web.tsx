@@ -1679,26 +1679,16 @@ export default function AppTabs() {
         pointerEvents="none"
         style={[
           StyleSheet.absoluteFill,
-          { opacity: themeMode === 'dark' ? 0.50 : 0.30 },
-          (Platform.OS === 'web' ? {
-            backgroundImage: `url("${themeMode === 'dark'
-              ? (typeof require('../../assets/images/honeycomb-dark.png') === 'string' ? require('../../assets/images/honeycomb-dark.png') : (require('../../assets/images/honeycomb-dark.png') as any).uri || (require('../../assets/images/honeycomb-dark.png') as any).default || '')
-              : (typeof require('../../assets/images/honeycomb-light.png') === 'string' ? require('../../assets/images/honeycomb-light.png') : (require('../../assets/images/honeycomb-light.png') as any).uri || (require('../../assets/images/honeycomb-light.png') as any).default || '')}")`,
-            backgroundSize: 'cover',
-            backgroundRepeat: 'no-repeat',
-            backgroundPosition: 'center',
-          } : {}) as any,
+          { opacity: themeMode === 'dark' ? 1.0 : 1.0 },
         ]}
       >
-        {Platform.OS !== 'web' && (
-          <Image
-            source={themeMode === 'dark'
-              ? require('../../assets/images/honeycomb-dark.png')
-              : require('../../assets/images/honeycomb-light.png')}
-            style={StyleSheet.absoluteFill}
-            resizeMode="cover"
-          />
-        )}
+        <Image
+          source={themeMode === 'dark'
+            ? require('../../assets/images/background-dark.jpg')
+            : require('../../assets/images/background-light.jpg')}
+          style={StyleSheet.absoluteFill}
+          resizeMode="cover"
+        />
       </View>
 
       <View style={[styles.content, { backgroundColor: 'transparent' }]}>{renderScreen()}</View>

@@ -57,17 +57,50 @@ export default function HomeScreen({ onNavigateToMarketplace, onNavigate }) {
             </View>
           </StatusBorderCard>
 
-          {/* Active Loads */}
-          <StatusBorderCard borderColor={T.secondary + '8C'} style={styles.statCard}>
-            <Text style={styles.statLabel}>ACTIVE LOADS</Text>
-            <Text style={[styles.statNumber, { color: T.secondary }]}>08</Text>
+          {/* Active Loads & Completed Loads */}
+          <View style={{ flexDirection: 'row', gap: 12, width: '100%' }}>
+            <StatusBorderCard borderColor={T.secondary + '8C'} style={styles.statCard}>
+              <Text style={styles.statLabel}>ACTIVE LOADS</Text>
+              <Text style={[styles.statNumber, { color: T.secondary }]}>08</Text>
+            </StatusBorderCard>
+
+            <StatusBorderCard borderColor={BRAND.profitGreen + '8C'} style={styles.statCard}>
+              <Text style={styles.statLabel}>COMPLETED LOADS</Text>
+              <Text style={[styles.statNumber, { color: BRAND.profitGreen }]}>12</Text>
+            </StatusBorderCard>
+          </View>
+
+          {/* RPM Average & Fuel Consumption */}
+          <View style={{ flexDirection: 'row', gap: 12, width: '100%' }}>
+            <StatusBorderCard borderColor={BRAND.hazardOrange + '8C'} style={styles.statCard}>
+              <Text style={styles.statLabel}>RPM AVG</Text>
+              <Text style={[styles.statNumber, { color: T.text.primary }]}>$3.22</Text>
+            </StatusBorderCard>
+
+            <StatusBorderCard borderColor={T.tertiary + '8C'} style={styles.statCard}>
+              <Text style={styles.statLabel}>FUEL CONSUMPTION</Text>
+              <Text style={[styles.statNumber, { color: T.text.primary }]}>6.2 MPG</Text>
+            </StatusBorderCard>
+          </View>
+
+          {/* Miles Driven (Spans full width) */}
+          <StatusBorderCard borderColor={T.primary + '8C'} style={styles.milesCard}>
+            <Text style={styles.statLabel}>TOTAL MILES DRIVEN</Text>
+            <Text style={[styles.statNumberBig, { color: T.primary }]}>14,820 mi</Text>
           </StatusBorderCard>
 
-          {/* RPM Average */}
-          <StatusBorderCard borderColor={BRAND.hazardOrange + '8C'} style={styles.statCard}>
-            <Text style={styles.statLabel}>RPM AVG</Text>
-            <Text style={[styles.statNumber, { color: T.text.primary }]}>$3.22</Text>
-          </StatusBorderCard>
+          {/* Loaded Miles & Empty Miles Driven */}
+          <View style={{ flexDirection: 'row', gap: 12, width: '100%' }}>
+            <StatusBorderCard borderColor={T.secondary + '8C'} style={styles.statCard}>
+              <Text style={styles.statLabel}>LOADED MILES</Text>
+              <Text style={[styles.statNumber, { color: T.text.primary }]}>12,400</Text>
+            </StatusBorderCard>
+
+            <StatusBorderCard borderColor={BRAND.crimsonRed + '8C'} style={styles.statCard}>
+              <Text style={styles.statLabel}>EMPTY MILES</Text>
+              <Text style={[styles.statNumber, { color: BRAND.crimsonRed }]}>2,420</Text>
+            </StatusBorderCard>
+          </View>
         </View>
 
         {/* ── Quick Actions Grid ── */}
@@ -75,7 +108,7 @@ export default function HomeScreen({ onNavigateToMarketplace, onNavigate }) {
           {QUICK_ACTIONS.map((action) => (
             <Pressable
               key={action.id}
-              style={({ pressed }) => [pressed && styles.pressed, { width: '21.5%' }]}
+              style={({ pressed }) => [pressed && styles.pressed, { width: '22%' }]}
               accessibilityRole="button"
               accessibilityLabel={action.label}
               onPress={() => {
@@ -87,12 +120,12 @@ export default function HomeScreen({ onNavigateToMarketplace, onNavigate }) {
                 }
               }}
             >
-              <GlassCard style={styles.quickActionTile}>
+              <View style={styles.quickActionTile}>
                 <View style={[styles.quickActionIcon, { backgroundColor: action.color + '8C' }]}>
                   <Text style={styles.quickActionEmoji}>{action.icon}</Text>
                 </View>
                 <Text style={styles.quickActionLabel}>{action.label}</Text>
-              </GlassCard>
+              </View>
             </Pressable>
           ))}
         </View>
@@ -117,15 +150,18 @@ export default function HomeScreen({ onNavigateToMarketplace, onNavigate }) {
               <Text style={styles.inTransitText}>IN TRANSIT</Text>
             </View>
 
-            {/* Load ID row */}
-            <View style={styles.loadIdRow}>
-              <View style={styles.truckIconBox}>
-                <Text style={{ fontSize: 22 }}>🚛</Text>
+            {/* Load ID row with navigation arrow */}
+            <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
+              <View style={styles.loadIdRow}>
+                <View style={styles.truckIconBox}>
+                  <Text style={{ fontSize: 22 }}>🚛</Text>
+                </View>
+                <View>
+                  <Text style={styles.loadIdText}>L-49208-TX</Text>
+                  <Text style={styles.loadSubtext}>Reefer | 42,000 lbs</Text>
+                </View>
               </View>
-              <View>
-                <Text style={styles.loadIdText}>L-49208-TX</Text>
-                <Text style={styles.loadSubtext}>Reefer | 42,000 lbs</Text>
-              </View>
+              <Text style={{ fontSize: 22, color: T.text.secondary, paddingRight: 4 }}>➔</Text>
             </View>
 
             {/* Route visualization */}
@@ -176,13 +212,7 @@ export default function HomeScreen({ onNavigateToMarketplace, onNavigate }) {
                 styles.viewRouteBtn,
                 pressed && styles.pressed
               ]}
-              onPress={() => {
-                if (Platform.OS === 'web') {
-                  alert("Route Details:\nHouston, TX → Chicago, IL\nDistance: 1,082 mi\nEst. Time: 18.5 hrs");
-                } else {
-                  Alert.alert("Route Details", "Houston, TX → Chicago, IL\nDistance: 1,082 mi\nEst. Time: 18.5 hrs");
-                }
-              }}
+              onPress={onNavigateToMarketplace}
               accessibilityRole="button"
               accessibilityLabel="View Route"
             >
@@ -237,8 +267,15 @@ const useStyles = createThemedStyleSheet((T) => {
       gap: 6,
       backgroundColor: cardBg,
     },
+    milesCard: {
+      width: '100%',
+      padding: SPACING.stackMd,
+      gap: 6,
+      backgroundColor: cardBg,
+    },
     statLabel: { ...TYPOGRAPHY.labelData, color: T.text.secondary },
     statNumber: { ...TYPOGRAPHY.displayMetricsMobile, fontSize: 28, fontWeight: '700' },
+    statNumberBig: { ...TYPOGRAPHY.displayMetricsMobile, fontSize: 34, fontWeight: '800' },
 
     // Quick actions
     quickActionsGrid: {
@@ -249,12 +286,24 @@ const useStyles = createThemedStyleSheet((T) => {
       gap: SPACING.gutter,
     },
     quickActionTile: {
-      borderColor: BRAND.crimsonRed + '8C',
-      borderWidth: 1.5,
+      borderWidth: 1,
+      borderTopWidth: 1.5,
+      borderBottomWidth: 4.5,
+      borderColor: BRAND.crimsonRed + '55',
+      borderTopColor: BRAND.crimsonRedLight + 'AA',
+      borderBottomColor: BRAND.crimsonRed,
+      borderRadius: 12,
       padding: SPACING.stackMd,
       alignItems: 'center',
       gap: 8,
-      backgroundColor: cardBg,
+      backgroundColor: isLight ? '#ffffff' : '#272323',
+      
+      // Embossed shadow
+      shadowColor: '#000000',
+      shadowOffset: { width: 0, height: 4 },
+      shadowOpacity: 0.35,
+      shadowRadius: 5,
+      elevation: 6,
     },
     quickActionIcon: {
       width: 44,
@@ -264,7 +313,7 @@ const useStyles = createThemedStyleSheet((T) => {
       justifyContent: 'center',
     },
     quickActionEmoji: { fontSize: 22 },
-    quickActionLabel: { ...TYPOGRAPHY.labelData, color: T.text.primary, fontSize: 9, textAlign: 'center' },
+    quickActionLabel: { ...TYPOGRAPHY.labelData, color: T.text.primary, fontSize: 8.5, fontWeight: '700', textAlign: 'center' },
 
     // Section header
     sectionHeader: {
