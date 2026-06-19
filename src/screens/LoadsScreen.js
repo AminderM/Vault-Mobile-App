@@ -12,7 +12,8 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { getLoads, updateLoad } from '../lib/api';
+import { getLoads, updateLoad, getAuthToken, getAuthUser } from '../lib/api';
+import { getAvailableLoads, acceptLoad, getMyLoads, updateLoadStatus } from '../lib/tms';
 import { BRAND, TYPOGRAPHY, SPACING, StatusBorderCard, useTheme, createThemedStyleSheet } from '../lib/theme';
 
 const getStatusStyles = (T) => ({
@@ -274,14 +275,20 @@ export default function LoadsScreen({ onBackToHome = () => {}, onOpenProfile = (
   const loadLoads = async () => {
     try {
       setLoading(true);
-      // Fetch all loads to perform local status-based filtering for granular statuses
-      const data = await getLoads({});
+      const token = await getAuthToken();
+      let fetchedLoads = [];
+      
+      if (activeTab === 'marketplace' || activeTab === 'available') {
+        fetchedLoads = await getAvailableLoads(token);
+      } else {
+        fetchedLoads = await getMyLoads(token);
+      }
       
       let allLoads = [];
-      if (data.loads && data.loads.length > 0) {
-        allLoads = data.loads.map((l, i) => ({
+      if (fetchedLoads && fetchedLoads.length > 0) {
+        allLoads = fetchedLoads.map((l, i) => ({
           ...l,
-          loadId: l.id,
+          loadId: l.id || l.loadId,
           rpm: l.rateAmount && l.distance
             ? `$${(l.rateAmount / parseFloat(l.distance)).toFixed(2)}`
             : '$3.22',
@@ -321,7 +328,8 @@ export default function LoadsScreen({ onBackToHome = () => {}, onOpenProfile = (
         );
       }
       setLoads(filtered);
-    } catch {
+    } catch (err) {
+      console.warn("Error loading loads from API, falling back to DEMO_LOADS:", err);
       // Fallback local filtering on DEMO_LOADS
       const allDemoLoads = [...DEMO_LOADS];
       for (let i = 0; i < allDemoLoads.length; i++) {
@@ -353,6 +361,68 @@ export default function LoadsScreen({ onBackToHome = () => {}, onOpenProfile = (
   useEffect(() => {
     loadLoads();
   }, [activeTab]);
+
+  useEffect(() => {
+    let ws;
+    const connectWebSocket = async () => {
+      try {
+        const token = await getAuthToken();
+        const wsBaseUrl = process.env.EXPO_PUBLIC_WS_URL || 'wss://api.staging.integratedtech.ca/loads/stream';
+        const wsUrl = token
+          ? `${wsBaseUrl}?token=${encodeURIComponent(token)}`
+          : wsBaseUrl;
+        
+        ws = new WebSocket(wsUrl);
+
+        ws.onopen = () => {
+          console.log('WebSocket connected to loads stream');
+        };
+
+        ws.onmessage = (event) => {
+          try {
+            const data = JSON.parse(event.data);
+            if (data.type === 'load_update' && data.load) {
+              setLoads(prevLoads => {
+                const index = prevLoads.findIndex(l => l.id === data.load.id);
+                if (index !== -1) {
+                  const updated = [...prevLoads];
+                  updated[index] = {
+                    ...updated[index],
+                    ...data.load,
+                    loadId: data.load.id,
+                    status: data.load.status || updated[index].status
+                  };
+                  return updated;
+                }
+                return prevLoads;
+              });
+            }
+          } catch (err) {
+            console.error('Error parsing WebSocket message:', err);
+          }
+        };
+
+        ws.onerror = (error) => {
+          console.warn('WebSocket error:', error);
+        };
+
+        ws.onclose = () => {
+          console.log('WebSocket disconnected, reconnecting in 5s...');
+          setTimeout(connectWebSocket, 5000);
+        };
+      } catch (err) {
+        console.error('Failed to initialize WebSocket:', err);
+      }
+    };
+
+    connectWebSocket();
+
+    return () => {
+      if (ws) {
+        ws.close();
+      }
+    };
+  }, []);
 
   const openManageModal = async (load) => {
     setSelectedLoadForManage(load);
@@ -416,15 +486,10 @@ export default function LoadsScreen({ onBackToHome = () => {}, onOpenProfile = (
       // Save gate times locally
       await AsyncStorage.setItem(`load_gate_times_${selectedLoadForManage.id}`, JSON.stringify(gateTimes));
       
-      // Construct a log string to append to notes or send to server
-      const timesLog = `[Gate Log] Pickup In: ${gateTimes.gateInPickup || '—'} | Pickup Out: ${gateTimes.gateOutPickup || '—'} | Delivery In: ${gateTimes.gateInDelivery || '—'} | Delivery Out: ${gateTimes.gateOutDelivery || '—'}`;
-      
       try {
-        // Call PATCH updateLoad endpoint
-        await updateLoad(selectedLoadForManage.id, {
-          status: manageStatus,
-          notes: (selectedLoadForManage.notes ? selectedLoadForManage.notes + '\n' : '') + timesLog,
-        });
+        const token = await getAuthToken();
+        // Call PATCH status update endpoint from tms.js
+        await updateLoadStatus(selectedLoadForManage.id, manageStatus, token);
       } catch (apiErr) {
         console.warn("API load status update failed, saving status locally as fallback:", apiErr);
         await AsyncStorage.setItem(`load_status_override_${selectedLoadForManage.id}`, manageStatus);
@@ -484,7 +549,10 @@ export default function LoadsScreen({ onBackToHome = () => {}, onOpenProfile = (
         style: 'default', 
         onPress: async () => {
           try {
-            await updateLoad(load.id, { status: 'Accepted' });
+            const token = await getAuthToken();
+            const user = await getAuthUser();
+            const driverId = user?.id || user?.driverId || 'driver_123';
+            await acceptLoad(load.id, driverId, token);
             Alert.alert('Success', 'Load accepted successfully!', [
               {
                 text: 'OK',

@@ -130,4 +130,25 @@ The document upload mechanism has transitioned from a JSON form payload to direc
    - The backend must parse the incoming `fileData` Base64 stream, decode it, and persist it to the secure document vault storage (S3/Cloud Storage).
    - Ensure the server validates and rejects files exceeding size limit constraints or containing unsupported MIME types.
 
+---
+
+## Log #6: Driver Onboarding Invite Redirection to Vault App
+**Date:** 2026-06-19  
+**Feature:** Redirection of Driver Account Setups from Driver-PWA to Vault App
+
+### Frontend Implementation
+The new Vault Mobile App has configured native deep links (Universal Links on iOS and App Links on Android) to capture `/invite/{token}` routes. A custom onboarding registration screen `OnboardingInviteScreen` validates tokens and activates driver accounts directly inside the mobile/web Vault app container.
+
+### Required Backend Changes
+1. **Redirect URL Base Environment Variable (`DRIVER_PWA_URL`):**
+   - The environment variable name remains `DRIVER_PWA_URL` to prevent breaking legacy API paths or third-party hooks.
+   - **Staging value:** Update `DRIVER_PWA_URL` in Staging to `https://vault.staging.integratedtech.ca`.
+   - **Production value:** Update `DRIVER_PWA_URL` in Production to `https://vault.integratedtech.ca`.
+   - When a dispatcher generates a driver account or manually requests an invite link, the backend must use this updated variable to format the SMS/email onboarding invitation links (e.g. `https://vault.staging.integratedtech.ca/invite/{token}`).
+
+2. **GitHub CI/CD Deployment Workflows:**
+   - Default fallbacks for `DRIVER_PWA_URL` have been updated inside `staging-ci.yml` and `production-ci.yml` to use `https://vault.staging.integratedtech.ca` and `https://vault.integratedtech.ca` respectively.
+   - If overriding values in GitHub Actions secrets, fleet admins/developers should ensure `DRIVER_PWA_URL_STAGING` and `DRIVER_PWA_URL` secrets point to the new Vault domains.
+
+
 

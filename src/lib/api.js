@@ -1,8 +1,15 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
+let SecureStore;
+try {
+  SecureStore = require('expo-secure-store');
+} catch {
+  SecureStore = null;
+}
+
 // ============== CONFIGURATION ==============
 
-const API_BASE = 'https://api.integratedtech.ca';
+const API_BASE = process.env.EXPO_PUBLIC_API_URL || 'https://api.staging.integratedtech.ca';
 const AUTH_TOKEN_KEY = 'auth_token';
 const AUTH_USER_KEY = 'auth_user';
 const LOCAL_DOCS_KEY = 'vault_local_documents';
@@ -10,6 +17,12 @@ const LOCAL_DOCS_KEY = 'vault_local_documents';
 // ============== AUTH TOKEN HELPERS ==============
 
 export async function getAuthToken() {
+  try {
+    if (SecureStore && typeof SecureStore.getItemAsync === 'function') {
+      const secureToken = await SecureStore.getItemAsync(AUTH_TOKEN_KEY);
+      if (secureToken) return secureToken;
+    }
+  } catch {}
   try {
     return await AsyncStorage.getItem(AUTH_TOKEN_KEY);
   } catch {
@@ -66,12 +79,31 @@ export async function login(email, password, api = API_BASE) {
   const data = await res.json();
   const token = data.token || data.access_token;
   if (token) {
+    try {
+      if (SecureStore && typeof SecureStore.setItemAsync === 'function') {
+        await SecureStore.setItemAsync(AUTH_TOKEN_KEY, token);
+      }
+    } catch {}
     await AsyncStorage.setItem(AUTH_TOKEN_KEY, token);
   }
   if (data.user) {
     await AsyncStorage.setItem(AUTH_USER_KEY, JSON.stringify(data.user));
   }
   return data;
+}
+
+export async function validateInvite(token, api = API_BASE) {
+  const res = await fetch(`${api}/api/driver-mobile/signup/validate-invite?token=${token}`, {
+    method: 'GET',
+    headers: { 'Content-Type': 'application/json' },
+  });
+
+  if (!res.ok) {
+    const data = await res.json().catch(() => ({}));
+    throw new Error(data.detail || 'This invite link is invalid or has expired.');
+  }
+
+  return res.json();
 }
 
 export async function signup(token, phone, password, api = API_BASE) {
@@ -112,6 +144,11 @@ export async function signupOpen(payload, api = API_BASE) {
   const data = await res.json();
   const authToken = data.token || data.access_token;
   if (authToken) {
+    try {
+      if (SecureStore && typeof SecureStore.setItemAsync === 'function') {
+        await SecureStore.setItemAsync(AUTH_TOKEN_KEY, authToken);
+      }
+    } catch {}
     await AsyncStorage.setItem(AUTH_TOKEN_KEY, authToken);
   }
   if (data.user) {
@@ -121,6 +158,11 @@ export async function signupOpen(payload, api = API_BASE) {
 }
 
 export async function logout() {
+  try {
+    if (SecureStore && typeof SecureStore.deleteItemAsync === 'function') {
+      await SecureStore.deleteItemAsync(AUTH_TOKEN_KEY);
+    }
+  } catch {}
   await AsyncStorage.multiRemove([AUTH_TOKEN_KEY, AUTH_USER_KEY]);
 }
 

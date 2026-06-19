@@ -14,12 +14,15 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { BRAND, TYPOGRAPHY, SPACING, createThemedStyleSheet, useTheme } from '../lib/theme';
 import { login } from '../lib/api';
+import { sendOTP, validatePhoneNumber, formatPhoneNumber } from '../lib/twilio';
 
-export default function LoginScreen({ onLoginSuccess, onSwitchToSignup, onBack }) {
+export default function LoginScreen({ onLoginSuccess, onSwitchToSignup, onBack, onPhoneCodeSent }) {
   const { t: T } = useTheme();
   const styles = useStyles();
+  const [authMethod, setAuthMethod] = useState('email'); // 'email' or 'phone'
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [phone, setPhone] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
   const [showPassword, setShowPassword] = useState(false);
@@ -44,6 +47,28 @@ export default function LoginScreen({ onLoginSuccess, onSwitchToSignup, onBack }
       }
     } catch (err) {
       setError(err.message || 'Login failed. Please try again.');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handlePhoneSubmit = async () => {
+    if (!validatePhoneNumber(phone)) {
+      setError('Please enter a valid phone number (10-15 digits)');
+      return;
+    }
+
+    setError('');
+    setIsLoading(true);
+
+    try {
+      const formatted = formatPhoneNumber(phone);
+      const result = await sendOTP(formatted);
+      if (onPhoneCodeSent) {
+        onPhoneCodeSent(formatted, result.sessionId);
+      }
+    } catch (err) {
+      setError(err.message || 'Failed to send verification code.');
     } finally {
       setIsLoading(false);
     }
@@ -92,6 +117,22 @@ export default function LoginScreen({ onLoginSuccess, onSwitchToSignup, onBack }
 
           {/* Login Form Card */}
           <View style={styles.formCard}>
+            {/* Tabs for Email vs Phone Auth */}
+            <View style={{ flexDirection: 'row', borderBottomWidth: 1.5, borderColor: T.border.variant, marginBottom: 16 }}>
+              <Pressable 
+                style={{ flex: 1, paddingVertical: 10, alignItems: 'center', borderBottomWidth: authMethod === 'email' ? 2.5 : 0, borderColor: BRAND.crimsonRed }}
+                onPress={() => { setAuthMethod('email'); setError(''); }}
+              >
+                <Text style={{ fontSize: 12, fontWeight: '800', color: authMethod === 'email' ? T.text.primary : T.text.muted, letterSpacing: 0.8 }}>EMAIL SIGN IN</Text>
+              </Pressable>
+              <Pressable 
+                style={{ flex: 1, paddingVertical: 10, alignItems: 'center', borderBottomWidth: authMethod === 'phone' ? 2.5 : 0, borderColor: BRAND.crimsonRed }}
+                onPress={() => { setAuthMethod('phone'); setError(''); }}
+              >
+                <Text style={{ fontSize: 12, fontWeight: '800', color: authMethod === 'phone' ? T.text.primary : T.text.muted, letterSpacing: 0.8 }}>PHONE SIGN IN</Text>
+              </Pressable>
+            </View>
+
             {/* Error message */}
             {error ? (
               <View style={styles.errorBox}>
@@ -99,78 +140,121 @@ export default function LoginScreen({ onLoginSuccess, onSwitchToSignup, onBack }
               </View>
             ) : null}
 
-            {/* Email Field */}
-            <View style={styles.inputGroup}>
-              <Text style={styles.inputLabel}>EMAIL ADDRESS</Text>
-              <TextInput
-                style={styles.textInput}
-                value={email}
-                onChangeText={(val) => {
-                  setEmail(val);
-                  setError('');
-                }}
-                placeholder="driver@example.com"
-                placeholderTextColor={T.text.muted}
-                keyboardType="email-address"
-                autoCapitalize="none"
-                autoComplete="email"
-                autoCorrect={false}
-                editable={!isLoading}
-              />
-            </View>
+            {authMethod === 'email' ? (
+              <>
+                {/* Email Field */}
+                <View style={styles.inputGroup}>
+                  <Text style={styles.inputLabel}>EMAIL ADDRESS</Text>
+                  <TextInput
+                    style={styles.textInput}
+                    value={email}
+                    onChangeText={(val) => {
+                      setEmail(val);
+                      setError('');
+                    }}
+                    placeholder="driver@example.com"
+                    placeholderTextColor={T.text.muted}
+                    keyboardType="email-address"
+                    autoCapitalize="none"
+                    autoComplete="email"
+                    autoCorrect={false}
+                    editable={!isLoading}
+                  />
+                </View>
 
-            {/* Password Field */}
-            <View style={styles.inputGroup}>
-              <Text style={styles.inputLabel}>PASSWORD</Text>
-              <View style={styles.passwordContainer}>
-                <TextInput
-                  style={styles.passwordInput}
-                  value={password}
-                  onChangeText={(val) => {
-                    setPassword(val);
-                    setError('');
-                  }}
-                  placeholder="Enter password"
-                  placeholderTextColor={T.text.muted}
-                  secureTextEntry={!showPassword}
-                  autoCapitalize="none"
-                  autoComplete="password"
-                  editable={!isLoading}
-                />
-                <Pressable
-                  style={styles.eyeBtn}
-                  onPress={() => setShowPassword(!showPassword)}
-                  accessibilityRole="button"
-                  accessibilityLabel={showPassword ? 'Hide password' : 'Show password'}
-                >
-                  <Text style={styles.eyeIcon}>{showPassword ? '🙈' : '👁'}</Text>
+                {/* Password Field */}
+                <View style={styles.inputGroup}>
+                  <Text style={styles.inputLabel}>PASSWORD</Text>
+                  <View style={styles.passwordContainer}>
+                    <TextInput
+                      style={styles.passwordInput}
+                      value={password}
+                      onChangeText={(val) => {
+                        setPassword(val);
+                        setError('');
+                      }}
+                      placeholder="Enter password"
+                      placeholderTextColor={T.text.muted}
+                      secureTextEntry={!showPassword}
+                      autoCapitalize="none"
+                      autoComplete="password"
+                      editable={!isLoading}
+                    />
+                    <Pressable
+                      style={styles.eyeBtn}
+                      onPress={() => setShowPassword(!showPassword)}
+                      accessibilityRole="button"
+                      accessibilityLabel={showPassword ? 'Hide password' : 'Show password'}
+                    >
+                      <Text style={styles.eyeIcon}>{showPassword ? '🙈' : '👁'}</Text>
+                    </Pressable>
+                  </View>
+                </View>
+
+                {/* Forgot Password */}
+                <Pressable style={styles.forgotBtn}>
+                  <Text style={styles.forgotText}>Forgot Password?</Text>
                 </Pressable>
-              </View>
-            </View>
 
-            {/* Forgot Password */}
-            <Pressable style={styles.forgotBtn}>
-              <Text style={styles.forgotText}>Forgot Password?</Text>
-            </Pressable>
+                {/* Login Button */}
+                <Pressable
+                  style={({ pressed }) => [
+                    styles.loginBtn,
+                    pressed && styles.pressed,
+                    isLoading && styles.loginBtnDisabled,
+                  ]}
+                  onPress={handleLogin}
+                  disabled={isLoading}
+                  accessibilityRole="button"
+                  accessibilityLabel="Sign in"
+                >
+                  {isLoading ? (
+                    <ActivityIndicator size="small" color="#ffffff" />
+                  ) : (
+                    <Text style={styles.loginBtnText}>SIGN IN ➔</Text>
+                  )}
+                </Pressable>
+              </>
+            ) : (
+              <>
+                {/* Phone Field */}
+                <View style={styles.inputGroup}>
+                  <Text style={styles.inputLabel}>PHONE NUMBER</Text>
+                  <TextInput
+                    style={styles.textInput}
+                    value={phone}
+                    onChangeText={(val) => {
+                      setPhone(val);
+                      setError('');
+                    }}
+                    placeholder="(555) 123-4567"
+                    placeholderTextColor={T.text.muted}
+                    keyboardType="phone-pad"
+                    autoComplete="tel"
+                    editable={!isLoading}
+                  />
+                </View>
 
-            {/* Login Button */}
-            <Pressable
-              style={({ pressed }) => [
-                styles.loginBtn,
-                pressed && styles.pressed,
-                isLoading && styles.loginBtnDisabled,
-              ]}
-              onPress={handleLogin}
-              disabled={isLoading}
-              accessibilityRole="button"
-              accessibilityLabel="Sign in"
-            >
-              {isLoading ? (
-                <ActivityIndicator size="small" color="#ffffff" />
-              ) : (
-                <Text style={styles.loginBtnText}>SIGN IN ➔</Text>
-              )}
-            </Pressable>
+                {/* Send OTP Button */}
+                <Pressable
+                  style={({ pressed }) => [
+                    styles.loginBtn,
+                    pressed && styles.pressed,
+                    isLoading && styles.loginBtnDisabled,
+                  ]}
+                  onPress={handlePhoneSubmit}
+                  disabled={isLoading}
+                  accessibilityRole="button"
+                  accessibilityLabel="Send verification code"
+                >
+                  {isLoading ? (
+                    <ActivityIndicator size="small" color="#ffffff" />
+                  ) : (
+                    <Text style={styles.loginBtnText}>SEND OTP CODE ➔</Text>
+                  )}
+                </Pressable>
+              </>
+            )}
           </View>
 
           {/* Divider */}
