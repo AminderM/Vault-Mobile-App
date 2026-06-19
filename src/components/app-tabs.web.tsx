@@ -22,6 +22,9 @@ import LoadsScreen from '@/screens/LoadsScreen';
 import SmartScanScreen from '@/screens/SmartScanScreen';
 import SplashScreen from '@/screens/SplashScreen';
 import LoginScreen from '@/screens/LoginScreen';
+import PhoneVerificationScreen from '@/screens/PhoneVerificationScreen';
+import OnboardingInviteScreen from '@/screens/OnboardingInviteScreen';
+import * as Linking from 'expo-linking';
 import { BRAND, useTheme, toggleTheme, StatusBorderCard } from '@/lib/theme';
 import { saveDocument, logout, isAuthenticated, getAuthUser, getMe } from '../lib/api';
 
@@ -873,10 +876,36 @@ const generateCarrierProfilePDF = (profile: {
   }
 };
 
+// Helper to parse invite token from incoming deep link or browser URL
+function parseInviteToken(url: string | null): string | null {
+  if (!url) return null;
+  try {
+    // Match /invite/{token} path parameter
+    const pathMatch = url.match(/\/invite\/([a-zA-Z0-9_-]+)/);
+    if (pathMatch && pathMatch[1] && pathMatch[1] !== 'setup') {
+      return pathMatch[1];
+    }
+    // Match search query parameter (e.g. ?token=...)
+    const urlObj = new URL(url);
+    const token = urlObj.searchParams.get('token');
+    if (token) return token;
+  } catch (e) {
+    // Fallback regex match for query parameter if URL constructor fails (e.g. custom schemes)
+    const queryMatch = url.match(/[?&]token=([a-zA-Z0-9_-]+)/);
+    if (queryMatch && queryMatch[1]) {
+      return queryMatch[1];
+    }
+  }
+  return null;
+}
+
 export default function AppTabs() {
   const insets = useSafeAreaInsets();
-  // Auth flow state: 'splash' → 'login' → 'app'
-  const [appState, setAppState] = useState<'splash' | 'login' | 'app'>('splash');
+  // Auth flow state: 'splash' → 'login' → 'otp' → 'app' | 'invite'
+  const [appState, setAppState] = useState<'splash' | 'login' | 'otp' | 'app' | 'invite'>('splash');
+  const [inviteToken, setInviteToken] = useState<string | null>(null);
+  const [verificationPhone, setVerificationPhone] = useState('');
+  const [verificationSessionId, setVerificationSessionId] = useState('');
   const [authUser, setAuthUser] = useState<any>(null);
   const [activeTab, setActiveTab] = useState<TabName>('loads');
   const [activeToolView, setActiveToolView] = useState<'hub' | 'calculator' | 'invoices' | 'loads'>('hub');
@@ -901,6 +930,45 @@ export default function AppTabs() {
     nsc: false,
     ifta: true,
   });
+
+  // Handle incoming deep links (onboard via invite code)
+  React.useEffect(() => {
+    const handleUrl = (url: string | null) => {
+      if (!url) return;
+      console.log('Intercepted URL:', url);
+      const token = parseInviteToken(url);
+      if (token) {
+        setInviteToken(token);
+        setAppState('invite');
+        
+        // Clean URL parameter on web so refresh doesn't trigger signup flow again
+        if (Platform.OS === 'web' && window.history && window.history.replaceState) {
+          window.history.replaceState({}, document.title, '/');
+        }
+      }
+    };
+
+    // 1. Check if app was launched with a deep link
+    Linking.getInitialURL().then((url) => {
+      if (url) handleUrl(url);
+    }).catch(err => {
+      console.warn('Failed to get initial URL', err);
+    });
+
+    // 2. Listen for deep link events while the app is running
+    const subscription = Linking.addEventListener('url', (event) => {
+      handleUrl(event.url);
+    });
+
+    // 3. Web-specific fallback (in case Linking doesn't capture initial window URL on start)
+    if (Platform.OS === 'web' && typeof window !== 'undefined' && window.location) {
+      handleUrl(window.location.href);
+    }
+
+    return () => {
+      subscription.remove();
+    };
+  }, []);
 
   React.useEffect(() => {
     const checkAuth = async () => {
@@ -1009,6 +1077,11 @@ export default function AppTabs() {
             }
             setAppState('app');
           }}
+          onPhoneCodeSent={(phone: string, sessionId: string) => {
+            setVerificationPhone(phone);
+            setVerificationSessionId(sessionId);
+            setAppState('otp');
+          }}
           onSwitchToSignup={() => {
             // For now, show alert — signup form is Phase 2
             if (Platform.OS === 'web') {
@@ -1016,6 +1089,58 @@ export default function AppTabs() {
             } else {
               Alert.alert('Sign Up', 'Sign up is currently available by invite only. Contact your fleet administrator.');
             }
+          }}
+          onBack={() => setAppState('splash')}
+        />
+      );
+    }
+
+    if (appState === 'otp') {
+      return (
+        <PhoneVerificationScreen
+          sessionId={verificationSessionId}
+          phoneNumber={verificationPhone}
+          onVerificationSuccess={(result: any) => {
+            setAuthUser(result?.driver || null);
+            // Populate profile from server driver data
+            if (result?.driver) {
+              const u = result.driver;
+              if (u.firstName && u.lastName) {
+                const fullName = `${u.firstName} ${u.lastName}`;
+                setProfileName(fullName);
+                AsyncStorage.setItem('profile_name', fullName).catch(() => {});
+              }
+              if (u.companyName) {
+                setProfileCompany(u.companyName);
+                AsyncStorage.setItem('profile_company', u.companyName).catch(() => {});
+              }
+            }
+            setAppState('app');
+          }}
+          onBack={() => setAppState('login')}
+        />
+      );
+    }
+
+    if (appState === 'invite') {
+      return (
+        <OnboardingInviteScreen
+          token={inviteToken}
+          onSignupSuccess={async (result: any) => {
+            setAuthUser(result?.user || null);
+            // Populate profile from server user data
+            if (result?.user) {
+              const u = result.user;
+              if (u.full_name) {
+                setProfileName(u.full_name);
+                await AsyncStorage.setItem('profile_name', u.full_name).catch(() => {});
+              }
+              if (u.company_name) {
+                setProfileCompany(u.company_name);
+                await AsyncStorage.setItem('profile_company', u.company_name).catch(() => {});
+              }
+            }
+            setAppState('app');
           }}
           onBack={() => setAppState('splash')}
         />
