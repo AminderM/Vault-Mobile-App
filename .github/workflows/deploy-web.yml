@@ -5,6 +5,9 @@ on:
     branches: [main, develop]
   workflow_dispatch:
 
+env:
+  NODE_VERSION: '20.x'
+
 jobs:
   deploy:
     name: Build & Deploy Web App
@@ -17,7 +20,7 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '18'
+          node-version: ${{ env.NODE_VERSION }}
           cache: 'npm'
 
       - name: Install dependencies
@@ -29,21 +32,25 @@ jobs:
 
       - name: Build Web App (Staging)
         if: github.ref == 'refs/heads/develop'
-        run: |
-          export EXPO_ROUTER_DISABLE_RN_NAVIGATION_CHECK=1
-          npm run build:web
+        run: npx expo export --platform web
+        timeout-minutes: 10
         env:
+          CI: false
+          EXPO_ROUTER_DISABLE_RN_NAVIGATION_CHECK: '1'
           EXPO_PUBLIC_API_URL: https://api.staging.integratedtech.ca
           EXPO_PUBLIC_WS_URL: wss://api.staging.integratedtech.ca/loads/stream
+          NODE_OPTIONS: --max_old_space_size=4096
 
       - name: Build Web App (Production)
         if: github.ref == 'refs/heads/main'
-        run: |
-          export EXPO_ROUTER_DISABLE_RN_NAVIGATION_CHECK=1
-          npm run build:web
+        run: npx expo export --platform web
+        timeout-minutes: 10
         env:
+          CI: false
+          EXPO_ROUTER_DISABLE_RN_NAVIGATION_CHECK: '1'
           EXPO_PUBLIC_API_URL: https://api.integratedtech.ca
           EXPO_PUBLIC_WS_URL: wss://api.integratedtech.ca/loads/stream
+          NODE_OPTIONS: --max_old_space_size=4096
 
       - name: Verify build output
         run: |
@@ -53,6 +60,8 @@ jobs:
             exit 1
           fi
           echo "✅ Build verified"
+          echo "   Size:  $(du -sh dist/ | cut -f1)"
+          echo "   Files: $(find dist/ -type f | wc -l)"
 
       - name: Create deployment archive
         run: |
@@ -94,7 +103,7 @@ jobs:
             sudo mkdir -p /var/www/vault-app/dist
             sudo rm -rf /var/www/vault-app/dist/*
             sudo tar -xzf /tmp/dist.tar.gz -C /var/www/vault-app/dist
-            sudo chown -R ${{ secrets.EC2_USER || 'ubuntu' }}:${{ secrets.EC2_USER || 'ubuntu' }} /var/www/vault-app
+            sudo chown -R ubuntu:ubuntu /var/www/vault-app
             sudo chmod -R 755 /var/www/vault-app
             rm -f /tmp/dist.tar.gz
             echo "✅ Staging deployment complete!"
@@ -113,7 +122,7 @@ jobs:
             sudo mkdir -p /var/www/vault-app-prod/dist
             sudo rm -rf /var/www/vault-app-prod/dist/*
             sudo tar -xzf /tmp/dist.tar.gz -C /var/www/vault-app-prod/dist
-            sudo chown -R ${{ secrets.EC2_USER || 'ubuntu' }}:${{ secrets.EC2_USER || 'ubuntu' }} /var/www/vault-app-prod
+            sudo chown -R ubuntu:ubuntu /var/www/vault-app-prod
             sudo chmod -R 755 /var/www/vault-app-prod
             rm -f /tmp/dist.tar.gz
             echo "✅ Production deployment complete!"
