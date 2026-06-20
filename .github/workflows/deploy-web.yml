@@ -1,0 +1,119 @@
+name: Deploy Web
+
+on:
+  push:
+    branches: [main, develop]
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    name: Build & Deploy Web App
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: |
+          npm config set fetch-retries 5
+          npm config set fetch-retry-mintimeout 15000
+          npm config set fetch-retry-maxtimeout 120000
+          npm install --legacy-peer-deps
+
+      - name: Build Web App (Staging)
+        if: github.ref == 'refs/heads/develop'
+        run: |
+          export EXPO_ROUTER_DISABLE_RN_NAVIGATION_CHECK=1
+          npm run build:web
+        env:
+          EXPO_PUBLIC_API_URL: https://api.staging.integratedtech.ca
+          EXPO_PUBLIC_WS_URL: wss://api.staging.integratedtech.ca/loads/stream
+
+      - name: Build Web App (Production)
+        if: github.ref == 'refs/heads/main'
+        run: |
+          export EXPO_ROUTER_DISABLE_RN_NAVIGATION_CHECK=1
+          npm run build:web
+        env:
+          EXPO_PUBLIC_API_URL: https://api.integratedtech.ca
+          EXPO_PUBLIC_WS_URL: wss://api.integratedtech.ca/loads/stream
+
+      - name: Verify build output
+        run: |
+          if [ ! -f "dist/index.html" ]; then
+            echo "❌ Build failed — index.html not found in dist/"
+            ls -la dist/ 2>/dev/null || echo "dist/ does not exist"
+            exit 1
+          fi
+          echo "✅ Build verified"
+
+      - name: Create deployment archive
+        run: |
+          tar -czf dist.tar.gz -C dist .
+
+      - name: Copy bundle to EC2 (Staging)
+        if: github.ref == 'refs/heads/develop'
+        uses: appleboy/scp-action@v1.0.0
+        with:
+          host: ${{ secrets.EC2_HOST }}
+          username: ${{ secrets.EC2_USER || 'ubuntu' }}
+          key: ${{ secrets.EC2_SSH_KEY }}
+          port: ${{ secrets.EC2_PORT || 22 }}
+          source: "dist.tar.gz"
+          target: "/tmp/"
+
+      - name: Copy bundle to EC2 (Production)
+        if: github.ref == 'refs/heads/main'
+        uses: appleboy/scp-action@v1.0.0
+        with:
+          host: ${{ secrets.EC2_HOST }}
+          username: ${{ secrets.EC2_USER || 'ubuntu' }}
+          key: ${{ secrets.EC2_SSH_KEY }}
+          port: ${{ secrets.EC2_PORT || 22 }}
+          source: "dist.tar.gz"
+          target: "/tmp/"
+
+      - name: Deploy and unpack on server (Staging)
+        if: github.ref == 'refs/heads/develop'
+        uses: appleboy/ssh-action@v1.2.5
+        with:
+          host: ${{ secrets.EC2_HOST }}
+          username: ${{ secrets.EC2_USER || 'ubuntu' }}
+          key: ${{ secrets.EC2_SSH_KEY }}
+          port: ${{ secrets.EC2_PORT || 22 }}
+          script: |
+            set -e
+            echo "🚀 Deploying to Staging..."
+            sudo mkdir -p /var/www/vault-app/dist
+            sudo rm -rf /var/www/vault-app/dist/*
+            sudo tar -xzf /tmp/dist.tar.gz -C /var/www/vault-app/dist
+            sudo chown -R ${{ secrets.EC2_USER || 'ubuntu' }}:${{ secrets.EC2_USER || 'ubuntu' }} /var/www/vault-app
+            sudo chmod -R 755 /var/www/vault-app
+            rm -f /tmp/dist.tar.gz
+            echo "✅ Staging deployment complete!"
+
+      - name: Deploy and unpack on server (Production)
+        if: github.ref == 'refs/heads/main'
+        uses: appleboy/ssh-action@v1.2.5
+        with:
+          host: ${{ secrets.EC2_HOST }}
+          username: ${{ secrets.EC2_USER || 'ubuntu' }}
+          key: ${{ secrets.EC2_SSH_KEY }}
+          port: ${{ secrets.EC2_PORT || 22 }}
+          script: |
+            set -e
+            echo "🚀 Deploying to Production..."
+            sudo mkdir -p /var/www/vault-app-prod/dist
+            sudo rm -rf /var/www/vault-app-prod/dist/*
+            sudo tar -xzf /tmp/dist.tar.gz -C /var/www/vault-app-prod/dist
+            sudo chown -R ${{ secrets.EC2_USER || 'ubuntu' }}:${{ secrets.EC2_USER || 'ubuntu' }} /var/www/vault-app-prod
+            sudo chmod -R 755 /var/www/vault-app-prod
+            rm -f /tmp/dist.tar.gz
+            echo "✅ Production deployment complete!"
