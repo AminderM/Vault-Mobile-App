@@ -150,5 +150,37 @@ The new Vault Mobile App has configured native deep links (Universal Links on iO
    - Default fallbacks for `DRIVER_PWA_URL` have been updated inside `staging-ci.yml` and `production-ci.yml` to use `https://vault.staging.integratedtech.ca` and `https://vault.integratedtech.ca` respectively.
    - If overriding values in GitHub Actions secrets, fleet admins/developers should ensure `DRIVER_PWA_URL_STAGING` and `DRIVER_PWA_URL` secrets point to the new Vault domains.
 
+---
+
+## Log #7: Web Deployment, Hosting & CI/CD
+**Date:** 2026-06-21  
+**Feature:** Web Hosting & GitHub Actions Deployments  
+
+### Staging & Production Domains
+The frontend Expo/React Native Web app is hosted on the EC2 server (`44.197.191.154`) and mapped to:
+- **Staging**: `https://vault.staging.integratedtech.ca` (served from `/var/www/vault-app/dist`)
+- **Production**: `https://vault.integratedtech.ca` (served from `/var/www/vault-app-prod/dist`)
+
+### Completed Configurations
+1. **DNS**: CNAME records for `vault` and `vault.staging` point to the EC2 server.
+2. **Nginx Server Blocks**: Configured with Let's Encrypt SSL and HTTP-to-HTTPS redirects at:
+   - `/etc/nginx/sites-available/vault-staging`
+   - `/etc/nginx/sites-available/vault-prod`
+3. **CI/CD Workflow**: [deploy-web.yml](file:///c:/Users/Magic/OneDrive/Documents/Integra%20AI/Vault-Mobile-App/.github/workflows/deploy-web.yml) triggers on:
+   - Push to `staging` or `develop` branch (builds staging bundle with staging API variables, deploys to `/var/www/vault-app/dist`).
+   - Push to `main` branch (builds production bundle with production API variables, deploys to `/var/www/vault-app-prod/dist`).
+4. **Local Keys Verification**: Confirmed that the private key `aminder_key` (ED25519) successfully authenticates with the server when run from our local console.
+
+### Troubleshooting and Action Required for Backend Developer
+The automated CI/CD runs (e.g., Run #8) have failed during the deployment phase (`Copy bundle to EC2` or `Deploy and unpack on server`). Please verify:
+1. **GitHub Secrets Verification**:
+   - Double-check that `EC2_HOST`, `EC2_USER`, `EC2_PORT`, and `EC2_SSH_KEY` are correctly saved in GitHub Repository Settings -> Secrets and variables -> Actions.
+   - Make sure `EC2_SSH_KEY` is pasted exactly as the raw private key, including the headers and footers.
+2. **Security Groups / AWS Firewall**:
+   - Confirm if the AWS Security Group for the EC2 server allows inbound SSH traffic (port 22) from all IPs (`0.0.0.0/0`), as GitHub Actions runner IPs are dynamic. If port 22 access is restricted to specific IP lists, either open it up or configure a security step in the workflow to dynamically whitelist the GitHub runner IP before the connection.
+3. **Native SSH vs. Actions**:
+   - We modified [deploy-web.yml](file:///c:/Users/Magic/OneDrive/Documents/Integra%20AI/Vault-Mobile-App/.github/workflows/deploy-web.yml) to use native `ssh` and `scp` commands with `-o StrictHostKeyChecking=no` and `-o UserKnownHostsFile=/dev/null` to prevent interactive prompts and bypass older Go-based SSH action key limitations.
+
+
 
 
