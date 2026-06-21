@@ -162,8 +162,14 @@ export async function logout() {
     if (SecureStore && typeof SecureStore.deleteItemAsync === 'function') {
       await SecureStore.deleteItemAsync(AUTH_TOKEN_KEY);
     }
-  } catch {}
-  await AsyncStorage.multiRemove([AUTH_TOKEN_KEY, AUTH_USER_KEY]);
+  } catch (err) {
+    console.warn('SecureStore delete failed during logout:', err);
+  }
+  try {
+    await AsyncStorage.multiRemove([AUTH_TOKEN_KEY, AUTH_USER_KEY]);
+  } catch (err) {
+    console.warn('AsyncStorage clear failed during logout:', err);
+  }
 }
 
 export async function isAuthenticated() {
