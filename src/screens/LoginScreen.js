@@ -266,7 +266,7 @@ export default function LoginScreen({ onLoginSuccess, onSwitchToSignup, onBack, 
 
           {/* Sign up CTA */}
           <View style={styles.signupRow}>
-            <Text style={styles.signupPrompt}>Don't have an account?</Text>
+            <Text style={styles.signupPrompt}>{"Don't have an account?"}</Text>
             <Pressable
               onPress={onSwitchToSignup}
               accessibilityRole="button"
@@ -337,8 +337,8 @@ const useStyles = createThemedStyleSheet((T) =>
       marginBottom: 32,
     },
     logo: {
-      width: 120,
-      height: 80,
+      width: 240,
+      height: 160,
       marginBottom: 20,
     },
     welcomeText: {

@@ -9,6 +9,7 @@ import {
   KeyboardAvoidingView,
   Platform,
   ScrollView,
+  Alert,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { BRAND, TYPOGRAPHY, SPACING, createThemedStyleSheet, useTheme } from '../lib/theme';
@@ -203,7 +204,7 @@ export default function PhoneVerificationScreen({
 
             {/* Resend Link */}
             <View style={styles.resendContainer}>
-              <Text style={styles.resendLabel}>Didn't receive the code?</Text>
+              <Text style={styles.resendLabel}>{"Didn't receive the code?"}</Text>
               <Pressable
                 onPress={handleResend}
                 disabled={countdown > 0 || resending}

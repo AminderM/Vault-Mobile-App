@@ -372,8 +372,11 @@ function InvoiceGenerator({
 
   React.useEffect(() => {
     if (prepopulatedLoad) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setLoadId(prepopulatedLoad.loadId || prepopulatedLoad.id || '');
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setBroker(prepopulatedLoad.carrier || prepopulatedLoad.broker || '');
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setLineItems([
         { id: 'base', description: 'Freight / Base Rate', amount: prepopulatedLoad.rateAmount ? prepopulatedLoad.rateAmount.toString() : '' }
       ]);
@@ -393,7 +396,9 @@ function InvoiceGenerator({
         return;
       }
 
+      // eslint-disable-next-line react-hooks/purity
       const invoiceNum = `INV-${loadId || 'TEMP'}-${Math.floor(1000 + Math.random() * 9000)}`;
+      // eslint-disable-next-line react-hooks/purity
       const dateStr = new Date().toLocaleDateString();
 
       const htmlContent = `
@@ -1773,7 +1778,17 @@ export default function AppTabs() {
                   pressed && { opacity: 0.8 }
                 ]}
                 onPress={async () => {
-                  await logout();
+                  try {
+                    await logout();
+                  } catch (err) {
+                    console.warn("Logout error:", err);
+                  }
+                  if (Platform.OS === 'web') {
+                    try {
+                      localStorage.removeItem('auth_token');
+                      localStorage.removeItem('auth_user');
+                    } catch {}
+                  }
                   setAuthUser(null);
                   setShowProfile(false);
                   setAppState('splash');

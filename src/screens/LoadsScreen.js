@@ -44,7 +44,7 @@ const getStatusStyles = (T) => ({
 });
 
 const TABS = [
-  { id: 'marketplace', label: 'Market Place' },
+  { id: 'marketplace', label: 'Marketplace' },
   { id: 'available', label: 'Available' },
   { id: 'active', label: 'Active' },
   { id: 'history', label: 'History' },
@@ -359,6 +359,7 @@ export default function LoadsScreen({ onBackToHome = () => {}, onOpenProfile = (
   };
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     loadLoads();
   }, [activeTab]);
 
@@ -603,7 +604,12 @@ export default function LoadsScreen({ onBackToHome = () => {}, onOpenProfile = (
               accessibilityRole="tab"
               accessibilityLabel={tab.label}
             >
-              <Text style={[styles.tabText, activeTab === tab.id && styles.tabTextActive]}>
+              <Text 
+                style={[styles.tabText, activeTab === tab.id && styles.tabTextActive]}
+                numberOfLines={1}
+                adjustsFontSizeToFit={true}
+                minimumScaleFactor={0.8}
+              >
                 {tab.label}
               </Text>
             </Pressable>
