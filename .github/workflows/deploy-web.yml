@@ -68,9 +68,11 @@ jobs:
           tar -czf dist.tar.gz -C dist .
 
       - name: Setup SSH
+        env:
+          SSH_KEY: ${{ secrets.EC2_SSH_KEY }}
         run: |
           mkdir -p ~/.ssh
-          echo "${{ secrets.EC2_SSH_KEY }}" > ~/.ssh/deploy_key
+          echo "$SSH_KEY" > ~/.ssh/deploy_key
           chmod 600 ~/.ssh/deploy_key
           ssh-keyscan -p ${{ secrets.EC2_PORT || 22 }} -H ${{ secrets.EC2_HOST }} >> ~/.ssh/known_hosts
 
