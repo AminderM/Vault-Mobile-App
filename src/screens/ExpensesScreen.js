@@ -76,6 +76,7 @@ export default function ExpensesScreen({ onBack, onNavigateToScan }) {
   };
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     loadExpensesData();
   }, [selectedTimeFilter, selectedCategory]);
 
