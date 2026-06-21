@@ -2,7 +2,7 @@ name: Deploy Web
 
 on:
   push:
-    branches: [main, develop]
+    branches: [main, staging, develop]
   workflow_dispatch:
 
 env:
@@ -31,7 +31,7 @@ jobs:
           npm install --legacy-peer-deps
 
       - name: Build Web App (Staging)
-        if: github.ref == 'refs/heads/develop'
+        if: github.ref == 'refs/heads/develop' || github.ref == 'refs/heads/staging'
         run: npx expo export --platform web
         timeout-minutes: 10
         env:
@@ -67,37 +67,29 @@ jobs:
         run: |
           tar -czf dist.tar.gz -C dist .
 
+      - name: Setup SSH
+        env:
+          SSH_KEY: ${{ secrets.EC2_SSH_KEY }}
+        run: |
+          mkdir -p ~/.ssh
+          echo "$SSH_KEY" > ~/.ssh/deploy_key
+          chmod 600 ~/.ssh/deploy_key
+          ssh-keyscan -p ${{ secrets.EC2_PORT || 22 }} -H ${{ secrets.EC2_HOST }} >> ~/.ssh/known_hosts
+
       - name: Copy bundle to EC2 (Staging)
-        if: github.ref == 'refs/heads/develop'
-        uses: appleboy/scp-action@v1.0.0
-        with:
-          host: ${{ secrets.EC2_HOST }}
-          username: ${{ secrets.EC2_USER || 'ubuntu' }}
-          key: ${{ secrets.EC2_SSH_KEY }}
-          port: ${{ secrets.EC2_PORT || 22 }}
-          source: "dist.tar.gz"
-          target: "/tmp/"
+        if: github.ref == 'refs/heads/develop' || github.ref == 'refs/heads/staging'
+        run: |
+          scp -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -i ~/.ssh/deploy_key -P ${{ secrets.EC2_PORT || 22 }} dist.tar.gz ${{ secrets.EC2_USER || 'ubuntu' }}@${{ secrets.EC2_HOST }}:/tmp/
 
       - name: Copy bundle to EC2 (Production)
         if: github.ref == 'refs/heads/main'
-        uses: appleboy/scp-action@v1.0.0
-        with:
-          host: ${{ secrets.EC2_HOST }}
-          username: ${{ secrets.EC2_USER || 'ubuntu' }}
-          key: ${{ secrets.EC2_SSH_KEY }}
-          port: ${{ secrets.EC2_PORT || 22 }}
-          source: "dist.tar.gz"
-          target: "/tmp/"
+        run: |
+          scp -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -i ~/.ssh/deploy_key -P ${{ secrets.EC2_PORT || 22 }} dist.tar.gz ${{ secrets.EC2_USER || 'ubuntu' }}@${{ secrets.EC2_HOST }}:/tmp/
 
       - name: Deploy and unpack on server (Staging)
-        if: github.ref == 'refs/heads/develop'
-        uses: appleboy/ssh-action@v1.2.5
-        with:
-          host: ${{ secrets.EC2_HOST }}
-          username: ${{ secrets.EC2_USER || 'ubuntu' }}
-          key: ${{ secrets.EC2_SSH_KEY }}
-          port: ${{ secrets.EC2_PORT || 22 }}
-          script: |
+        if: github.ref == 'refs/heads/develop' || github.ref == 'refs/heads/staging'
+        run: |
+          ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -i ~/.ssh/deploy_key -p ${{ secrets.EC2_PORT || 22 }} ${{ secrets.EC2_USER || 'ubuntu' }}@${{ secrets.EC2_HOST }} << 'EOF'
             set -e
             echo "🚀 Deploying to Staging..."
             sudo mkdir -p /var/www/vault-app/dist
@@ -107,16 +99,12 @@ jobs:
             sudo chmod -R 755 /var/www/vault-app
             rm -f /tmp/dist.tar.gz
             echo "✅ Staging deployment complete!"
+          EOF
 
       - name: Deploy and unpack on server (Production)
         if: github.ref == 'refs/heads/main'
-        uses: appleboy/ssh-action@v1.2.5
-        with:
-          host: ${{ secrets.EC2_HOST }}
-          username: ${{ secrets.EC2_USER || 'ubuntu' }}
-          key: ${{ secrets.EC2_SSH_KEY }}
-          port: ${{ secrets.EC2_PORT || 22 }}
-          script: |
+        run: |
+          ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -i ~/.ssh/deploy_key -p ${{ secrets.EC2_PORT || 22 }} ${{ secrets.EC2_USER || 'ubuntu' }}@${{ secrets.EC2_HOST }} << 'EOF'
             set -e
             echo "🚀 Deploying to Production..."
             sudo mkdir -p /var/www/vault-app-prod/dist
@@ -126,3 +114,4 @@ jobs:
             sudo chmod -R 755 /var/www/vault-app-prod
             rm -f /tmp/dist.tar.gz
             echo "✅ Production deployment complete!"
+          EOF
