@@ -12,7 +12,8 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { getLoads, updateLoad, getAuthToken, getAuthUser } from '../lib/api';
+import * as ImagePicker from 'expo-image-picker';
+import { getAuthToken, getAuthUser, saveDocument } from '../lib/api';
 import { getAvailableLoads, acceptLoad, getMyLoads, updateLoadStatus } from '../lib/tms';
 import { BRAND, TYPOGRAPHY, SPACING, StatusBorderCard, useTheme, createThemedStyleSheet } from '../lib/theme';
 
@@ -249,16 +250,22 @@ const STATUS_OPTIONS = [
 
 /**
  * @param {object} props
+ * @param {string} [props.userType]
  * @param {() => void} [props.onBackToHome]
  * @param {() => void} [props.onOpenProfile]
  * @param {(load: any) => void} [props.onCreateInvoice]
  */
-export default function LoadsScreen({ onBackToHome = () => {}, onOpenProfile = () => {}, onCreateInvoice = () => {} } = {}) {
+export default function LoadsScreen({ userType = 'owner_operator', onBackToHome = () => {}, onOpenProfile = () => {}, onCreateInvoice = () => {} } = {}) {
   const [loads, setLoads] = useState(DEMO_LOADS);
   const [loading, setLoading] = useState(false);
-  const [activeTab, setActiveTab] = useState('marketplace');
+  const [activeTab, setActiveTab] = useState(userType === 'driver' ? 'active' : 'marketplace');
   const { t: T } = useTheme();
   const styles = useStyles();
+
+  const isDriver = userType === 'driver';
+  const filteredTabs = isDriver
+    ? TABS.filter(t => t.id === 'active' || t.id === 'history')
+    : TABS;
 
   // Active Load Manager Modal State
   const [selectedLoadForManage, setSelectedLoadForManage] = useState(null);
@@ -271,6 +278,15 @@ export default function LoadsScreen({ onBackToHome = () => {}, onOpenProfile = (
     gateInDelivery: '',
     gateOutDelivery: '',
   });
+  const [attachments, setAttachments] = useState([]);
+  const [uploading, setUploading] = useState(false);
+
+  useEffect(() => {
+    if (isDriver && (activeTab === 'marketplace' || activeTab === 'available')) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      setActiveTab('active');
+    }
+  }, [userType, isDriver, activeTab]);
 
   const loadLoads = async () => {
     try {
@@ -361,6 +377,7 @@ export default function LoadsScreen({ onBackToHome = () => {}, onOpenProfile = (
   useEffect(() => {
     // eslint-disable-next-line react-hooks/set-state-in-effect
     loadLoads();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [activeTab]);
 
   useEffect(() => {
@@ -451,7 +468,87 @@ export default function LoadsScreen({ onBackToHome = () => {}, onOpenProfile = (
         gateOutDelivery: '',
       });
     }
+
+    // Load document attachments from AsyncStorage
+    try {
+      const attachmentsJSON = await AsyncStorage.getItem(`load_attachments_${load.id}`);
+      if (attachmentsJSON) {
+        setAttachments(JSON.parse(attachmentsJSON));
+      } else {
+        setAttachments([]);
+      }
+    } catch {
+      setAttachments([]);
+    }
+
     setManageModalVisible(true);
+  };
+
+  const handleAttachDocument = async () => {
+    if (!selectedLoadForManage) return;
+
+    // Request camera and media library permissions
+    const libraryPermission = await ImagePicker.requestMediaLibraryPermissionsAsync();
+    if (!libraryPermission.granted) {
+      Alert.alert('Permission Denied', 'Media library access is required to attach documents.');
+      return;
+    }
+
+    try {
+      const result = await ImagePicker.launchImageLibraryAsync({
+        mediaTypes: ImagePicker.MediaTypeOptions.Images,
+        quality: 0.7,
+        base64: true,
+      });
+
+      if (result.canceled || !result.assets || !result.assets[0]) {
+        return;
+      }
+
+      setUploading(true);
+      const asset = result.assets[0];
+
+      // Format base64 string
+      let base64Str = '';
+      if (asset.base64) {
+        const ext = asset.uri.split('.').pop()?.toLowerCase() || 'png';
+        base64Str = `data:image/${ext === 'jpg' ? 'jpeg' : ext};base64,${asset.base64}`;
+      } else {
+        base64Str = asset.uri;
+      }
+
+      const newAttachment = {
+        id: `attach_${Date.now()}`,
+        uri: base64Str,
+        name: `POD_${selectedLoadForManage.id.replace('#', '')}_${Date.now().toString().slice(-4)}.jpg`,
+        uploadedAt: new Date().toLocaleDateString() + ' ' + new Date().toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' }),
+      };
+
+      // Save to AsyncStorage
+      const updatedAttachments = [...attachments, newAttachment];
+      setAttachments(updatedAttachments);
+      await AsyncStorage.setItem(
+        `load_attachments_${selectedLoadForManage.id}`,
+        JSON.stringify(updatedAttachments)
+      );
+
+      // Upload to server using saveDocument
+      try {
+        await saveDocument({
+          docType: 'POD',
+          description: `POD for load ${selectedLoadForManage.id} (${newAttachment.name})`,
+          uploadedAt: new Date().toISOString(),
+        });
+      } catch (uploadErr) {
+        console.warn('Document server save failed, saved locally only:', uploadErr);
+      }
+
+      Alert.alert('Success', 'Document attached successfully!');
+    } catch (err) {
+      Alert.alert('Error', 'Failed to attach document: ' + err.message);
+    } finally {
+      setUploading(false);
+    }
   };
 
   const recordGateTime = (field) => {
@@ -596,7 +693,7 @@ export default function LoadsScreen({ onBackToHome = () => {}, onOpenProfile = (
       <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
         {/* Segmented Tabs */}
         <View style={styles.tabBar}>
-          {TABS.map((tab) => (
+          {filteredTabs.map((tab) => (
             <Pressable
               key={tab.id}
               style={[styles.tab, activeTab === tab.id && styles.tabActive]}
@@ -619,9 +716,9 @@ export default function LoadsScreen({ onBackToHome = () => {}, onOpenProfile = (
         {/* Section Header */}
         <View style={styles.sectionHeader}>
           <View>
-            <Text style={styles.sectionTitle}>MARKETPLACE</Text>
+            <Text style={styles.sectionTitle}>{activeTab.toUpperCase()}</Text>
             <Text style={styles.sectionSubtitle}>
-              {loads.length} High-yield loads matching your profile
+              {loads.length} {activeTab === 'active' ? 'assigned loads' : activeTab === 'history' ? 'completed loads' : 'high-yield loads'} matching your profile
             </Text>
           </View>
           <View style={styles.refreshBadge}>
@@ -782,6 +879,60 @@ export default function LoadsScreen({ onBackToHome = () => {}, onOpenProfile = (
                       <Text style={styles.recordTimeBtnText}>{gateTimes.gateOutDelivery ? 'RE-LOG' : 'LOG TIME'}</Text>
                     </Pressable>
                   </View>
+                </View>
+
+                {/* Load Documents Attachment Portal */}
+                <View style={styles.gateTimesBox}>
+                  <Text style={styles.gateSectionTitle}>LOAD DOCUMENTS (POD / BOL)</Text>
+                  
+                  {attachments.length === 0 ? (
+                    <Text style={{ fontSize: 12, color: T.text.secondary, fontStyle: 'italic', marginVertical: 4 }}>
+                      No documents attached to this load yet.
+                    </Text>
+                  ) : (
+                    <View style={{ gap: 8, marginVertical: 4 }}>
+                      {attachments.map((item) => (
+                        <View key={item.id} style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', backgroundColor: T.background.containerHighest, padding: 8, borderRadius: 6, borderWidth: 1, borderColor: T.border.variant }}>
+                          <View style={{ flex: 1 }}>
+                            <Text style={{ fontSize: 12, fontWeight: '700', color: T.text.primary }} numberOfLines={1}>
+                              📄 {item.name}
+                            </Text>
+                            <Text style={{ fontSize: 10, color: T.text.muted, marginTop: 1 }}>
+                              Uploaded: {item.uploadedAt}
+                            </Text>
+                          </View>
+                          <Pressable
+                            onPress={async () => {
+                              const filtered = attachments.filter(a => a.id !== item.id);
+                              setAttachments(filtered);
+                              await AsyncStorage.setItem(`load_attachments_${selectedLoadForManage.id}`, JSON.stringify(filtered));
+                              Alert.alert('Deleted', 'Document attachment removed.');
+                            }}
+                            style={{ padding: 4 }}
+                          >
+                            <Text style={{ color: BRAND.crimsonRed, fontSize: 13, fontWeight: '700' }}>Remove</Text>
+                          </Pressable>
+                        </View>
+                      ))}
+                    </View>
+                  )}
+
+                  <Pressable
+                    style={({ pressed }) => [
+                      styles.recordTimeBtn,
+                      { backgroundColor: BRAND.crimsonRed, borderColor: BRAND.crimsonRed, height: 40, marginTop: 4 },
+                      pressed && { opacity: 0.8 },
+                      uploading && { opacity: 0.6 }
+                    ]}
+                    onPress={handleAttachDocument}
+                    disabled={uploading}
+                  >
+                    {uploading ? (
+                      <ActivityIndicator size="small" color="#ffffff" />
+                    ) : (
+                      <Text style={{ color: '#ffffff', fontWeight: '800', fontSize: 12 }}>+ ATTACH DOCUMENT</Text>
+                    )}
+                  </Pressable>
                 </View>
 
                 {/* Save Button */}

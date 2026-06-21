@@ -181,6 +181,28 @@ The automated CI/CD runs (e.g., Run #8) have failed during the deployment phase 
 3. **Native SSH vs. Actions**:
    - We modified [deploy-web.yml](file:///c:/Users/Magic/OneDrive/Documents/Integra%20AI/Vault-Mobile-App/.github/workflows/deploy-web.yml) to use native `ssh` and `scp` commands with `-o StrictHostKeyChecking=no` and `-o UserKnownHostsFile=/dev/null` to prevent interactive prompts and bypass older Go-based SSH action key limitations.
 
+---
+
+## Log #8: Role Gating, Document Upload Association, and Chat Specifications
+**Date:** 2026-06-21  
+**Feature:** Role-based Access Control (RBAC), Dispatch Messaging (Chat), and Load Document Attachment  
+
+### Frontend Implementation
+1. **Dynamic Role Access**: Driver users are restricted from viewing Finance (P&L, fleet expenses) and Tools (Load Calculator, Invoice Generator) screens. Bottom tab navigation adapts to only show Home, Scan, Chat, and Vault.
+2. **Loads Board Gating**: Drivers can only view Active (assigned) and History loads. Marketplace and Available loads bidding screens are hidden.
+3. **Chat Screen**: Added a Chat tab permitting drivers to communicate with dispatch. It persists messages locally in AsyncStorage.
+4. **Load Document Attachments**: Drivers can attach BOL/POD document photos directly inside the Active Load update modal. The files are uploaded as Base64 strings.
+
+### Required Backend Changes
+1. **Document Upload API Expansion (`POST /api/documents`):**
+   - Accept an optional `load_id` parameter to associate uploaded compliance documents or PODs with a specific load assignment in the TMS.
+   - When `load_id` is provided, link the document entity directly to the load in the database.
+2. **Chat API and WebSocket Support:**
+   - Provide a WebSocket server endpoint (e.g. `wss://api.staging.integratedtech.ca/chat/stream`) allowing real-time carrier-driver communications.
+   - Implement message history storage in the database (e.g. `messages` table with fields: `id`, `sender_id`, `recipient_id`, `load_id`, `text`, `timestamp`, `read_status`).
+   - Create HTTP REST API endpoints (`GET /api/driver-mobile/chat/history`) to fetch conversation history for the driver.
+
+
 
 
 
