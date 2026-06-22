@@ -24,11 +24,12 @@ import SplashScreen from '@/screens/SplashScreen';
 import LoginScreen from '@/screens/LoginScreen';
 import PhoneVerificationScreen from '@/screens/PhoneVerificationScreen';
 import OnboardingInviteScreen from '@/screens/OnboardingInviteScreen';
+import ChatScreen from '@/screens/ChatScreen';
 import * as Linking from 'expo-linking';
 import { BRAND, useTheme, toggleTheme, StatusBorderCard } from '@/lib/theme';
 import { saveDocument, logout, isAuthenticated, getAuthUser, getMe } from '../lib/api';
 
-type TabName = 'loads' | 'vault' | 'scan' | 'finance' | 'tools';
+type TabName = 'loads' | 'vault' | 'scan' | 'finance' | 'tools' | 'chat';
 
 // High-fidelity custom vector drawings for the bottom tabs
 function HomeIcon({ color }: { color: string }) {
@@ -108,6 +109,42 @@ function ProfileIcon({ color }: { color: string }) {
   );
 }
 
+function ChatIcon({ color, bg }: { color: string; bg: string }) {
+  return (
+    <View style={{ width: 24, height: 22, justifyContent: 'center', alignItems: 'center' }}>
+      <View style={{
+        width: 18,
+        height: 14,
+        borderWidth: 2.2,
+        borderColor: color,
+        borderRadius: 3.5,
+        backgroundColor: bg,
+        justifyContent: 'center',
+        alignItems: 'center',
+        paddingBottom: 1,
+      }}>
+        <View style={{ width: 10, height: 1.5, backgroundColor: color, marginBottom: 1.5, borderRadius: 0.5 }} />
+        <View style={{ width: 6, height: 1.5, backgroundColor: color, alignSelf: 'flex-start', marginLeft: 2, borderRadius: 0.5 }} />
+      </View>
+      <View style={{
+        position: 'absolute',
+        bottom: 1,
+        left: 6,
+        width: 0,
+        height: 0,
+        backgroundColor: 'transparent',
+        borderStyle: 'solid',
+        borderLeftWidth: 2.5,
+        borderRightWidth: 2.5,
+        borderTopWidth: 3.5,
+        borderLeftColor: 'transparent',
+        borderRightColor: 'transparent',
+        borderTopColor: color,
+      }} />
+    </View>
+  );
+}
+
 function TabIcon({ id, color, bg }: { id: string; color: string; bg: string }) {
   const iconScale = id === 'scan' ? 1.25 : 1.15;
   return (
@@ -124,6 +161,8 @@ function TabIcon({ id, color, bg }: { id: string; color: string; bg: string }) {
             return <FinanceIcon color={color} bg={bg} />;
           case 'tools':
             return <ToolsIcon color={color} />;
+          case 'chat':
+            return <ChatIcon color={color} bg={bg} />;
           default:
             return null;
         }
@@ -1170,6 +1209,7 @@ export default function AppTabs() {
               />
             ) : (
               <LoadsScreen
+                userType={userType}
                 onBackToHome={() => setHomeScreenView('home')}
                 onOpenProfile={() => setShowProfile(true)}
                 onCreateInvoice={(load: any) => {
@@ -1220,18 +1260,44 @@ export default function AppTabs() {
           </ErrorBoundary>
         );
 
+      case 'chat':
+        return (
+          <ErrorBoundary t={T}>
+            <ChatScreen />
+          </ErrorBoundary>
+        );
+
       default:
         return null;
     }
   };
 
-  const tabs: { id: TabName; label: string }[] = [
-    { id: 'loads', label: 'Home' },
-    { id: 'vault', label: 'Vault' },
-    { id: 'scan', label: 'Scan' },
-    { id: 'finance', label: 'Finance' },
-    { id: 'tools', label: 'Tools' },
-  ];
+  const userType = authUser?.role || authUser?.user_type || 'owner_operator';
+  const isDriver = userType === 'driver';
+
+  const tabs: { id: TabName; label: string }[] = React.useMemo(() => {
+    return isDriver ? [
+      { id: 'loads', label: 'Home' },
+      { id: 'scan', label: 'Scan' },
+      { id: 'chat', label: 'Chat' },
+      { id: 'vault', label: 'Vault' },
+    ] : [
+      { id: 'loads', label: 'Home' },
+      { id: 'vault', label: 'Vault' },
+      { id: 'scan', label: 'Scan' },
+      { id: 'finance', label: 'Finance' },
+      { id: 'tools', label: 'Tools' },
+    ];
+  }, [isDriver]);
+
+  // Safeguard activeTab if dynamic role changes hide the current tab
+  React.useEffect(() => {
+    const isTabVisible = tabs.some((t) => t.id === activeTab);
+    if (!isTabVisible) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      setActiveTab('loads');
+    }
+  }, [userType, tabs, activeTab]);
 
   const renderThemeToggle = () => (
     <Pressable
@@ -1465,6 +1531,7 @@ export default function AppTabs() {
           )}
           {activeToolView === 'loads' && (
             <LoadsScreen 
+              userType={userType}
               onBackToHome={() => setActiveToolView('hub')}
               onOpenProfile={() => setShowProfile(true)}
               onCreateInvoice={(load: any) => {
@@ -1769,6 +1836,62 @@ export default function AppTabs() {
               >
                 <Text style={styles.saveToVaultBtnText}>📄 GENERATE CARRIER PROFILE PDF</Text>
               </Pressable>
+
+              {/* Debug Role Toggle (Debug Mode) */}
+              <View style={[styles.calcSummaryCard, { backgroundColor: T.background.container, borderColor: T.border.variant, marginVertical: 8 }]}>
+                <Text style={[styles.calcSummaryTitle, { color: T.text.primary, fontSize: 13, fontWeight: '700' }]}>
+                  DEBUG: User Role (Local Toggle)
+                </Text>
+                <View style={{ flexDirection: 'row', gap: 6, flexWrap: 'wrap', marginTop: 4 }}>
+                  {['driver', 'carrier', 'owner_operator'].map((roleOpt) => {
+                    const isSelected = userType === roleOpt;
+                    return (
+                      <Pressable
+                        key={roleOpt}
+                        style={({ pressed }) => [
+                          {
+                            flex: 1,
+                            minWidth: 80,
+                            paddingVertical: 8,
+                            alignItems: 'center',
+                            borderRadius: 6,
+                            borderWidth: 1.5,
+                            borderColor: isSelected ? BRAND.crimsonRed : T.border.variant,
+                            backgroundColor: isSelected
+                              ? (themeMode === 'dark' ? 'rgba(138, 18, 27, 0.2)' : 'rgba(138, 18, 27, 0.05)')
+                              : T.background.container,
+                          },
+                          pressed && { opacity: 0.8 }
+                        ]}
+                        onPress={async () => {
+                          const updatedUser = {
+                            ...(authUser || {}),
+                            role: roleOpt,
+                            user_type: roleOpt,
+                          };
+                          setAuthUser(updatedUser);
+                          await AsyncStorage.setItem('auth_user', JSON.stringify(updatedUser));
+                          if (roleOpt === 'driver') {
+                            // eslint-disable-next-line react-hooks/set-state-in-effect
+                            setActiveTab('loads');
+                          }
+                        }}
+                      >
+                        <Text
+                          style={{
+                            fontSize: 11,
+                            fontWeight: '700',
+                            color: isSelected ? BRAND.crimsonRed : T.text.secondary,
+                            textTransform: 'capitalize',
+                          }}
+                        >
+                          {roleOpt.replace('_', ' ')}
+                        </Text>
+                      </Pressable>
+                    );
+                  })}
+                </View>
+              </View>
 
               {/* Sign Out Button */}
               <Pressable
