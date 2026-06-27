@@ -16,12 +16,13 @@ import { scanIdentify, saveDocument } from '../lib/api';
 import { BRAND, TYPOGRAPHY, SPACING, GlassCard, StatusBorderCard, createGlassCard, useTheme, createThemedStyleSheet } from '../lib/theme';
 
 const DOC_CATEGORIES = [
-  { id: 'bol', label: 'Bill of Lading' },
-  { id: 'fuel', label: 'Fuel Ticket' },
-  { id: 'lumper', label: 'Lumper Receipt' },
-  { id: 'inspection', label: 'Inspection Report' },
-  { id: 'medical', label: 'Medical Certificate' },
-  { id: 'other', label: 'Other' },
+  { id: 'bol',               label: 'Bill of Lading' },
+  { id: 'rate_confirmation', label: 'Rate Confirmation' },
+  { id: 'expense_receipt',   label: 'Expense Receipt' },
+  { id: 'invoice',           label: 'Invoice' },
+  { id: 'drivers_license',   label: "Driver's License" },
+  { id: 'medical_card',      label: 'Medical Card' },
+  { id: 'other',             label: 'Other' },
 ];
 
 const SCAN_STATES = {
@@ -37,6 +38,9 @@ export default function SmartScanScreen() {
   const [expiryDate, setExpiryDate] = useState('');
   const [referenceNo, setReferenceNo] = useState('');
   const [confidence, setConfidence] = useState('High');
+  const [scannedUri, setScannedUri] = useState(null);
+  const [detectedCategory, setDetectedCategory] = useState('');
+
   const scanLineAnim = useMemo(() => new Animated.Value(0), []);
   const { t: T } = useTheme();
   const styles = useStyles();
@@ -52,21 +56,31 @@ export default function SmartScanScreen() {
 
   const processImage = async (uri) => {
     setScanState(SCAN_STATES.SCANNING);
+    setScannedUri(uri);
     startScanAnimation();
     try {
       const file = { uri, type: 'image/jpeg', name: 'scan.jpg' };
       const result = await scanIdentify(file);
-      setSelectedCategory(mapDocType(result.docType));
-      setExpiryDate(result.expiryDate || '');
-      setReferenceNo(result.referenceNo || '');
-      setConfidence('High');
+
+      const docType = result.document_type || result.docType || 'other';
+      const extracted = result.extracted || {};
+
+      setSelectedCategory(mapDocType(docType));
+      setDetectedCategory(extracted.category || '');
+      setExpiryDate(extracted.expiry_date || result.expiryDate || '');
+      
+      const refNo = extracted.vendor || extracted.description || result.referenceNo || '';
+      setReferenceNo(refNo);
+      
+      setConfidence(result.confidence ? `${Math.round(result.confidence * 100)}%` : 'High');
       setScanState(SCAN_STATES.RESULT);
     } catch {
       // Demo result on API failure
       setSelectedCategory('bol');
-      setExpiryDate('2025-12-31');
+      setDetectedCategory('');
+      setExpiryDate('2026-12-31');
       setReferenceNo('BOL-4492-XQ');
-      setConfidence('High');
+      setConfidence('95%');
       setScanState(SCAN_STATES.RESULT);
     }
   };
@@ -74,10 +88,11 @@ export default function SmartScanScreen() {
   const mapDocType = (docType) => {
     if (!docType) return 'other';
     const d = docType.toLowerCase();
-    if (d.includes('fuel')) return 'fuel';
-    if (d.includes('lumper')) return 'lumper';
-    if (d.includes('inspect')) return 'inspection';
-    if (d.includes('medical')) return 'medical';
+    if (d.includes('fuel') || d.includes('receipt') || d.includes('lumper') || d.includes('expense')) return 'expense_receipt';
+    if (d.includes('rate_confirmation') || d.includes('ratecon')) return 'rate_confirmation';
+    if (d.includes('invoice')) return 'invoice';
+    if (d.includes('drivers_license') || d.includes('license') || d.includes('cdl')) return 'drivers_license';
+    if (d.includes('medical')) return 'medical_card';
     if (d.includes('bol') || d.includes('lading')) return 'bol';
     return 'other';
   };
@@ -114,14 +129,28 @@ export default function SmartScanScreen() {
   const handleSaveToVault = async () => {
     try {
       setScanState(SCAN_STATES.SAVING);
+
+      const fileObj = scannedUri ? {
+        uri: scannedUri,
+        type: 'image/jpeg',
+        name: 'scan.jpg'
+      } : null;
+
       await saveDocument({
-        docType: DOC_CATEGORIES.find((c) => c.id === selectedCategory)?.label || selectedCategory,
+        docType: selectedCategory,
         expiryDate: expiryDate || null,
-        description: `Ref: ${referenceNo}`,
+        description: referenceNo ? `Ref: ${referenceNo}` : 'Scanned Document',
+        notes: selectedCategory === 'expense_receipt' ? (detectedCategory || 'other') : undefined,
+        file: fileObj,
         uploadedAt: new Date().toISOString(),
       });
+
       Alert.alert('✅ Saved', 'Document saved to Vault!', [
-        { text: 'OK', onPress: () => setScanState(SCAN_STATES.IDLE) },
+        { text: 'OK', onPress: () => {
+          setScanState(SCAN_STATES.IDLE);
+          setScannedUri(null);
+          setDetectedCategory('');
+        }},
       ]);
     } catch {
       Alert.alert('Error', 'Failed to save document. Please try again.');
