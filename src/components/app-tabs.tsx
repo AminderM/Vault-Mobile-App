@@ -1402,20 +1402,40 @@ export default function AppTabs() {
   const userType = authUser?.role || authUser?.user_type || 'owner_operator';
   const isDriver = userType === 'driver';
 
+  // A carrier sees all 5 tabs only if they have an active subscription or pro/enterprise tier
+  const isPremiumCarrier = userType === 'carrier' && (
+    authUser?.tier === 'pro' || 
+    authUser?.tier === 'enterprise' || 
+    authUser?.subscription_status === 'active' ||
+    !!authUser?.stripe_subscription_id
+  );
+
   const tabs: { id: TabName; label: string }[] = React.useMemo(() => {
-    return isDriver ? [
-      { id: 'loads', label: 'Home' },
-      { id: 'scan', label: 'Scan' },
-      { id: 'chat', label: 'Chat' },
-      { id: 'vault', label: 'Vault' },
-    ] : [
-      { id: 'loads', label: 'Home' },
-      { id: 'vault', label: 'Vault' },
-      { id: 'scan', label: 'Scan' },
-      { id: 'finance', label: 'Finance' },
-      { id: 'tools', label: 'Tools' },
-    ];
-  }, [isDriver]);
+    if (isDriver) {
+      return [
+        { id: 'loads', label: 'Home' },
+        { id: 'scan', label: 'Scan' },
+        { id: 'chat', label: 'Chat' },
+        { id: 'vault', label: 'Vault' },
+      ];
+    } else if (userType === 'carrier' && !isPremiumCarrier) {
+      // Free / Invited carrier gets exactly 3 features: Home, Vault, Scan
+      return [
+        { id: 'loads', label: 'Home' },
+        { id: 'vault', label: 'Vault' },
+        { id: 'scan', label: 'Scan' },
+      ];
+    } else {
+      // Owner operator or Premium carrier gets all 5 features
+      return [
+        { id: 'loads', label: 'Home' },
+        { id: 'vault', label: 'Vault' },
+        { id: 'scan', label: 'Scan' },
+        { id: 'finance', label: 'Finance' },
+        { id: 'tools', label: 'Tools' },
+      ];
+    }
+  }, [authUser]);
 
   // Safeguard activeTab if dynamic role changes hide the current tab
   React.useEffect(() => {
@@ -1899,18 +1919,26 @@ export default function AppTabs() {
               </View>
 
               {/* Subscription Status Card */}
-              <View style={[styles.calcSummaryCard, { backgroundColor: T.background.container, borderColor: T.border.variant, marginVertical: 8 }]}>
-                <Text style={[styles.calcSummaryTitle, { color: T.text.primary }]}>Subscription Status</Text>
-                <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
-                  <View>
-                    <Text style={{ fontSize: 14, fontWeight: '700', color: BRAND.profitGreen }}>✓ PREMIUM MEMBER</Text>
-                    <Text style={{ fontSize: 12, color: T.text.secondary, marginTop: 2 }}>Renews: July 15, 2026</Text>
-                  </View>
-                  <View style={{ backgroundColor: themeMode === 'dark' ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.05)', paddingVertical: 6, paddingHorizontal: 12, borderRadius: 6 }}>
-                    <Text style={{ fontSize: 11, fontWeight: '700', color: T.text.primary }}>ACTIVE</Text>
+              {userType !== 'driver' && (
+                <View style={[styles.calcSummaryCard, { backgroundColor: T.background.container, borderColor: T.border.variant, marginVertical: 8 }]}>
+                  <Text style={[styles.calcSummaryTitle, { color: T.text.primary }]}>Subscription Status</Text>
+                  <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <View>
+                      <Text style={{ fontSize: 14, fontWeight: '700', color: isPremiumCarrier || userType === 'owner_operator' ? BRAND.profitGreen : T.text.muted }}>
+                        {isPremiumCarrier || userType === 'owner_operator' ? '✓ PREMIUM MEMBER' : '⏳ FREE / INVITE TIER'}
+                      </Text>
+                      <Text style={{ fontSize: 12, color: T.text.secondary, marginTop: 2 }}>
+                        {isPremiumCarrier || userType === 'owner_operator' ? 'Renews: July 15, 2026' : 'Limited features (3 tabs)'}
+                      </Text>
+                    </View>
+                    <View style={{ backgroundColor: themeMode === 'dark' ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.05)', paddingVertical: 6, paddingHorizontal: 12, borderRadius: 6 }}>
+                      <Text style={{ fontSize: 11, fontWeight: '700', color: isPremiumCarrier || userType === 'owner_operator' ? T.text.primary : T.text.muted }}>
+                        {isPremiumCarrier || userType === 'owner_operator' ? 'ACTIVE' : 'FREE'}
+                      </Text>
+                    </View>
                   </View>
                 </View>
-              </View>
+              )}
 
               {/* Company Documents Checklist */}
               <View style={{ gap: 8, marginTop: 8 }}>
@@ -1967,60 +1995,62 @@ export default function AppTabs() {
               </Pressable>
 
               {/* Debug Role Toggle (Debug Mode) */}
-              <View style={[styles.calcSummaryCard, { backgroundColor: T.background.container, borderColor: T.border.variant, marginVertical: 8 }]}>
-                <Text style={[styles.calcSummaryTitle, { color: T.text.primary, fontSize: 13, fontWeight: '700' }]}>
-                  DEBUG: User Role (Local Toggle)
-                </Text>
-                <View style={{ flexDirection: 'row', gap: 6, flexWrap: 'wrap', marginTop: 4 }}>
-                  {['driver', 'carrier', 'owner_operator'].map((roleOpt) => {
-                    const isSelected = userType === roleOpt;
-                    return (
-                      <Pressable
-                        key={roleOpt}
-                        style={({ pressed }) => [
-                          {
-                            flex: 1,
-                            minWidth: 80,
-                            paddingVertical: 8,
-                            alignItems: 'center',
-                            borderRadius: 6,
-                            borderWidth: 1.5,
-                            borderColor: isSelected ? BRAND.crimsonRed : T.border.variant,
-                            backgroundColor: isSelected
-                              ? (themeMode === 'dark' ? 'rgba(138, 18, 27, 0.2)' : 'rgba(138, 18, 27, 0.05)')
-                              : T.background.container,
-                          },
-                          pressed && { opacity: 0.8 }
-                        ]}
-                        onPress={async () => {
-                          const updatedUser = {
-                            ...(authUser || {}),
-                            role: roleOpt,
-                            user_type: roleOpt,
-                          };
-                          setAuthUser(updatedUser);
-                          await AsyncStorage.setItem('auth_user', JSON.stringify(updatedUser));
-                          if (roleOpt === 'driver') {
-                            // eslint-disable-next-line react-hooks/set-state-in-effect
-                            setActiveTab('loads');
-                          }
-                        }}
-                      >
-                        <Text
-                          style={{
-                            fontSize: 11,
-                            fontWeight: '700',
-                            color: isSelected ? BRAND.crimsonRed : T.text.secondary,
-                            textTransform: 'capitalize',
+              {authUser?.email === 'aminder@integratedtech.ca' && (
+                <View style={[styles.calcSummaryCard, { backgroundColor: T.background.container, borderColor: T.border.variant, marginVertical: 8 }]}>
+                  <Text style={[styles.calcSummaryTitle, { color: T.text.primary, fontSize: 13, fontWeight: '700' }]}>
+                    DEBUG: User Role (Local Toggle)
+                  </Text>
+                  <View style={{ flexDirection: 'row', gap: 6, flexWrap: 'wrap', marginTop: 4 }}>
+                    {['driver', 'carrier', 'owner_operator'].map((roleOpt) => {
+                      const isSelected = userType === roleOpt;
+                      return (
+                        <Pressable
+                          key={roleOpt}
+                          style={({ pressed }) => [
+                            {
+                              flex: 1,
+                              minWidth: 80,
+                              paddingVertical: 8,
+                              alignItems: 'center',
+                              borderRadius: 6,
+                              borderWidth: 1.5,
+                              borderColor: isSelected ? BRAND.crimsonRed : T.border.variant,
+                              backgroundColor: isSelected
+                                ? (themeMode === 'dark' ? 'rgba(138, 18, 27, 0.2)' : 'rgba(138, 18, 27, 0.05)')
+                                : T.background.container,
+                            },
+                            pressed && { opacity: 0.8 }
+                          ]}
+                          onPress={async () => {
+                            const updatedUser = {
+                              ...(authUser || {}),
+                              role: roleOpt,
+                              user_type: roleOpt,
+                            };
+                            setAuthUser(updatedUser);
+                            await AsyncStorage.setItem('auth_user', JSON.stringify(updatedUser));
+                            if (roleOpt === 'driver') {
+                              // eslint-disable-next-line react-hooks/set-state-in-effect
+                              setActiveTab('loads');
+                            }
                           }}
                         >
-                          {roleOpt.replace('_', ' ')}
-                        </Text>
-                      </Pressable>
-                    );
-                  })}
+                          <Text
+                            style={{
+                              fontSize: 11,
+                              fontWeight: '700',
+                              color: isSelected ? BRAND.crimsonRed : T.text.secondary,
+                              textTransform: 'capitalize',
+                            }}
+                          >
+                            {roleOpt.replace('_', ' ')}
+                          </Text>
+                        </Pressable>
+                      );
+                    })}
+                  </View>
                 </View>
-              </View>
+              )}
 
               {/* Sign Out Button */}
               <Pressable

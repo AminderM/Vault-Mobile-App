@@ -16,7 +16,7 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import * as WebBrowser from 'expo-web-browser';
 import * as Sharing from 'expo-sharing';
-import * as FileSystem from 'expo-file-system';
+import { cacheDirectory, downloadAsync } from 'expo-file-system';
 import { listDocuments, deleteDocument } from '../lib/api';
 import { cancelExpiryReminders } from '../lib/expiryNotifications';
 import { BRAND, TYPOGRAPHY, SPACING, GlassCard, useTheme, createThemedStyleSheet } from '../lib/theme';
@@ -150,6 +150,7 @@ export default function DocumentVaultScreen({ onBack = undefined } = {}) {
   }, []);
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     loadDocuments();
   }, [loadDocuments]);
 
@@ -189,8 +190,8 @@ export default function DocumentVaultScreen({ onBack = undefined } = {}) {
       let localUri = fileUrl;
       if (fileUrl.startsWith('http')) {
         const ext    = fileUrl.split('?')[0].split('.').pop() || 'pdf';
-        const dest   = `${FileSystem.cacheDirectory}vault_share_${doc.id}.${ext}`;
-        const dl     = await FileSystem.downloadAsync(fileUrl, dest);
+        const dest   = `${cacheDirectory}vault_share_${doc.id}.${ext}`;
+        const dl     = await downloadAsync(fileUrl, dest);
         localUri     = dl.uri;
       }
 
