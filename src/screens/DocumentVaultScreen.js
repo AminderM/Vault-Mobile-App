@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import {
   View,
   StyleSheet,
@@ -25,16 +25,70 @@ import { BRAND, TYPOGRAPHY, SPACING, GlassCard, useTheme, createThemedStyleSheet
 
 const DOC_TYPE_META = {
   driverLicense:     { emoji: '🪪', label: "Driver's License" },
+  drivers_license:   { emoji: '🪪', label: "Driver's License" },
+  medical_card:      { emoji: '🩺', label: 'Medical Card' },
+  hazmat_cert:       { emoji: '☣️', label: 'Hazmat Certificate' },
+  twic_card:         { emoji: '💳', label: 'TWIC Card' },
+  abstract:          { emoji: '📋', label: 'Driver Abstract' },
+  cvor_certificate:  { emoji: '🏛️', label: 'CVOR Certificate' },
   coi:               { emoji: '🛡️', label: 'Certificate of Insurance' },
+  cargo_insurance:   { emoji: '🛡️', label: 'Cargo Insurance' },
+  liability_insurance: { emoji: '🛡️', label: 'Liability Insurance' },
   operatingAuthority:{ emoji: '📜', label: 'Operating Authority (MC/DOT)' },
+  operating_authority:{ emoji: '📜', label: 'Operating Authority (MC/DOT)' },
   nsc:               { emoji: '🏛️', label: 'National Safety Code' },
   ifta:              { emoji: '⛽', label: 'IFTA Certificate' },
+  ifta_license:      { emoji: '⛽', label: 'IFTA Certificate' },
   invoice:           { emoji: '🧾', label: 'Invoice' },
   receipt:           { emoji: '🧾', label: 'Receipt' },
+  expense_receipt:   { emoji: '🧾', label: 'Expense Receipt' },
   registration:      { emoji: '🚛', label: 'Vehicle Registration' },
+  vehicle_registration: { emoji: '🚛', label: 'Vehicle Registration' },
   insurance:         { emoji: '🛡️', label: 'Insurance' },
   contract:          { emoji: '📋', label: 'Contract' },
+  lease_agreement:   { emoji: '📋', label: 'Lease Agreement' },
+  void_cheque:       { emoji: '🏦', label: 'Void Cheque' },
+  sin_card:          { emoji: '🪪', label: 'SIN Card' },
 };
+
+const FOLDERS = [
+  { id: 'compliance', name: 'Compliance & Safety', emoji: '🪪', bg: 'rgba(43,135,255,0.08)', iconColor: '#2b87ff' },
+  { id: 'insurance',  name: 'Insurance & Authority', emoji: '🛡️', bg: 'rgba(0,204,102,0.08)', iconColor: '#00cc66' },
+  { id: 'loads',      name: 'Load Paperwork',        emoji: '📦', bg: 'rgba(255,153,0,0.08)', iconColor: '#ff9900' },
+  { id: 'fuel',       name: 'Fuel Receipts',         emoji: '⛽', bg: 'rgba(255,77,77,0.08)', iconColor: '#ff4d4d' },
+  { id: 'tolls',      name: 'Toll Receipts',         emoji: '🛣️', bg: 'rgba(166,166,166,0.08)', iconColor: '#a6a6a6' },
+  { id: 'maintenance',name: 'Maintenance Receipts',   emoji: '🔧', bg: 'rgba(51,204,204,0.08)', iconColor: '#33cccc' },
+  { id: 'meals',      name: 'Meals & Lodging',       emoji: '🍽️', bg: 'rgba(214,51,255,0.08)', iconColor: '#d633ff' },
+  { id: 'other_exp',  name: 'Other Expenses',        emoji: '🧾', bg: 'rgba(230,230,0,0.08)', iconColor: '#d1d100' },
+  { id: 'uncategorized', name: 'Other Documents',    emoji: '📄', bg: 'rgba(153,153,255,0.08)', iconColor: '#9999ff' },
+];
+
+function getDocumentFolder(doc) {
+  const type = (doc.doc_type || doc.docType || '').toLowerCase();
+  const notes = (doc.notes || '').toLowerCase();
+  
+  if (['drivers_license', 'driverslicense', 'driverlicense', 'medical_card', 'medicalcard', 'hazmat_cert', 'twic_card', 'abstract', 'cvor_certificate', 'nsc', 'sin_card'].includes(type)) {
+    return 'compliance';
+  }
+  
+  if (['coi', 'cargo_insurance', 'liability_insurance', 'operating_authority', 'operatingauthority', 'ifta_license', 'ifta', 'vehicle_registration', 'registration', 'insurance'].includes(type)) {
+    return 'insurance';
+  }
+  
+  if (['bol', 'rate_confirmation', 'invoice', 'contract', 'lease_agreement'].includes(type)) {
+    return 'loads';
+  }
+  
+  if (type === 'expense_receipt' || type === 'receipt' || type === 'fuel' || type === 'lumper') {
+    if (notes.includes('fuel')) return 'fuel';
+    if (notes.includes('toll')) return 'tolls';
+    if (notes.includes('maintain') || notes.includes('repair') || notes.includes('maintenance') || notes.includes('service') || notes.includes('tire')) return 'maintenance';
+    if (notes.includes('meal') || notes.includes('food') || notes.includes('lodg') || notes.includes('hotel') || notes.includes('motel')) return 'meals';
+    return 'other_exp';
+  }
+  
+  return 'uncategorized';
+}
 
 function getDocMeta(docType = '') {
   const key = Object.keys(DOC_TYPE_META).find(k => k.toLowerCase() === docType.toLowerCase()) || null;
@@ -133,8 +187,28 @@ export default function DocumentVaultScreen({ onBack = undefined } = {}) {
   const [documents, setDocuments] = useState([]);
   const [loading, setLoading]     = useState(true);
   const [viewingDoc, setViewingDoc] = useState(null);
+  const [currentFolder, setCurrentFolder] = useState(null);
   const { t: T } = useTheme();
   const styles = useStyles();
+
+  const folderCounts = useMemo(() => {
+    const counts = {};
+    FOLDERS.forEach(f => counts[f.id] = 0);
+    documents.forEach(doc => {
+      const folderId = getDocumentFolder(doc);
+      if (counts[folderId] !== undefined) {
+        counts[folderId]++;
+      } else {
+        counts['uncategorized']++;
+      }
+    });
+    return counts;
+  }, [documents]);
+
+  const filteredDocuments = useMemo(() => {
+    if (!currentFolder) return [];
+    return documents.filter(doc => getDocumentFolder(doc) === currentFolder);
+  }, [documents, currentFolder]);
 
   const loadDocuments = useCallback(async () => {
     try {
@@ -337,31 +411,69 @@ export default function DocumentVaultScreen({ onBack = undefined } = {}) {
     );
   }
 
+  const renderFolderItem = (folder) => {
+    const count = folderCounts[folder.id] || 0;
+    return (
+      <TouchableOpacity
+        key={folder.id}
+        style={styles.folderCard}
+        onPress={() => setCurrentFolder(folder.id)}
+        activeOpacity={0.85}
+        accessibilityRole="button"
+        accessibilityLabel={`${folder.name}, ${count} documents`}
+      >
+        <View style={[styles.folderIconBg, { backgroundColor: folder.bg }]}>
+          <Text style={{ fontSize: 26 }}>{folder.emoji}</Text>
+        </View>
+        <Text style={styles.folderName} numberOfLines={2}>{folder.name}</Text>
+        <Text style={styles.folderCount}>{count} document{count !== 1 ? 's' : ''}</Text>
+      </TouchableOpacity>
+    );
+  };
+
   // ── Main render ────────────────────────────────────────────────────────────
+  const folderInfo = FOLDERS.find(f => f.id === currentFolder);
+
+  const handleHeaderBack = () => {
+    if (currentFolder) {
+      setCurrentFolder(null);
+    } else if (onBack) {
+      onBack();
+    }
+  };
+
   return (
     <SafeAreaView style={styles.safe} edges={['top']}>
       <View style={styles.topHeader}>
-        {onBack && (
-          <TouchableOpacity style={styles.headerBtn} onPress={onBack} accessibilityRole="button" accessibilityLabel="Back">
+        {(currentFolder || onBack) && (
+          <TouchableOpacity style={styles.headerBtn} onPress={handleHeaderBack} accessibilityRole="button" accessibilityLabel="Back">
             <Text style={styles.headerIconText}>←</Text>
           </TouchableOpacity>
         )}
-        <Text style={styles.headerTitle}>Document Vault</Text>
+        <Text style={styles.headerTitle}>
+          {currentFolder ? `${folderInfo?.emoji}  ${folderInfo?.name}` : 'Document Vault'}
+        </Text>
         <View style={styles.headerCount}>
-          <Text style={styles.headerCountText}>{documents.length}</Text>
+          <Text style={styles.headerCountText}>
+            {currentFolder ? filteredDocuments.length : documents.length}
+          </Text>
         </View>
       </View>
 
       <View style={styles.container}>
-        {documents.length === 0 ? (
+        {!currentFolder ? (
+          <ScrollView contentContainerStyle={styles.foldersGrid} showsVerticalScrollIndicator={false}>
+            {FOLDERS.map(f => renderFolderItem(f))}
+          </ScrollView>
+        ) : filteredDocuments.length === 0 ? (
           <View style={styles.emptyContainer}>
-            <Text style={{ fontSize: 56 }}>🗄️</Text>
-            <Text style={styles.emptyText}>No documents yet</Text>
-            <Text style={styles.emptySubtext}>Start by scanning your first document</Text>
+            <Text style={{ fontSize: 56 }}>{folderInfo?.emoji || '🗄️'}</Text>
+            <Text style={styles.emptyText}>Folder is empty</Text>
+            <Text style={styles.emptySubtext}>Documents in this category will appear here</Text>
           </View>
         ) : (
           <FlatList
-            data={documents}
+            data={filteredDocuments}
             keyExtractor={(item) => item.id}
             renderItem={renderDocument}
             contentContainerStyle={styles.listContainer}
@@ -414,6 +526,48 @@ const useStyles = createThemedStyleSheet((T) => {
 
     container: { flex: 1, backgroundColor: 'transparent' },
     listContainer: { padding: 12, paddingBottom: 32 },
+
+    foldersGrid: {
+      padding: 16,
+      flexDirection: 'row',
+      flexWrap: 'wrap',
+      gap: 12,
+      justifyContent: 'space-between',
+    },
+    folderCard: {
+      width: '48%',
+      borderRadius: 12,
+      padding: 16,
+      borderWidth: 1.5,
+      borderColor: T.border.variant,
+      marginBottom: 4,
+      backgroundColor: isLight ? 'rgba(255, 255, 255, 0.9)' : 'rgba(25, 10, 10, 0.4)',
+      shadowColor: '#000',
+      shadowOffset: { width: 0, height: 2 },
+      shadowOpacity: isLight ? 0.04 : 0.2,
+      shadowRadius: 4,
+      elevation: 2,
+    },
+    folderIconBg: {
+      width: 48,
+      height: 48,
+      borderRadius: 10,
+      alignItems: 'center',
+      justifyContent: 'center',
+      marginBottom: 12,
+    },
+    folderName: {
+      fontSize: 14,
+      fontWeight: '700',
+      color: T.text.primary,
+      marginBottom: 4,
+      minHeight: 36,
+    },
+    folderCount: {
+      fontSize: 11,
+      color: T.text.secondary,
+      fontWeight: '600',
+    },
 
     // Document card
     documentCard: {

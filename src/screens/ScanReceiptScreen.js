@@ -11,7 +11,7 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import * as ImagePicker from 'expo-image-picker';
-import { scanReceipt, createExpense } from '../lib/api';
+import { scanReceipt, createExpense, saveDocument } from '../lib/api';
 import { BRAND, TYPOGRAPHY, SPACING, GlassCard, useTheme, createThemedStyleSheet } from '../lib/theme';
 
 // ── Category definitions ──────────────────────────────────────────────────────
@@ -46,6 +46,7 @@ export default function ScanReceiptScreen({ onExpenseSaved }) {
   const styles = useStyles();
 
   const [scanState, setScanState] = useState(STATES.IDLE);
+  const [scannedFile, setScannedFile] = useState(null);
 
   // Review form state (populated from scan result)
   const [description, setDescription]   = useState('');
@@ -59,6 +60,7 @@ export default function ScanReceiptScreen({ onExpenseSaved }) {
     setScanState(STATES.SCANNING);
     try {
       const file = { uri: asset.uri, type: asset.type || 'image/jpeg', name: asset.fileName || 'receipt.jpg' };
+      setScannedFile(file);
       const result = await scanReceipt(file);
 
       // Populate review form from AI result
@@ -98,6 +100,7 @@ export default function ScanReceiptScreen({ onExpenseSaved }) {
     }
     setScanState(STATES.SAVING);
     try {
+      // 1. Create numeric expense log
       await createExpense({
         description: description || 'Scanned Receipt',
         vendor:      vendor      || undefined,
@@ -105,6 +108,17 @@ export default function ScanReceiptScreen({ onExpenseSaved }) {
         category,
         date:        date        || new Date().toISOString().split('T')[0],
       });
+
+      // 2. Upload actual receipt file to Document Vault under 'expense_receipt' folder
+      if (scannedFile) {
+        await saveDocument({
+          docType: 'expense_receipt',
+          label: `${vendor || 'Receipt'} - ${description || 'Scanned Receipt'}`,
+          notes: category, // Store category (e.g. fuel, tolls) in notes to allow folder placement
+          file: scannedFile,
+        });
+      }
+
       setScanState(STATES.SAVED);
       if (onExpenseSaved) onExpenseSaved();
     } catch (err) {
@@ -115,6 +129,7 @@ export default function ScanReceiptScreen({ onExpenseSaved }) {
 
   const resetScan = () => {
     setScanState(STATES.IDLE);
+    setScannedFile(null);
     setDescription(''); setVendor(''); setAmount(''); setDate(''); setCategory('other');
   };
 
