@@ -242,25 +242,99 @@ function LoadCalculator({ T, styles }: { T: any; styles: any }) {
   const [rate, setRate] = useState('');
   const [distance, setDistance] = useState('');
   const [fuelPrice, setFuelPrice] = useState('');
-  const [mpg, setMpg] = useState('6.2');
-  const [accessorials, setAccessorials] = useState('');
+  const [fuelUnit, setFuelUnit] = useState<'gal' | 'liter'>('gal'); // $/GAL or $/L
+  const [efficiencyUnit, setEfficiencyUnit] = useState<'mpg' | 'l100km'>('mpg'); // MPG or L/100km
+  const [efficiency, setEfficiency] = useState('6.2'); // value in selected unit
   const [fees, setFees] = useState('');
+  // Multi-line accessorial charges
+  const [accessorialItems, setAccessorialItems] = useState<Array<{ id: string; description: string; amount: string }>>(
+    [{ id: '1', description: '', amount: '' }]
+  );
 
   const rateVal = parseFloat(rate) || 0;
   const distVal = parseFloat(distance) || 0;
   const fuelPriceVal = parseFloat(fuelPrice) || 0;
-  const mpgVal = parseFloat(mpg) || 6.2;
-  const accVal = parseFloat(accessorials) || 0;
+  const efficiencyVal = parseFloat(efficiency) || (efficiencyUnit === 'mpg' ? 6.2 : 37.8);
   const feesVal = parseFloat(fees) || 0;
+  const totalAccessorials = accessorialItems.reduce((sum, item) => sum + (parseFloat(item.amount) || 0), 0);
 
-  const grossRevenue = rateVal + accVal;
+  // Normalize fuel price to $/gallon for calculation
+  const fuelPricePerGal = fuelUnit === 'liter' ? fuelPriceVal * 3.78541 : fuelPriceVal;
+
+  // Normalize efficiency to MPG for calculation
+  // L/100km → MPG: mpg = 235.214 / (L/100km)
+  const mpgForCalc = efficiencyUnit === 'l100km'
+    ? (efficiencyVal > 0 ? 235.214 / efficiencyVal : 0)
+    : efficiencyVal;
+
+  const grossRevenue = rateVal + totalAccessorials;
   const rpm = distVal > 0 ? (grossRevenue / distVal).toFixed(2) : '0.00';
-  const fuelConsumed = mpgVal > 0 ? distVal / mpgVal : 0;
-  const fuelCost = fuelConsumed * fuelPriceVal;
+  const fuelConsumed = mpgForCalc > 0 ? distVal / mpgForCalc : 0; // gallons
+  const fuelCost = fuelConsumed * fuelPricePerGal;
   const totalCost = fuelCost + feesVal;
   const netProfit = grossRevenue - totalCost;
   const cpm = distVal > 0 ? (totalCost / distVal).toFixed(2) : '0.00';
   const profitMargin = grossRevenue > 0 ? ((netProfit / grossRevenue) * 100).toFixed(1) : '0.0';
+
+  // Toggle fuel unit and convert the existing value
+  const toggleFuelUnit = () => {
+    setFuelUnit(prev => {
+      const current = parseFloat(fuelPrice) || 0;
+      if (prev === 'gal') {
+        // $/gal → $/L: divide by 3.78541
+        if (current > 0) setFuelPrice((current / 3.78541).toFixed(3));
+        return 'liter';
+      } else {
+        // $/L → $/gal: multiply by 3.78541
+        if (current > 0) setFuelPrice((current * 3.78541).toFixed(2));
+        return 'gal';
+      }
+    });
+  };
+
+  // Toggle efficiency unit and convert the existing value
+  const toggleEfficiencyUnit = () => {
+    setEfficiencyUnit(prev => {
+      const current = parseFloat(efficiency) || 0;
+      if (prev === 'mpg') {
+        // MPG → L/100km: 235.214 / mpg
+        if (current > 0) setEfficiency((235.214 / current).toFixed(1));
+        return 'l100km';
+      } else {
+        // L/100km → MPG: 235.214 / (L/100km)
+        if (current > 0) setEfficiency((235.214 / current).toFixed(2));
+        return 'mpg';
+      }
+    });
+  };
+
+  const addAccessorialRow = () => {
+    setAccessorialItems(prev => [
+      ...prev,
+      { id: Date.now().toString(), description: '', amount: '' }
+    ]);
+  };
+
+  const removeAccessorialRow = (id: string) => {
+    setAccessorialItems(prev => prev.length > 1 ? prev.filter(item => item.id !== id) : prev);
+  };
+
+  const updateAccessorialItem = (id: string, field: 'description' | 'amount', value: string) => {
+    setAccessorialItems(prev =>
+      prev.map(item => item.id === id ? { ...item, [field]: value } : item)
+    );
+  };
+
+  const unitToggleStyle = {
+    paddingHorizontal: 10,
+    paddingVertical: 5,
+    borderRadius: 6,
+    backgroundColor: BRAND.crimsonRed + '22',
+    borderWidth: 1,
+    borderColor: BRAND.crimsonRed + '66',
+    alignSelf: 'flex-start' as const,
+    marginTop: 4,
+  };
 
   return (
     <View style={styles.formContainer}>
@@ -289,54 +363,107 @@ function LoadCalculator({ T, styles }: { T: any; styles: any }) {
         </View>
       </View>
 
+      {/* Fuel Price Row with unit toggle */}
       <View style={styles.inputRow}>
         <View style={styles.inputCell}>
-          <Text style={[styles.inputLabel, { color: T.text.secondary }]}>AVG FUEL PRICE ($/GAL)</Text>
+          <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 4 }}>
+            <Text style={[styles.inputLabel, { color: T.text.secondary, marginBottom: 0 }]}>
+              AVG FUEL PRICE ({fuelUnit === 'gal' ? '$/GAL' : '$/L'})
+            </Text>
+            <Pressable onPress={toggleFuelUnit} style={unitToggleStyle}>
+              <Text style={{ color: BRAND.crimsonRed, fontSize: 11, fontWeight: '700' }}>
+                {fuelUnit === 'gal' ? 'GAL' : 'LITER'}
+              </Text>
+            </Pressable>
+          </View>
           <TextInput
             style={[styles.modalInput, { backgroundColor: T.background.container, borderColor: T.border.variant, color: T.text.primary }]}
             value={fuelPrice}
             onChangeText={setFuelPrice}
-            placeholder="e.g. 3.85"
+            placeholder={fuelUnit === 'gal' ? 'e.g. 3.85' : 'e.g. 1.02'}
             placeholderTextColor={T.text.muted}
             keyboardType="numeric"
           />
         </View>
         <View style={styles.inputCell}>
-          <Text style={[styles.inputLabel, { color: T.text.secondary }]}>TRUCK MPG</Text>
+          <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 4 }}>
+            <Text style={[styles.inputLabel, { color: T.text.secondary, marginBottom: 0 }]}>
+              {efficiencyUnit === 'mpg' ? 'TRUCK MPG' : 'FUEL USE (L/100km)'}
+            </Text>
+            <Pressable onPress={toggleEfficiencyUnit} style={unitToggleStyle}>
+              <Text style={{ color: BRAND.crimsonRed, fontSize: 11, fontWeight: '700' }}>
+                {efficiencyUnit === 'mpg' ? 'MPG' : 'L/100km'}
+              </Text>
+            </Pressable>
+          </View>
           <TextInput
             style={[styles.modalInput, { backgroundColor: T.background.container, borderColor: T.border.variant, color: T.text.primary }]}
-            value={mpg}
-            onChangeText={setMpg}
-            placeholder="e.g. 6.2"
+            value={efficiency}
+            onChangeText={setEfficiency}
+            placeholder={efficiencyUnit === 'mpg' ? 'e.g. 6.2' : 'e.g. 37.8'}
             placeholderTextColor={T.text.muted}
             keyboardType="numeric"
           />
         </View>
       </View>
 
-      <View style={styles.inputRow}>
-        <View style={styles.inputCell}>
-          <Text style={[styles.inputLabel, { color: T.text.secondary }]}>ACCESSORIALS ($)</Text>
-          <TextInput
-            style={[styles.modalInput, { backgroundColor: T.background.container, borderColor: T.border.variant, color: T.text.primary }]}
-            value={accessorials}
-            onChangeText={setAccessorials}
-            placeholder="e.g. 150"
-            placeholderTextColor={T.text.muted}
-            keyboardType="numeric"
-          />
+      {/* Accessorial Charges — multi-line */}
+      <View style={{ marginBottom: 12 }}>
+        <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 6 }}>
+          <Text style={[styles.inputLabel, { color: T.text.secondary, marginBottom: 0 }]}>ACCESSORIAL CHARGES</Text>
+          <Pressable
+            onPress={addAccessorialRow}
+            style={{ flexDirection: 'row', alignItems: 'center', gap: 4, paddingHorizontal: 10, paddingVertical: 5, borderRadius: 6, backgroundColor: BRAND.profitGreen + '22', borderWidth: 1, borderColor: BRAND.profitGreen + '66' }}
+          >
+            <Text style={{ color: BRAND.profitGreen, fontSize: 14, fontWeight: '700', lineHeight: 16 }}>+</Text>
+            <Text style={{ color: BRAND.profitGreen, fontSize: 11, fontWeight: '700' }}>ADD</Text>
+          </Pressable>
         </View>
-        <View style={styles.inputCell}>
-          <Text style={[styles.inputLabel, { color: T.text.secondary }]}>TOLLS & FEES ($)</Text>
-          <TextInput
-            style={[styles.modalInput, { backgroundColor: T.background.container, borderColor: T.border.variant, color: T.text.primary }]}
-            value={fees}
-            onChangeText={setFees}
-            placeholder="e.g. 80"
-            placeholderTextColor={T.text.muted}
-            keyboardType="numeric"
-          />
-        </View>
+        {accessorialItems.map((item, idx) => (
+          <View key={item.id} style={{ flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 6 }}>
+            <TextInput
+              style={[styles.modalInput, { flex: 1, backgroundColor: T.background.container, borderColor: T.border.variant, color: T.text.primary }]}
+              value={item.description}
+              onChangeText={(val) => updateAccessorialItem(item.id, 'description', val)}
+              placeholder={idx === 0 ? 'e.g. Detention' : 'Description'}
+              placeholderTextColor={T.text.muted}
+            />
+            <TextInput
+              style={[styles.modalInput, { width: 90, backgroundColor: T.background.container, borderColor: T.border.variant, color: T.text.primary }]}
+              value={item.amount}
+              onChangeText={(val) => updateAccessorialItem(item.id, 'amount', val)}
+              placeholder="$0"
+              placeholderTextColor={T.text.muted}
+              keyboardType="numeric"
+            />
+            {accessorialItems.length > 1 && (
+              <Pressable
+                onPress={() => removeAccessorialRow(item.id)}
+                style={{ width: 28, height: 28, borderRadius: 6, backgroundColor: BRAND.crimsonRed + '22', borderWidth: 1, borderColor: BRAND.crimsonRed + '44', justifyContent: 'center', alignItems: 'center' }}
+              >
+                <Text style={{ color: BRAND.crimsonRed, fontSize: 16, fontWeight: '700', lineHeight: 18 }}>×</Text>
+              </Pressable>
+            )}
+          </View>
+        ))}
+        {totalAccessorials > 0 && (
+          <Text style={{ color: T.text.secondary, fontSize: 11, textAlign: 'right', marginTop: 2 }}>
+            Accessorials Total: <Text style={{ color: BRAND.profitGreen, fontWeight: '700' }}>${totalAccessorials.toFixed(2)}</Text>
+          </Text>
+        )}
+      </View>
+
+      {/* Tolls & Fees */}
+      <View style={{ marginBottom: 12 }}>
+        <Text style={[styles.inputLabel, { color: T.text.secondary }]}>TOLLS & FEES ($)</Text>
+        <TextInput
+          style={[styles.modalInput, { backgroundColor: T.background.container, borderColor: T.border.variant, color: T.text.primary }]}
+          value={fees}
+          onChangeText={setFees}
+          placeholder="e.g. 80"
+          placeholderTextColor={T.text.muted}
+          keyboardType="numeric"
+        />
       </View>
 
       {/* Calculations Summary Card */}
@@ -1375,6 +1502,7 @@ export default function AppTabs() {
         desc: 'Review operational expenditures and fuel stops.',
         icon: <ToolCashIcon color={BRAND.crimsonRedLight} />,
         action: () => {
+          setFinanceSubView('expenses');
           setActiveTab('finance');
         },
       },
@@ -1384,6 +1512,7 @@ export default function AppTabs() {
         desc: 'Track long-term revenue and business metrics.',
         icon: <ToolChartIcon color={BRAND.crimsonRedLight} />,
         action: () => {
+          setFinanceSubView('pnl');
           setActiveTab('finance');
         },
       },
