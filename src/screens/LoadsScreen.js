@@ -258,6 +258,7 @@ const STATUS_OPTIONS = [
 export default function LoadsScreen({ userType = 'owner_operator', onBackToHome = () => {}, onOpenProfile = () => {}, onCreateInvoice = () => {} } = {}) {
   const [loads, setLoads] = useState(DEMO_LOADS);
   const [loading, setLoading] = useState(false);
+  const [apiError, setApiError] = useState(null);
   const [activeTab, setActiveTab] = useState(userType === 'driver' ? 'active' : 'marketplace');
   const { t: T } = useTheme();
   const styles = useStyles();
@@ -291,6 +292,7 @@ export default function LoadsScreen({ userType = 'owner_operator', onBackToHome 
   const loadLoads = async () => {
     try {
       setLoading(true);
+      setApiError(null);
       const token = await getAuthToken();
       let fetchedLoads = [];
       
@@ -346,6 +348,7 @@ export default function LoadsScreen({ userType = 'owner_operator', onBackToHome 
       setLoads(filtered);
     } catch (err) {
       console.warn("Error loading loads from API, falling back to DEMO_LOADS:", err);
+      setApiError(err.message || 'Failed to fetch live loads.');
       // Fallback local filtering on DEMO_LOADS
       const allDemoLoads = [...DEMO_LOADS];
       for (let i = 0; i < allDemoLoads.length; i++) {
@@ -691,6 +694,11 @@ export default function LoadsScreen({ userType = 'owner_operator', onBackToHome 
       </View>
 
       <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
+        {apiError && (
+          <View style={styles.apiErrorBanner}>
+            <Text style={styles.apiErrorText}>⚠️ {apiError} (Offline/Demo Mode)</Text>
+          </View>
+        )}
         {/* Segmented Tabs */}
         <View style={styles.tabBar}>
           {filteredTabs.map((tab) => (
@@ -1354,4 +1362,20 @@ const useStyles = createThemedStyleSheet((T) => StyleSheet.create({
   },
   acceptBtnText: { ...TYPOGRAPHY.headlineSm, color: '#ffffff', fontWeight: '700', fontSize: 13 },
   pressed: { opacity: 0.75 },
+  apiErrorBanner: {
+    backgroundColor: 'rgba(198, 40, 40, 0.15)',
+    borderWidth: 1,
+    borderColor: '#c62828',
+    borderRadius: 8,
+    padding: 12,
+    marginHorizontal: 16,
+    marginTop: 16,
+    marginBottom: 8,
+  },
+  apiErrorText: {
+    color: '#e53935',
+    fontSize: 13,
+    fontWeight: '600',
+    textAlign: 'center',
+  },
 }));

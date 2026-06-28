@@ -190,6 +190,7 @@ export default function DocumentVaultScreen({ onBack = undefined } = {}) {
   const [viewingDoc, setViewingDoc] = useState(null);
   const [currentFolder, setCurrentFolder] = useState(null);
   const [uploadModalVisible, setUploadModalVisible] = useState(false);
+  const [apiError, setApiError] = useState(null);
   const { t: T } = useTheme();
   const styles = useStyles();
 
@@ -215,10 +216,12 @@ export default function DocumentVaultScreen({ onBack = undefined } = {}) {
   const loadDocuments = useCallback(async () => {
     try {
       setLoading(true);
+      setApiError(null);
       const data = await listDocuments();
       setDocuments(Array.isArray(data) ? data : []);
-    } catch {
-      Alert.alert('Error', 'Failed to load documents');
+    } catch (err) {
+      console.warn("Failed to load documents:", err);
+      setApiError(err.message || 'Failed to load documents from server.');
       setDocuments([]);
     } finally {
       setLoading(false);
@@ -461,6 +464,12 @@ export default function DocumentVaultScreen({ onBack = undefined } = {}) {
           </Text>
         </View>
       </View>
+
+      {apiError && (
+        <View style={styles.apiErrorBanner}>
+          <Text style={styles.apiErrorText}>⚠️ {apiError} (Offline/Cached Mode)</Text>
+        </View>
+      )}
 
       <View style={styles.container}>
         {!currentFolder ? (
@@ -719,6 +728,22 @@ const useStyles = createThemedStyleSheet((T) => {
       fontSize: 32,
       fontWeight: '300',
       marginTop: -2,
+    },
+    apiErrorBanner: {
+      backgroundColor: 'rgba(198, 40, 40, 0.15)',
+      borderWidth: 1,
+      borderColor: '#c62828',
+      borderRadius: 8,
+      padding: 12,
+      marginHorizontal: 16,
+      marginTop: 16,
+      marginBottom: 8,
+    },
+    apiErrorText: {
+      color: '#e53935',
+      fontSize: 13,
+      fontWeight: '600',
+      textAlign: 'center',
     },
   });
 });
