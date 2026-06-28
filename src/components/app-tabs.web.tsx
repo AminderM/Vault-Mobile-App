@@ -27,7 +27,7 @@ import OnboardingInviteScreen from '@/screens/OnboardingInviteScreen';
 import ChatScreen from '@/screens/ChatScreen';
 import * as Linking from 'expo-linking';
 import { BRAND, useTheme, toggleTheme, StatusBorderCard } from '@/lib/theme';
-import { saveDocument, logout, isAuthenticated, getAuthUser, getMe } from '../lib/api';
+import { saveDocument, logout, isAuthenticated, getAuthUser, getMe, registerAuthFailureListener } from '../lib/api';
 import { checkDueNotifications } from '../lib/expiryNotifications';
 
 type TabName = 'loads' | 'vault' | 'scan' | 'finance' | 'tools' | 'chat';
@@ -1143,6 +1143,16 @@ export default function AppTabs() {
   }, []);
 
   React.useEffect(() => {
+    registerAuthFailureListener(() => {
+      setAuthUser(null);
+      setAppState('login');
+      if (Platform.OS === 'web') {
+        alert('Your session has expired. Please log in again.');
+      } else {
+        Alert.alert('Session Expired', 'Your session has expired. Please log in again.');
+      }
+    });
+
     const checkAuth = async () => {
       try {
         await checkDueNotifications();

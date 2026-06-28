@@ -14,6 +14,37 @@ const AUTH_TOKEN_KEY = 'auth_token';
 const AUTH_USER_KEY = 'auth_user';
 const LOCAL_DOCS_KEY = 'vault_local_documents';
 
+// ============== AUTH INTERCEPTOR ==============
+
+let authFailureListener = null;
+
+export function registerAuthFailureListener(listener) {
+  authFailureListener = listener;
+}
+
+export function triggerAuthFailure() {
+  if (authFailureListener) {
+    authFailureListener();
+  }
+}
+
+const _global = typeof global !== 'undefined' ? global : typeof window !== 'undefined' ? window : {};
+const _originalFetch = (_global.fetch || fetch);
+
+if (_global && _originalFetch) {
+  _global.fetch = async function(input, init) {
+    const res = await _originalFetch(input, init);
+    if (res.status === 401 || res.status === 403) {
+      const urlStr = typeof input === 'string' ? input : (input && input.url) ? input.url : '';
+      if (urlStr.includes(API_BASE)) {
+        logout().catch(() => {});
+        triggerAuthFailure();
+      }
+    }
+    return res;
+  };
+}
+
 // ============== AUTH TOKEN HELPERS ==============
 
 export async function getAuthToken() {
