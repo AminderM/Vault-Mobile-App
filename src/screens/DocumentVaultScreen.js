@@ -20,6 +20,7 @@ import { cacheDirectory, downloadAsync } from 'expo-file-system';
 import { listDocuments, deleteDocument } from '../lib/api';
 import { cancelExpiryReminders } from '../lib/expiryNotifications';
 import { BRAND, TYPOGRAPHY, SPACING, GlassCard, useTheme, createThemedStyleSheet } from '../lib/theme';
+import FilePickerScreen from './FilePickerScreen';
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
@@ -188,6 +189,7 @@ export default function DocumentVaultScreen({ onBack = undefined } = {}) {
   const [loading, setLoading]     = useState(true);
   const [viewingDoc, setViewingDoc] = useState(null);
   const [currentFolder, setCurrentFolder] = useState(null);
+  const [uploadModalVisible, setUploadModalVisible] = useState(false);
   const { t: T } = useTheme();
   const styles = useStyles();
 
@@ -494,6 +496,30 @@ export default function DocumentVaultScreen({ onBack = undefined } = {}) {
           styles={styles}
         />
       )}
+
+      {/* Floating Action Button for manual upload */}
+      <TouchableOpacity
+        style={styles.fab}
+        onPress={() => setUploadModalVisible(true)}
+        accessibilityRole="button"
+        accessibilityLabel="Upload Document"
+      >
+        <Text style={styles.fabText}>+</Text>
+      </TouchableOpacity>
+
+      {/* Manual Upload Modal */}
+      <Modal
+        visible={uploadModalVisible}
+        animationType="slide"
+        onRequestClose={() => setUploadModalVisible(false)}
+      >
+        <SafeAreaView style={{ flex: 1, backgroundColor: T.background.base }} edges={['top', 'bottom']}>
+          <FilePickerScreen onClose={() => {
+            setUploadModalVisible(false);
+            loadDocuments();
+          }} />
+        </SafeAreaView>
+      </Modal>
     </SafeAreaView>
   );
 }
@@ -672,5 +698,27 @@ const useStyles = createThemedStyleSheet((T) => {
       borderRadius: 8, backgroundColor: BRAND.crimsonRed,
     },
     viewerOpenBtnText: { color: '#fff', fontWeight: '800', fontSize: 14, letterSpacing: 0.5 },
+    fab: {
+      position: 'absolute',
+      right: 20,
+      bottom: 20,
+      width: 56,
+      height: 56,
+      borderRadius: 28,
+      backgroundColor: BRAND.crimsonRed,
+      justifyContent: 'center',
+      alignItems: 'center',
+      elevation: 5,
+      shadowColor: '#000',
+      shadowOffset: { width: 0, height: 2 },
+      shadowOpacity: 0.25,
+      shadowRadius: 3.84,
+    },
+    fabText: {
+      color: '#fff',
+      fontSize: 32,
+      fontWeight: '300',
+      marginTop: -2,
+    },
   });
 });
