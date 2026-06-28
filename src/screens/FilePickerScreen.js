@@ -26,7 +26,7 @@ const DOCUMENT_CATEGORIES = [
   { id: 'other', label: 'Other', icon: '📝' },
 ];
 
-export default function FilePickerScreen() {
+export default function FilePickerScreen({ onClose }) {
   const [selectedFile, setSelectedFile] = useState(null);
   const [selectedCategory, setSelectedCategory] = useState(null);
   const [expiryDate, setExpiryDate] = useState('');
@@ -88,6 +88,7 @@ export default function FilePickerScreen() {
             setSelectedCategory(null);
             setExpiryDate('');
             setNotes('');
+            if (onClose) onClose();
           },
         },
       ]);
@@ -102,8 +103,17 @@ export default function FilePickerScreen() {
     <ScrollView style={styles.container}>
       {/* Header */}
       <View style={styles.header}>
-        <Text style={styles.title}>Upload to Vault</Text>
-        <Text style={styles.subtitle}>Add files manually to your vault</Text>
+        <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
+          <View style={{ flex: 1 }}>
+            <Text style={styles.title}>Upload to Vault</Text>
+            <Text style={styles.subtitle}>Add files manually to your vault</Text>
+          </View>
+          {onClose && (
+            <TouchableOpacity onPress={onClose} style={styles.closeBtn} accessibilityRole="button" accessibilityLabel="Close">
+              <Text style={styles.closeBtnText}>✕</Text>
+            </TouchableOpacity>
+          )}
+        </View>
       </View>
 
       {/* File Selection */}
@@ -223,6 +233,16 @@ const styles = StyleSheet.create({
     backgroundColor: theme.primary,
     padding: 20,
     paddingTop: 12,
+  },
+  closeBtn: {
+    paddingLeft: 12,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  closeBtnText: {
+    fontSize: 22,
+    color: theme.primaryText,
+    fontWeight: 'bold',
   },
   title: {
     fontSize: 28,
