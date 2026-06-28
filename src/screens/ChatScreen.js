@@ -9,133 +9,118 @@ import {
   KeyboardAvoidingView,
   Platform,
   ActivityIndicator,
+  Alert,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import AsyncStorage from '@react-native-async-storage/async-storage';
+import { getDriverLoads } from '../lib/tms';
+import { getChatMessages, sendChatMessage } from '../lib/api';
 import { BRAND, useTheme, createThemedStyleSheet } from '../lib/theme';
-
-const CHAT_STORAGE_KEY = 'vault_chat_messages';
-
-const INITIAL_MESSAGES = [
-  {
-    id: 'init_1',
-    sender: 'dispatcher',
-    text: 'Welcome to your carrier dispatch channel. Assigned loads will be listed on your Home board.',
-    timestamp: '10:00 AM',
-  },
-  {
-    id: 'init_2',
-    sender: 'dispatcher',
-    text: 'Please log your gate check-in/out times for Stop 1 and Stop 2 directly in the active load updates.',
-    timestamp: '10:01 AM',
-  },
-];
-
-const DISPATCH_RESPONSES = [
-  "Copy that. Update Stop 1 gate times when arrived.",
-  "Understood. Please upload BOL/POD once delivery is signed.",
-  "Perfect, documents received and approved in TMS.",
-  "Understood. Keep us updated on traffic or delays.",
-  "Roger that, dispatcher notified.",
-  "Dispatched order details updated. Check your Home tab.",
-];
+const formatTime = (dateStr) => {
+  if (!dateStr) return '';
+  try {
+    const date = new Date(dateStr);
+    return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+  } catch {
+    return '';
+  }
+};
 
 export default function ChatScreen() {
   const { t: T } = useTheme();
   const styles = useStyles();
+  const [activeLoad, setActiveLoad] = useState(null);
   const [messages, setMessages] = useState([]);
   const [inputText, setInputText] = useState('');
-  const [isTyping, setIsTyping] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
+  const [errorMsg, setErrorMsg] = useState('');
   const flatListRef = useRef(null);
 
-  // Load chat history
+  // 1. Fetch active driver loads to find a load to chat about
   useEffect(() => {
-    const loadMessages = async () => {
+    let active = true;
+    const fetchActiveLoad = async () => {
       try {
-        const stored = await AsyncStorage.getItem(CHAT_STORAGE_KEY);
-        if (stored) {
-          setMessages(JSON.parse(stored));
+        const loads = await getDriverLoads();
+        if (!active) return;
+        
+        // Find the first active/assigned load, or latest load
+        const activeStatuses = ['assigned', 'en_route_pickup', 'arrived_pickup', 'loaded', 'en_route_delivery', 'arrived_delivery'];
+        const found = loads.find(l => activeStatuses.includes(l.status)) || loads[0];
+        
+        if (found) {
+          setActiveLoad(found);
         } else {
-          setMessages(INITIAL_MESSAGES);
+          setIsLoading(false);
         }
-      } catch {
-        setMessages(INITIAL_MESSAGES);
+      } catch (_err) {
+        if (active) {
+          console.warn('Failed to fetch driver loads for chat', _err);
+          setIsLoading(false);
+        }
       }
     };
-    loadMessages();
+    
+    fetchActiveLoad();
+    return () => { active = false; };
   }, []);
 
-  // Save messages
-  const saveMessages = async (newMessages) => {
-    try {
-      await AsyncStorage.setItem(CHAT_STORAGE_KEY, JSON.stringify(newMessages));
-    } catch (err) {
-      console.warn('Failed to save chat history', err);
-    }
-  };
-
-  const handleSend = async () => {
-    if (!inputText.trim()) return;
-
-    // eslint-disable-next-line react-hooks/purity
-    const timeStr = new Date().toLocaleTimeString(undefined, {
-      hour: '2-digit',
-      minute: '2-digit',
-    });
-
-    // eslint-disable-next-line react-hooks/purity
-    const userMessage = {
-      // eslint-disable-next-line react-hooks/purity
-      id: `msg_${Date.now()}`,
-      sender: 'driver',
-      text: inputText.trim(),
-      timestamp: timeStr,
+  // 2. Poll messages if we have an active load
+  useEffect(() => {
+    if (!activeLoad) return;
+    
+    let active = true;
+    const pollMessages = async () => {
+      try {
+        const msgs = await getChatMessages(activeLoad.id);
+        if (!active) return;
+        
+        const mapped = msgs.map(m => ({
+          id: m.id || String(Math.random()),
+          sender: m.sender_type === 'driver' ? 'driver' : 'dispatcher',
+          text: m.content,
+          timestamp: formatTime(m.sent_at),
+        }));
+        
+        setMessages(mapped);
+        setErrorMsg('');
+      } catch (_err) {
+        if (active && messages.length === 0) {
+          setErrorMsg('Failed to load chat history.');
+        }
+      } finally {
+        if (active) setIsLoading(false);
+      }
     };
 
-    const updatedMessages = [...messages, userMessage];
-    setMessages(updatedMessages);
-    saveMessages(updatedMessages);
+    pollMessages();
+    const interval = setInterval(pollMessages, 4000);
+    
+    return () => {
+      active = false;
+      clearInterval(interval);
+    };
+  }, [activeLoad, messages.length]);
+
+  const handleSend = async () => {
+    const text = inputText.trim();
+    if (!text || !activeLoad) return;
+
     setInputText('');
-
-    // Trigger dispatcher response simulation
-    setIsTyping(true);
-    setTimeout(() => {
-      const responseText = selectResponse(userMessage.text);
-      // eslint-disable-next-line react-hooks/purity
-      const dispTime = new Date().toLocaleTimeString(undefined, {
-        hour: '2-digit',
-        minute: '2-digit',
-      });
-      // eslint-disable-next-line react-hooks/purity
-      const dispMessage = {
-        // eslint-disable-next-line react-hooks/purity
-        id: `msg_${Date.now() + 1}`,
-        sender: 'dispatcher',
-        text: responseText,
-        timestamp: dispTime,
-      };
-
-      const finalMessages = [...updatedMessages, dispMessage];
-      setMessages(finalMessages);
-      saveMessages(finalMessages);
-      setIsTyping(false);
-    }, 1500);
-  };
-
-  const selectResponse = (userText) => {
-    const text = userText.toLowerCase();
-    if (text.includes('arrive') || text.includes('here') || text.includes('check')) {
-      return "Roger that. Proceed to load/unload and remember to update load status.";
+    try {
+      await sendChatMessage(activeLoad.id, text);
+      // Immediately refresh messages
+      const msgs = await getChatMessages(activeLoad.id);
+      const mapped = msgs.map(m => ({
+        id: m.id || String(Math.random()),
+        sender: m.sender_type === 'driver' ? 'driver' : 'dispatcher',
+        text: m.content,
+        timestamp: formatTime(m.sent_at),
+      }));
+      setMessages(mapped);
+    } catch (_err) {
+      Alert.alert('Send Failed', 'Could not send message. Please check connection.');
+      setInputText(text);
     }
-    if (text.includes('document') || text.includes('pod') || text.includes('bol') || text.includes('paper')) {
-      return "Got it. Make sure the signatures are clearly visible before saving to the load.";
-    }
-    if (text.includes('delay') || text.includes('traffic') || text.includes('flat') || text.includes('break')) {
-      return "Safety first. We will update the receiver of the new ETA. Stay safe!";
-    }
-    // Random fallback
-    // eslint-disable-next-line react-hooks/purity
-    return DISPATCH_RESPONSES[Math.floor(Math.random() * DISPATCH_RESPONSES.length)];
   };
 
   const renderItem = ({ item }) => {
@@ -154,6 +139,34 @@ export default function ChatScreen() {
     );
   };
 
+  if (isLoading) {
+    return (
+      <SafeAreaView style={styles.safe} edges={['top']}>
+        <View style={styles.centerContainer}>
+          <ActivityIndicator size="large" color={T.primary} />
+          <Text style={styles.loadingText}>Connecting to dispatcher...</Text>
+        </View>
+      </SafeAreaView>
+    );
+  }
+
+  if (!activeLoad) {
+    return (
+      <SafeAreaView style={styles.safe} edges={['top']}>
+        <View style={styles.topHeader}>
+          <Text style={styles.headerTitle}>Carrier Dispatch</Text>
+        </View>
+        <View style={styles.centerContainer}>
+          <Text style={{ fontSize: 48, marginBottom: 16 }}>💬</Text>
+          <Text style={styles.noLoadTitle}>No Active Load Assigned</Text>
+          <Text style={styles.noLoadSubtitle}>
+            Your direct chat channel to the TMS dispatch team will automatically open when you are assigned an active load.
+          </Text>
+        </View>
+      </SafeAreaView>
+    );
+  }
+
   return (
     <SafeAreaView style={styles.safe} edges={['top']}>
       {/* Top Header Bar */}
@@ -163,8 +176,10 @@ export default function ChatScreen() {
             <Text style={{ fontSize: 18 }}>📞</Text>
           </View>
           <View>
-            <Text style={styles.headerTitle}>Carrier Dispatch</Text>
-            <Text style={styles.headerSubtitle}>Emergent Logistics TMS • Online</Text>
+            <Text style={styles.headerTitle}>
+              {activeLoad.order_number || `Load #${activeLoad.id.slice(0, 8).toUpperCase()}`}
+            </Text>
+            <Text style={styles.headerSubtitle}>Emergent Logistics TMS • Live Chat</Text>
           </View>
         </View>
       </View>
@@ -185,12 +200,11 @@ export default function ChatScreen() {
           onLayout={() => flatListRef.current?.scrollToEnd({ animated: true })}
         />
 
-        {isTyping && (
-          <View style={styles.typingContainer}>
-            <ActivityIndicator size="small" color={T.primary} style={{ marginRight: 6 }} />
-            <Text style={styles.typingText}>Carrier Dispatcher is typing...</Text>
+        {errorMsg ? (
+          <View style={styles.errorBanner}>
+            <Text style={styles.errorText}>{errorMsg}</Text>
           </View>
-        )}
+        ) : null}
 
         {/* Input Bar */}
         <View style={styles.inputContainer}>
@@ -201,7 +215,6 @@ export default function ChatScreen() {
             placeholder="Type message to dispatcher..."
             placeholderTextColor={T.text.muted}
             onSubmitEditing={handleSend}
-            editable={!isTyping}
           />
           <Pressable
             style={({ pressed }) => [
@@ -210,7 +223,7 @@ export default function ChatScreen() {
               !inputText.trim() && styles.sendBtnDisabled,
             ]}
             onPress={handleSend}
-            disabled={!inputText.trim() || isTyping}
+            disabled={!inputText.trim()}
           >
             <Text style={styles.sendBtnText}>➔</Text>
           </Pressable>
@@ -224,6 +237,30 @@ const useStyles = createThemedStyleSheet((T) => {
   const isLight = T.background.base === '#edeef3';
   return StyleSheet.create({
     safe: { flex: 1, backgroundColor: 'transparent' },
+    centerContainer: {
+      flex: 1,
+      justifyContent: 'center',
+      alignItems: 'center',
+      paddingHorizontal: 32,
+    },
+    loadingText: {
+      marginTop: 12,
+      fontSize: 14,
+      color: T.text.secondary,
+    },
+    noLoadTitle: {
+      fontSize: 20,
+      fontWeight: 'bold',
+      color: T.text.primary,
+      marginBottom: 8,
+      textAlign: 'center',
+    },
+    noLoadSubtitle: {
+      fontSize: 14,
+      color: T.text.secondary,
+      textAlign: 'center',
+      lineHeight: 20,
+    },
     topHeader: {
       height: 64,
       flexDirection: 'row',
@@ -308,6 +345,16 @@ const useStyles = createThemedStyleSheet((T) => {
       fontSize: 11,
       color: T.text.secondary,
       fontStyle: 'italic',
+    },
+    errorBanner: {
+      backgroundColor: 'rgba(239, 68, 68, 0.1)',
+      paddingVertical: 8,
+      paddingHorizontal: 16,
+      alignItems: 'center',
+    },
+    errorText: {
+      color: '#ef4444',
+      fontSize: 12,
     },
     inputContainer: {
       flexDirection: 'row',
