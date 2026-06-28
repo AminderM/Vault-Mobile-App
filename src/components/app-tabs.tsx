@@ -28,6 +28,7 @@ import ChatScreen from '@/screens/ChatScreen';
 import * as Linking from 'expo-linking';
 import { BRAND, useTheme, toggleTheme, StatusBorderCard } from '@/lib/theme';
 import { saveDocument, logout, isAuthenticated, getAuthUser, getMe } from '../lib/api';
+import { checkDueNotifications } from '../lib/expiryNotifications';
 
 type TabName = 'loads' | 'vault' | 'scan' | 'finance' | 'tools' | 'chat';
 
@@ -1051,10 +1052,10 @@ const generateCarrierProfilePDF = (profile: {
 function parseInviteToken(url: string | null): string | null {
   if (!url) return null;
   try {
-    // Match /invite/{token} path parameter
-    const pathMatch = url.match(/\/invite\/([a-zA-Z0-9_-]+)/);
-    if (pathMatch && pathMatch[1] && pathMatch[1] !== 'setup') {
-      return pathMatch[1];
+    // Match /invite/{token} or /driver-setup/{token} path parameter
+    const pathMatch = url.match(/\/(invite|driver-setup)\/([a-zA-Z0-9_-]+)/);
+    if (pathMatch && pathMatch[2] && pathMatch[2] !== 'setup') {
+      return pathMatch[2];
     }
     // Match search query parameter (e.g. ?token=...)
     const urlObj = new URL(url);
@@ -1143,6 +1144,11 @@ export default function AppTabs() {
 
   React.useEffect(() => {
     const checkAuth = async () => {
+      try {
+        await checkDueNotifications();
+      } catch (err) {
+        console.warn('Failed to check due notifications on startup', err);
+      }
       try {
         const hasAuth = await isAuthenticated();
         if (hasAuth) {

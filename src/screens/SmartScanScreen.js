@@ -13,6 +13,7 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import * as ImagePicker from 'expo-image-picker';
 import { scanIdentify, saveDocument } from '../lib/api';
+import { scheduleExpiryReminders } from '../lib/expiryNotifications';
 import { BRAND, TYPOGRAPHY, SPACING, GlassCard, StatusBorderCard, createGlassCard, useTheme, createThemedStyleSheet } from '../lib/theme';
 
 const DOC_CATEGORIES = [
@@ -136,7 +137,7 @@ export default function SmartScanScreen() {
         name: 'scan.jpg'
       } : null;
 
-      await saveDocument({
+      const savedDoc = await saveDocument({
         docType: selectedCategory,
         expiryDate: expiryDate || null,
         description: referenceNo ? `Ref: ${referenceNo}` : 'Scanned Document',
@@ -144,6 +145,15 @@ export default function SmartScanScreen() {
         file: fileObj,
         uploadedAt: new Date().toISOString(),
       });
+
+      if (expiryDate && savedDoc && savedDoc.id) {
+        try {
+          const categoryLabel = DOC_CATEGORIES.find(c => c.id === selectedCategory)?.label || selectedCategory;
+          await scheduleExpiryReminders(savedDoc.id, referenceNo || 'Scanned Document', categoryLabel, expiryDate);
+        } catch (e) {
+          console.warn('Failed to schedule expiry reminder:', e);
+        }
+      }
 
       Alert.alert('✅ Saved', 'Document saved to Vault!', [
         { text: 'OK', onPress: () => {
