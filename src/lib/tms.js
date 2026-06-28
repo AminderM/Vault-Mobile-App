@@ -29,10 +29,13 @@ export async function getAvailableLoads(token, filters = {}) {
         params.append(key, filters[key]);
       }
     }
+    
+    // Target the correct backend carrier fleet endpoint for pending offers
+    if (!params.has('status')) {
+      params.append('status', 'pending');
+    }
     const queryString = params.toString();
-    const url = queryString 
-      ? `${API_BASE}/api/loads/available?${queryString}`
-      : `${API_BASE}/api/loads/available`;
+    const url = `${API_BASE}/api/driver-mobile/fleet/loads?${queryString}`;
 
     const response = await fetch(url, {
       method: 'GET',
@@ -40,12 +43,23 @@ export async function getAvailableLoads(token, filters = {}) {
     });
 
     if (!response.ok) {
+      // If carrier fleet fails or returns 403 (e.g. for drivers), fallback to driver-specific loads
+      if (response.status === 403) {
+        const driverRes = await fetch(`${API_BASE}/api/driver-mobile/loads`, {
+          method: 'GET',
+          headers,
+        });
+        if (driverRes.ok) {
+          const driverData = await driverRes.json();
+          return Array.isArray(driverData) ? driverData : (driverData.loads || []);
+        }
+      }
       const data = await response.json().catch(() => ({}));
-      throw new Error(data.error || 'Failed to fetch loads');
+      throw new Error(data.detail || data.error || 'Failed to fetch loads');
     }
 
     const data = await response.json();
-    return data.loads || [];
+    return Array.isArray(data) ? data : (data.loads || []);
   } catch (error) {
     throw new Error(error.message || 'Failed to fetch loads');
   }
@@ -59,19 +73,19 @@ export async function getAvailableLoads(token, filters = {}) {
 export async function getLoadDetail(loadId, token) {
   try {
     const headers = await getHeaders(token);
-    const response = await fetch(`${API_BASE}/api/loads/${loadId}`, {
+    const response = await fetch(`${API_BASE}/api/driver-mobile/loads/${loadId}`, {
       method: 'GET',
       headers,
     });
 
     if (!response.ok) {
       const data = await response.json().catch(() => ({}));
-      throw new Error(data.error || 'Failed to fetch load');
+      throw new Error(data.detail || data.error || 'Failed to fetch load details');
     }
 
     return await response.json();
   } catch (error) {
-    throw new Error(error.message || 'Failed to fetch load');
+    throw new Error(error.message || 'Failed to fetch load details');
   }
 }
 
@@ -84,7 +98,7 @@ export async function getLoadDetail(loadId, token) {
 export async function acceptLoad(loadId, driverId, token) {
   try {
     const headers = await getHeaders(token);
-    const response = await fetch(`${API_BASE}/api/loads/${loadId}/accept`, {
+    const response = await fetch(`${API_BASE}/api/driver-mobile/loads/${loadId}/accept`, {
       method: 'POST',
       headers,
       body: JSON.stringify({ driverId }),
@@ -92,7 +106,7 @@ export async function acceptLoad(loadId, driverId, token) {
 
     if (!response.ok) {
       const data = await response.json().catch(() => ({}));
-      throw new Error(data.error || 'Failed to accept load');
+      throw new Error(data.detail || data.error || 'Failed to accept load');
     }
 
     const data = await response.json();
@@ -114,7 +128,7 @@ export async function acceptLoad(loadId, driverId, token) {
 export async function rejectLoad(loadId, token, reason = '') {
   try {
     const headers = await getHeaders(token);
-    const response = await fetch(`${API_BASE}/api/loads/${loadId}/reject`, {
+    const response = await fetch(`${API_BASE}/api/driver-mobile/loads/${loadId}/reject`, {
       method: 'POST',
       headers,
       body: JSON.stringify({ reason }),
@@ -122,7 +136,7 @@ export async function rejectLoad(loadId, token, reason = '') {
 
     if (!response.ok) {
       const data = await response.json().catch(() => ({}));
-      throw new Error(data.error || 'Failed to reject load');
+      throw new Error(data.detail || data.error || 'Failed to reject load');
     }
 
     const data = await response.json();
@@ -136,24 +150,25 @@ export async function rejectLoad(loadId, token, reason = '') {
 }
 
 /**
- * Fetch loads assigned to the current driver
+ * Fetch loads assigned to the current driver or carrier
  * @param {string} [token] 
  */
 export async function getMyLoads(token) {
   try {
     const headers = await getHeaders(token);
-    const response = await fetch(`${API_BASE}/api/loads/my-loads`, {
+    // Fetch custom loads created directly by driver/carrier
+    const response = await fetch(`${API_BASE}/api/driver-mobile/my-loads`, {
       method: 'GET',
       headers,
     });
 
     if (!response.ok) {
       const data = await response.json().catch(() => ({}));
-      throw new Error(data.error || 'Failed to fetch your loads');
+      throw new Error(data.detail || data.error || 'Failed to fetch your loads');
     }
 
     const data = await response.json();
-    return data.loads || [];
+    return Array.isArray(data) ? data : (data.loads || []);
   } catch (error) {
     throw new Error(error.message || 'Failed to fetch your loads');
   }
@@ -168,15 +183,16 @@ export async function getMyLoads(token) {
 export async function updateLoadStatus(loadId, status, token) {
   try {
     const headers = await getHeaders(token);
-    const response = await fetch(`${API_BASE}/api/loads/${loadId}/status`, {
-      method: 'PATCH',
+    // Target correct POST endpoint on backend
+    const response = await fetch(`${API_BASE}/api/driver-mobile/loads/${loadId}/status`, {
+      method: 'POST',
       headers,
       body: JSON.stringify({ status }),
     });
 
     if (!response.ok) {
       const data = await response.json().catch(() => ({}));
-      throw new Error(data.error || 'Failed to update load status');
+      throw new Error(data.detail || data.error || 'Failed to update load status');
     }
 
     return await response.json();

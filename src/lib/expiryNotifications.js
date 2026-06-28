@@ -9,7 +9,7 @@ export async function scheduleExpiryReminders(docId, label, docType, expiryDate)
   if (!expiryDate) return;
 
   const expiryMs = new Date(expiryDate).getTime();
-  const jobs = getJobs();
+  const jobs = await getJobs();
 
   THRESHOLDS.forEach(days => {
     const dueMs = expiryMs - days * 86400000;
@@ -39,21 +39,21 @@ export async function scheduleExpiryReminders(docId, label, docType, expiryDate)
     };
   });
 
-  saveJobs(jobs);
+  await saveJobs(jobs);
 }
 
-export function cancelExpiryReminders(docId) {
-  const jobs = getJobs();
+export async function cancelExpiryReminders(docId) {
+  const jobs = await getJobs();
   Object.keys(jobs).forEach(id => {
     if (id.startsWith(`${docId}_`)) {
       delete jobs[id];
     }
   });
-  saveJobs(jobs);
+  await saveJobs(jobs);
 }
 
 export async function checkDueNotifications() {
-  const jobs = getJobs();
+  const jobs = await getJobs();
   const now = Date.now();
   const due = [];
 
@@ -79,7 +79,7 @@ export async function checkDueNotifications() {
     }
   });
 
-  saveJobs(jobs);
+  await saveJobs(jobs);
   return due;
 }
 
@@ -88,18 +88,19 @@ export async function requestNotificationPermission() {
   return status === 'granted';
 }
 
-function getJobs() {
+async function getJobs() {
   try {
-    const stored = AsyncStorage.getItem(JOB_STORAGE_KEY);
+    const stored = await AsyncStorage.getItem(JOB_STORAGE_KEY);
     return stored ? JSON.parse(stored) : {};
-  } catch {
+  } catch (err) {
+    console.error('Failed to parse scheduled jobs', err);
     return {};
   }
 }
 
-function saveJobs(jobs) {
+async function saveJobs(jobs) {
   try {
-    AsyncStorage.setItem(JOB_STORAGE_KEY, JSON.stringify(jobs));
+    await AsyncStorage.setItem(JOB_STORAGE_KEY, JSON.stringify(jobs));
   } catch (err) {
     console.error('Failed to save jobs', err);
   }
