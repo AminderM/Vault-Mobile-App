@@ -200,3 +200,27 @@ export async function updateLoadStatus(loadId, status, token) {
     throw new Error(error.message || 'Failed to update load status');
   }
 }
+
+/**
+ * Fetch loads assigned to the authenticated driver
+ * @param {string} [token]
+ */
+export async function getDriverLoads(token) {
+  try {
+    const headers = await getHeaders(token);
+    const response = await fetch(`${API_BASE}/api/driver-mobile/loads`, {
+      method: 'GET',
+      headers,
+    });
+
+    if (!response.ok) {
+      const data = await response.json().catch(() => ({}));
+      throw new Error(data.detail || data.error || 'Failed to fetch driver loads');
+    }
+
+    const data = await response.json();
+    return Array.isArray(data) ? data : (data.loads || []);
+  } catch (error) {
+    throw new Error(error.message || 'Failed to fetch driver loads');
+  }
+}

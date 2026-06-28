@@ -620,3 +620,26 @@ export async function uploadFileToVault(fileData, api = API_BASE) {
 
   return await res.json();
 }
+
+// ============== CHAT ENDPOINTS ==============
+
+export async function getChatMessages(loadId, api = API_BASE) {
+  const headers = await authHeaders();
+  const res = await fetch(`${api}/api/driver-mobile/loads/${loadId}/messages`, {
+    method: 'GET',
+    headers,
+  });
+  if (!res.ok) throw new Error('Failed to fetch chat messages');
+  return res.json();
+}
+
+export async function sendChatMessage(loadId, content, api = API_BASE) {
+  const headers = await authHeaders();
+  const res = await fetch(`${api}/api/driver-mobile/loads/${loadId}/messages`, {
+    method: 'POST',
+    headers,
+    body: JSON.stringify({ content }),
+  });
+  if (!res.ok) throw new Error('Failed to send chat message');
+  return res.json();
+}
