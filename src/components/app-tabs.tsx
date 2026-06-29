@@ -30,7 +30,7 @@ import { BRAND, useTheme, toggleTheme, StatusBorderCard } from '@/lib/theme';
 import { saveDocument, logout, isAuthenticated, getAuthUser, getMe, registerAuthFailureListener } from '../lib/api';
 import { checkDueNotifications } from '../lib/expiryNotifications';
 
-type TabName = 'loads' | 'vault' | 'scan' | 'finance' | 'tools' | 'chat';
+type TabName = 'home' | 'loads' | 'vault' | 'scan' | 'finance' | 'tools' | 'chat';
 
 // High-fidelity custom vector drawings for the bottom tabs
 function HomeIcon({ color }: { color: string }) {
@@ -152,8 +152,10 @@ function TabIcon({ id, color, bg }: { id: string; color: string; bg: string }) {
     <View style={{ transform: [{ scale: iconScale }] }}>
       {(() => {
         switch (id) {
-          case 'loads':
+          case 'home':
             return <HomeIcon color={color} />;
+          case 'loads':
+            return <ToolTruckIcon color={color} />;
           case 'vault':
             return <FolderIcon color={color} bg={bg} />;
           case 'scan':
@@ -1079,7 +1081,7 @@ export default function AppTabs() {
   const [verificationPhone, setVerificationPhone] = useState('');
   const [verificationSessionId, setVerificationSessionId] = useState('');
   const [authUser, setAuthUser] = useState<any>(null);
-  const [activeTab, setActiveTab] = useState<TabName>('loads');
+  const [activeTab, setActiveTab] = useState<TabName>('home');
   const [activeToolView, setActiveToolView] = useState<'hub' | 'calculator' | 'invoices' | 'loads'>('hub');
   const [homeScreenView, setHomeScreenView] = useState<'home' | 'marketplace'>('home');
   const [prepopulatedLoad, setPrepopulatedLoad] = useState<any>(null);
@@ -1335,40 +1337,46 @@ export default function AppTabs() {
     }
 
     switch (activeTab) {
+      case 'home':
+        return (
+          <ErrorBoundary t={T}>
+            <HomeScreen
+              onNavigateToMarketplace={() => {
+                setActiveTab('loads');
+                setHomeScreenView('marketplace');
+              }}
+              onNavigate={(tab: TabName, toolView?: 'hub' | 'calculator' | 'invoices' | 'loads' | 'expenses') => {
+                setActiveTab(tab);
+                if (tab === 'finance') {
+                   setFinanceSubView(toolView === 'expenses' ? 'expenses' : 'pnl');
+                } else if (toolView) {
+                   setActiveToolView(toolView as any);
+                }
+              }}
+            />
+          </ErrorBoundary>
+        );
+
       case 'loads':
         return (
           <ErrorBoundary t={T}>
-            {homeScreenView === 'home' ? (
-              <HomeScreen
-                onNavigateToMarketplace={() => setHomeScreenView('marketplace')}
-                onNavigate={(tab: TabName, toolView?: 'hub' | 'calculator' | 'invoices' | 'loads' | 'expenses') => {
-                  setActiveTab(tab);
-                  if (tab === 'finance') {
-                    setFinanceSubView(toolView === 'expenses' ? 'expenses' : 'pnl');
-                  } else if (toolView) {
-                    setActiveToolView(toolView as any);
-                  }
-                }}
-              />
-            ) : (
-              <LoadsScreen
-                userType={userType}
-                onBackToHome={() => setHomeScreenView('home')}
-                onOpenProfile={() => setShowProfile(true)}
-                onCreateInvoice={(load: any) => {
-                  setPrepopulatedLoad(load);
-                  setActiveTab('tools');
-                  setActiveToolView('invoices');
-                }}
-              />
-            )}
+            <LoadsScreen
+              userType={userType}
+              onBackToHome={() => setActiveTab('home')}
+              onOpenProfile={() => setShowProfile(true)}
+              onCreateInvoice={(load: any) => {
+                setPrepopulatedLoad(load);
+                setActiveTab('tools');
+                setActiveToolView('invoices');
+              }}
+            />
           </ErrorBoundary>
         );
 
       case 'vault':
         return (
           <ErrorBoundary t={T}>
-            <DocumentVaultScreen onBack={() => setActiveTab('loads')} />
+            <DocumentVaultScreen onBack={() => setActiveTab('home')} />
           </ErrorBoundary>
         );
 
@@ -1429,36 +1437,30 @@ export default function AppTabs() {
   const tabs: { id: TabName; label: string }[] = React.useMemo(() => {
     if (isDriver) {
       return [
-        { id: 'loads', label: 'Home' },
+        { id: 'home', label: 'Home' },
         { id: 'scan', label: 'Scan' },
         { id: 'chat', label: 'Chat' },
+        { id: 'loads', label: 'Loads' },
         { id: 'vault', label: 'Vault' },
-      ];
-    } else if (userType === 'carrier' && !isPremiumCarrier) {
-      // Free / Invited carrier gets exactly 3 features: Home, Vault, Scan
-      return [
-        { id: 'loads', label: 'Home' },
-        { id: 'vault', label: 'Vault' },
-        { id: 'scan', label: 'Scan' },
       ];
     } else {
-      // Owner operator or Premium carrier gets all 5 features
+      // Carrier and Owner Operator get Home, Vault, Scan, Finance, Tools
       return [
-        { id: 'loads', label: 'Home' },
+        { id: 'home', label: 'Home' },
         { id: 'vault', label: 'Vault' },
         { id: 'scan', label: 'Scan' },
         { id: 'finance', label: 'Finance' },
         { id: 'tools', label: 'Tools' },
       ];
     }
-  }, [authUser]);
+  }, [isDriver]);
 
   // Safeguard activeTab if dynamic role changes hide the current tab
   React.useEffect(() => {
     const isTabVisible = tabs.some((t) => t.id === activeTab);
     if (!isTabVisible) {
       // eslint-disable-next-line react-hooks/set-state-in-effect
-      setActiveTab('loads');
+      setActiveTab('home');
     }
   }, [userType, tabs, activeTab]);
 
@@ -2047,7 +2049,7 @@ export default function AppTabs() {
                             await AsyncStorage.setItem('auth_user', JSON.stringify(updatedUser));
                             if (roleOpt === 'driver') {
                               // eslint-disable-next-line react-hooks/set-state-in-effect
-                              setActiveTab('loads');
+                              setActiveTab('home');
                             }
                           }}
                         >
@@ -2256,9 +2258,6 @@ export default function AppTabs() {
               </Text>
             </>,
             () => {
-              if (tab.id === 'loads' && activeTab === 'loads') {
-                setHomeScreenView('home');
-              }
               setActiveTab(tab.id);
             },
             false
