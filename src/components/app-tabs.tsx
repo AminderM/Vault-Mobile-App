@@ -1083,7 +1083,6 @@ export default function AppTabs() {
   const [authUser, setAuthUser] = useState<any>(null);
   const [activeTab, setActiveTab] = useState<TabName>('home');
   const [activeToolView, setActiveToolView] = useState<'hub' | 'calculator' | 'invoices' | 'loads'>('hub');
-  const [homeScreenView, setHomeScreenView] = useState<'home' | 'marketplace'>('home');
   const [prepopulatedLoad, setPrepopulatedLoad] = useState<any>(null);
   const [financeSubView, setFinanceSubView] = useState<'pnl' | 'expenses'>('pnl');
   const [showProfile, setShowProfile] = useState(false);
@@ -1343,7 +1342,6 @@ export default function AppTabs() {
             <HomeScreen
               onNavigateToMarketplace={() => {
                 setActiveTab('loads');
-                setHomeScreenView('marketplace');
               }}
               onNavigate={(tab: TabName, toolView?: 'hub' | 'calculator' | 'invoices' | 'loads' | 'expenses') => {
                 setActiveTab(tab);
