@@ -674,3 +674,36 @@ export async function sendChatMessage(loadId, content, api = API_BASE) {
   if (!res.ok) throw new Error('Failed to send chat message');
   return res.json();
 }
+
+// ============== STRIPE BILLING ENDPOINTS ==============
+
+export async function createStripeCheckoutSession(plan = 'pro', billingCycle = 'monthly', api = API_BASE) {
+  const headers = await authHeaders();
+  const res = await fetch(`${api}/api/stripe/create-checkout-session`, {
+    method: 'POST',
+    headers,
+    body: JSON.stringify({ plan, billing_cycle: billingCycle }),
+  });
+
+  if (!res.ok) {
+    const data = await res.json().catch(() => ({}));
+    throw new Error(data.detail || 'Failed to create payment session');
+  }
+
+  return res.json();
+}
+
+export async function getStripePortal(api = API_BASE) {
+  const headers = await authHeaders();
+  const res = await fetch(`${api}/api/stripe/portal`, {
+    method: 'POST',
+    headers,
+  });
+
+  if (!res.ok) {
+    const data = await res.json().catch(() => ({}));
+    throw new Error(data.detail || 'Failed to open billing portal');
+  }
+
+  return res.json();
+}
