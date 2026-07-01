@@ -153,23 +153,23 @@ export async function signup(token, phone, password, api = API_BASE) {
 }
 
 export async function signupOpen(payload, api = API_BASE) {
-  const formBody = [];
-  for (const property in payload) {
-    const encodedKey = encodeURIComponent(property);
-    const encodedValue = encodeURIComponent(payload[property]);
-    formBody.push(encodedKey + "=" + encodedValue);
-  }
-  const body = formBody.join("&");
-
   const res = await fetch(`${api}/api/driver-mobile/signup/open`, {
     method: 'POST',
-    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-    body: body,
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(payload),
   });
 
   if (!res.ok) {
     const data = await res.json().catch(() => ({}));
-    throw new Error(data.detail || 'Signup failed');
+    let errMsg = 'Signup failed';
+    if (data.detail) {
+      if (typeof data.detail === 'string') {
+        errMsg = data.detail;
+      } else if (Array.isArray(data.detail)) {
+        errMsg = data.detail.map(d => `${d.loc.join('.')}: ${d.msg}`).join('\n');
+      }
+    }
+    throw new Error(errMsg);
   }
 
   const data = await res.json();

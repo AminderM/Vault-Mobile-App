@@ -202,6 +202,10 @@ export default function PhoneVerificationScreen({
               )}
             </Pressable>
 
+            <Text style={{ fontSize: 11, color: BRAND.crimsonRed, marginTop: 12, marginBottom: 4, fontWeight: '600', textAlign: 'center' }}>
+              💡 Staging Bypass Code: 123456
+            </Text>
+
             {/* Resend Link */}
             <View style={styles.resendContainer}>
               <Text style={styles.resendLabel}>{"Didn't receive the code?"}</Text>
