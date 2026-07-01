@@ -24,10 +24,11 @@ import SplashScreen from '@/screens/SplashScreen';
 import LoginScreen from '@/screens/LoginScreen';
 import PhoneVerificationScreen from '@/screens/PhoneVerificationScreen';
 import OnboardingInviteScreen from '@/screens/OnboardingInviteScreen';
+import SignupScreen from '@/screens/SignupScreen';
 import ChatScreen from '@/screens/ChatScreen';
 import * as Linking from 'expo-linking';
 import { BRAND, useTheme, toggleTheme, StatusBorderCard } from '@/lib/theme';
-import { saveDocument, logout, isAuthenticated, getAuthUser, getMe, registerAuthFailureListener } from '../lib/api';
+import { saveDocument, logout, isAuthenticated, getAuthUser, getMe, registerAuthFailureListener, createStripeCheckoutSession } from '../lib/api';
 import { checkDueNotifications } from '../lib/expiryNotifications';
 
 type TabName = 'home' | 'loads' | 'vault' | 'scan' | 'finance' | 'tools' | 'chat';
@@ -1075,8 +1076,8 @@ function parseInviteToken(url: string | null): string | null {
 
 export default function AppTabs() {
   const insets = useSafeAreaInsets();
-  // Auth flow state: 'splash' → 'login' → 'otp' → 'app' | 'invite'
-  const [appState, setAppState] = useState<'splash' | 'login' | 'otp' | 'app' | 'invite'>('splash');
+  // Auth flow state: 'splash' → 'login' → 'otp' → 'app' | 'invite' | 'signup'
+  const [appState, setAppState] = useState<'splash' | 'login' | 'otp' | 'app' | 'invite' | 'signup'>('splash');
   const [inviteToken, setInviteToken] = useState<string | null>(null);
   const [verificationPhone, setVerificationPhone] = useState('');
   const [verificationSessionId, setVerificationSessionId] = useState('');
@@ -1086,6 +1087,7 @@ export default function AppTabs() {
   const [prepopulatedLoad, setPrepopulatedLoad] = useState<any>(null);
   const [financeSubView, setFinanceSubView] = useState<'pnl' | 'expenses'>('pnl');
   const [showProfile, setShowProfile] = useState(false);
+  const [isBillingLoading, setIsBillingLoading] = useState(false);
   const { mode: themeMode, t: T } = useTheme();
 
   // Profile management state
@@ -1270,14 +1272,7 @@ export default function AppTabs() {
             setVerificationSessionId(sessionId);
             setAppState('otp');
           }}
-          onSwitchToSignup={() => {
-            // For now, show alert — signup form is Phase 2
-            if (Platform.OS === 'web') {
-              alert('Sign up is currently available by invite only. Contact your fleet administrator.');
-            } else {
-              Alert.alert('Sign Up', 'Sign up is currently available by invite only. Contact your fleet administrator.');
-            }
-          }}
+          onSwitchToSignup={() => setAppState('signup')}
           onBack={() => setAppState('splash')}
         />
       );
@@ -1331,6 +1326,29 @@ export default function AppTabs() {
             setAppState('app');
           }}
           onBack={() => setAppState('splash')}
+        />
+      );
+    }
+
+    if (appState === 'signup') {
+      return (
+        <SignupScreen
+          onSignupSuccess={async (result: any) => {
+            setAuthUser(result?.user || null);
+            if (result?.user) {
+              const u = result.user;
+              if (u.full_name) {
+                setProfileName(u.full_name);
+                await AsyncStorage.setItem('profile_name', u.full_name).catch(() => {});
+              }
+              if (u.company_name) {
+                setProfileCompany(u.company_name);
+                await AsyncStorage.setItem('profile_company', u.company_name).catch(() => {});
+              }
+            }
+            setAppState('app');
+          }}
+          onBack={() => setAppState('login')}
         />
       );
     }
@@ -1424,13 +1442,15 @@ export default function AppTabs() {
   const userType = authUser?.role || authUser?.user_type || 'owner_operator';
   const isDriver = userType === 'driver';
 
-  // A carrier sees all 5 tabs only if they have an active subscription or pro/enterprise tier
-  const isPremiumCarrier = userType === 'carrier' && (
-    authUser?.tier === 'pro' || 
+  const isSubscribed = authUser?.tier === 'pro' || 
     authUser?.tier === 'enterprise' || 
     authUser?.subscription_status === 'active' ||
-    !!authUser?.stripe_subscription_id
-  );
+    !!authUser?.stripe_subscription_id;
+
+  const isTrialActive = authUser?.subscription_status === 'trial' && 
+    (authUser?.trial_ends_at ? new Date(authUser.trial_ends_at) > new Date() : true);
+
+  const isPremium = isSubscribed || isTrialActive;
 
   const tabs: { id: TabName; label: string }[] = React.useMemo(() => {
     if (isDriver) {
@@ -1461,6 +1481,39 @@ export default function AppTabs() {
       setActiveTab('home');
     }
   }, [userType, tabs, activeTab]);
+
+  const handleSubscribe = async () => {
+    setIsBillingLoading(true);
+    try {
+      const result = await createStripeCheckoutSession('pro', 'monthly');
+      if (result?.url) {
+        Linking.openURL(result.url);
+      } else {
+        Alert.alert('Error', 'Failed to generate checkout session.');
+      }
+    } catch (err: any) {
+      Alert.alert('Billing Error', err.message || 'An error occurred while initiating subscription.');
+    } finally {
+      setIsBillingLoading(false);
+    }
+  };
+
+  const handleManageBilling = async () => {
+    setIsBillingLoading(true);
+    try {
+      const { getStripePortal } = require('../lib/api');
+      const result = await getStripePortal();
+      if (result?.url) {
+        Linking.openURL(result.url);
+      } else {
+        Alert.alert('Error', 'Failed to generate billing portal link.');
+      }
+    } catch (err: any) {
+      Alert.alert('Billing Error', err.message || 'Could not access billing portal.');
+    } finally {
+      setIsBillingLoading(false);
+    }
+  };
 
   const renderThemeToggle = () => (
     <Pressable
@@ -1936,23 +1989,80 @@ export default function AppTabs() {
 
               {/* Subscription Status Card */}
               {userType !== 'driver' && (
-                <View style={[styles.calcSummaryCard, { backgroundColor: T.background.container, borderColor: T.border.variant, marginVertical: 8 }]}>
-                  <Text style={[styles.calcSummaryTitle, { color: T.text.primary }]}>Subscription Status</Text>
-                  <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
+                <View style={[styles.calcSummaryCard, { backgroundColor: T.background.container, borderColor: T.border.variant, marginVertical: 8, padding: 14 }]}>
+                  <Text style={[styles.calcSummaryTitle, { color: T.text.primary, marginBottom: 8 }]}>Subscription Status</Text>
+                  <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
                     <View>
-                      <Text style={{ fontSize: 14, fontWeight: '700', color: isPremiumCarrier || userType === 'owner_operator' ? BRAND.profitGreen : T.text.muted }}>
-                        {isPremiumCarrier || userType === 'owner_operator' ? '✓ PREMIUM MEMBER' : '⏳ FREE / INVITE TIER'}
+                      <Text style={{ fontSize: 14, fontWeight: '700', color: isPremium ? BRAND.profitGreen : T.text.muted }}>
+                        {isPremium ? '✓ PREMIUM ACTIVE' : '⏳ TRIAL / FREE ACCESS'}
                       </Text>
                       <Text style={{ fontSize: 12, color: T.text.secondary, marginTop: 2 }}>
-                        {isPremiumCarrier || userType === 'owner_operator' ? 'Renews: July 15, 2026' : 'Limited features (3 tabs)'}
+                        {isPremium ? (isSubscribed ? 'Renews monthly' : 'Free Trial period') : 'Upgrade to keep full access'}
                       </Text>
                     </View>
                     <View style={{ backgroundColor: themeMode === 'dark' ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.05)', paddingVertical: 6, paddingHorizontal: 12, borderRadius: 6 }}>
-                      <Text style={{ fontSize: 11, fontWeight: '700', color: isPremiumCarrier || userType === 'owner_operator' ? T.text.primary : T.text.muted }}>
-                        {isPremiumCarrier || userType === 'owner_operator' ? 'ACTIVE' : 'FREE'}
+                      <Text style={{ fontSize: 11, fontWeight: '700', color: isPremium ? T.text.primary : T.text.muted }}>
+                        {isPremium ? 'ACTIVE' : 'FREE'}
                       </Text>
                     </View>
                   </View>
+
+                  {!isSubscribed ? (
+                    <Pressable
+                      style={({ pressed }) => [
+                        {
+                          height: 40,
+                          backgroundColor: BRAND.crimsonRed,
+                          borderRadius: 6,
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          marginTop: 4,
+                          flexDirection: 'row',
+                          gap: 8,
+                        },
+                        pressed && { opacity: 0.85 },
+                        isBillingLoading && { opacity: 0.6 }
+                      ]}
+                      onPress={handleSubscribe}
+                      disabled={isBillingLoading}
+                    >
+                      {isBillingLoading ? (
+                        <ActivityIndicator size="small" color="#ffffff" />
+                      ) : (
+                        <Text style={{ color: '#ffffff', fontWeight: '700', fontSize: 12, letterSpacing: 0.5 }}>
+                          SUBSCRIBE TO PREMIUM ➔
+                        </Text>
+                      )}
+                    </Pressable>
+                  ) : (
+                    <Pressable
+                      style={({ pressed }) => [
+                        {
+                          height: 40,
+                          borderColor: T.border.variant,
+                          borderWidth: 1,
+                          borderRadius: 6,
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          marginTop: 4,
+                          flexDirection: 'row',
+                          gap: 8,
+                        },
+                        pressed && { opacity: 0.85 },
+                        isBillingLoading && { opacity: 0.6 }
+                      ]}
+                      onPress={handleManageBilling}
+                      disabled={isBillingLoading}
+                    >
+                      {isBillingLoading ? (
+                        <ActivityIndicator size="small" color={T.text.primary} />
+                      ) : (
+                        <Text style={{ color: T.text.primary, fontWeight: '700', fontSize: 12, letterSpacing: 0.5 }}>
+                          MANAGE SUBSCRIPTION ⚙
+                        </Text>
+                      )}
+                    </Pressable>
+                  )}
                 </View>
               )}
 
