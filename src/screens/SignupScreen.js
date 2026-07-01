@@ -24,6 +24,14 @@ export default function SignupScreen({ onSignupSuccess, onBack }) {
   const { t: T, themeMode } = useTheme();
   const styles = useStyles();
 
+  const showAlert = (title, message) => {
+    if (Platform.OS === 'web') {
+      alert(`${title}\n\n${message}`);
+    } else {
+      Alert.alert(title, message);
+    }
+  };
+
   // Navigation & state
   const [userType, setUserType] = useState('carrier'); // 'carrier' or 'owner_operator'
   const [fullName, setFullName] = useState('');
@@ -72,7 +80,7 @@ export default function SignupScreen({ onSignupSuccess, onBack }) {
       else if (type === 'cvsa') setCvsaFile(fileInfo);
       else if (type === 'cvor') setCvorFile(fileInfo);
     } catch (err) {
-      Alert.alert('Error picking file', err.message);
+      showAlert('Error picking file', err.message);
     }
   };
 
@@ -126,7 +134,7 @@ export default function SignupScreen({ onSignupSuccess, onBack }) {
 
   const handleVerifyOtp = async () => {
     if (otpCode.length !== 6) {
-      Alert.alert('Validation', 'Please enter a 6-digit OTP code.');
+      showAlert('Validation', 'Please enter a 6-digit OTP code.');
       return;
     }
 
@@ -171,7 +179,7 @@ export default function SignupScreen({ onSignupSuccess, onBack }) {
         onSignupSuccess(result);
       }
     } catch (err) {
-      Alert.alert('Signup Failed', err.message || 'Failed to register account. Please check the code and try again.');
+      showAlert('Signup Failed', err.message || 'Failed to register account. Please check the code and try again.');
     } finally {
       setIsVerifying(false);
     }
@@ -450,6 +458,10 @@ export default function SignupScreen({ onSignupSuccess, onBack }) {
               placeholder="000000"
               placeholderTextColor={T.text.muted}
             />
+
+            <Text style={{ fontSize: 11, color: BRAND.crimsonRed, marginTop: 12, fontWeight: '600', textAlign: 'center' }}>
+              💡 Staging Bypass Code: 123456
+            </Text>
 
             <View style={{ flexDirection: 'row', gap: 12, marginTop: 24, width: '100%' }}>
               <Pressable
